@@ -40,8 +40,8 @@ extern uint64 *mdver_global_generation;
 /* MD Lite global cache generation init */
 void mdver_shmem_init(void);
 Size mdver_shmem_size(void);
-uint64 get_global_generation(void);
-void bump_global_generation(void);
+uint64 mdver_get_global_generation(void);
+void mdver_bump_global_generation(mdver_local* local_mdver);
 
 /* MD Lite Local cache generation functions*/
 mdver_local* mdver_create_local(void);

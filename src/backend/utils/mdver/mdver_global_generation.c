@@ -14,7 +14,6 @@
 
 /* Name to identify the MD Version Global Cache Generation (GG) shared memory area*/
 #define MDVER_GLOBAL_GEN_SHMEM_NAME "MDVer Global Cache Generation"
-const int64 INC = 1;
 
 /*
  * Pointer to the shared memory global cache generation (GG)
@@ -57,28 +56,39 @@ mdver_shmem_size(void)
 }
 
 /* 
- * get_global_generation
+ * mdver_get_global_generation
  * 		Get Current global generation number
  */
 uint64
-get_global_generation(void)
+mdver_get_global_generation(void)
 {
     Assert(NULL != mdver_global_generation);
     return *mdver_global_generation;
 }
 
 /*
- * bump_global_generation
- * 		Atomically increment global cache generation by 1
+ * mdver_bump_global_generation
+ * 		If bump command id is not same as default command id, then it means this tx
+ * 		has caused some metadata changes and we record that by atomically bump
+ * 		global generation by 1
+ * 		local_mdver : current local mdver pointer
  */
 void
-bump_global_generation(void)
+mdver_bump_global_generation(mdver_local* local_mdver)
 {
-    Assert(NULL != mdver_global_generation);
+	if (!mdver_enabled() ||
+		NULL == local_mdver ||
+		local_mdver->bump_cmd_id == DEFAULT_BUMP_CMD_ID) {
+		return;
+	}
+
+	Assert(NULL != mdver_global_generation);
+
 #ifdef MD_VERSIONING_INSTRUMENTATION
     uint64 old_global_id = *mdver_global_generation;
 #endif
 
+    const int64 INC = 1;
     gp_atomic_add_uint64(mdver_global_generation, INC);
 
 #ifdef MD_VERSIONING_INSTRUMENTATION

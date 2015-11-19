@@ -969,17 +969,8 @@ AtEOXact_Inval(bool isCommit)
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(false);
 
-		/*
-		 * If bump command id is not same as default command id, then it means this tx
-		 * has caused some metadata changes and we record that by bumping global
-		 * generation
-		 */
-		if (mdver_enabled() &&
-			NULL != local_mdver &&
-			local_mdver->bump_cmd_id != DEFAULT_BUMP_CMD_ID)
-		{
-			bump_global_generation();
-		}
+		/* Notifying the MD Versioning component of transaction commit */
+		mdver_bump_global_generation(local_mdver);
 	}
 	else if (transInvalInfo != NULL)
 	{

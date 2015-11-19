@@ -1714,11 +1714,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 
 	reloid = RelationGetRelid(relation);
         
-	/*
-	 * Add corresponding Metadata Version's Invalidations translation for this action.
-	 * When there is a catalog(metadata) update, call translator to record current command so
-	 * mdcache can be purged(at command end) or new generation id(on tx commit) can be generated.
-	 */
+	/* Notifying the MD Versioning component of catalog changes */
 	mdver_inv_translator(relation);
 
 	/* ----------------

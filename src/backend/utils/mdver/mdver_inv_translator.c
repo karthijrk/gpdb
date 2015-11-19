@@ -13,7 +13,7 @@
 
 /*
  * mdver_inv_translator
- * 		This component intercepts all changes to metadata done by a query.
+ * 		This component intercepts all changes to catalog(metadata) done by a query.
  * 		When a relevant catalog update is detected, this IT component
  * 		updates the bump command id so at command end mdcache is purged and at tx commit
  * 		new global cache generation can be generated.
@@ -39,6 +39,10 @@ mdver_inv_translator(Relation relation)
         return;
     }
     
+    /*
+     * We don't track(bump command id) catalog tables changes in the AOSEG namespace.
+     * These are modified for DML only (not DDL)
+     */
     if (IsAoSegmentRelation(relation))
     {
 		return;

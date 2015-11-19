@@ -23,7 +23,7 @@ mdver_create_local(void)
 	mdver_local* local_mdver = palloc0(sizeof(mdver_local));
     
     /* sync to global cache generation */
-    local_mdver->local_generation = get_global_generation();
+    local_mdver->local_generation = mdver_get_global_generation();
     
     /* set to default bump command id */
     local_mdver->bump_cmd_id = DEFAULT_BUMP_CMD_ID;
