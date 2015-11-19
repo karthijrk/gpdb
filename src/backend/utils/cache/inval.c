@@ -98,7 +98,7 @@
 #include "utils/relcache.h"
 #include "utils/simex.h"
 #include "utils/syscache.h"
-
+#include "utils/mdver.h"
 
 /*
  * To minimize palloc traffic, we keep pending requests in successively-
@@ -156,6 +156,7 @@ typedef struct TransInvalidationInfo
 } TransInvalidationInfo;
 
 static TransInvalidationInfo *transInvalInfo = NULL;
+static mdver_local *local_mdver = NULL;
 
 /*
  * Dynamically-registered callback functions.  Current implementation
@@ -797,6 +798,17 @@ AtStart_Inval(void)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransInvalidationInfo));
 	transInvalInfo->my_level = GetCurrentTransactionNestLevel();
+        
+	if (mdver_enabled())
+	{
+		/*
+		 * Since we create the TransInvalidationInfo in the TopTransactionContext,
+		 * we should create the local mdver in the same context as well.
+		 */
+		MemoryContext oldcxt = MemoryContextSwitchTo(TopTransactionContext);
+		local_mdver = mdver_create_local();
+		MemoryContextSwitchTo(oldcxt);
+	}
 }
 
 /*
@@ -956,6 +968,18 @@ AtEOXact_Inval(bool isCommit)
 
 		if (transInvalInfo->RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(false);
+
+		/*
+		 * If bump command id is not same as default command id, then it means this tx
+		 * has caused some metadata changes and we record that by bumping global
+		 * generation
+		 */
+		if (mdver_enabled() &&
+			NULL != local_mdver &&
+			local_mdver->bump_cmd_id != DEFAULT_BUMP_CMD_ID)
+		{
+			bump_global_generation();
+		}
 	}
 	else if (transInvalInfo != NULL)
 	{
@@ -968,6 +992,7 @@ AtEOXact_Inval(bool isCommit)
 
 	/* Need not free anything explicitly */
 	transInvalInfo = NULL;
+	local_mdver = NULL;
 }
 
 /*
@@ -1199,4 +1224,14 @@ CacheRegisterRelcacheCallback(CacheCallbackFunction func,
 	cache_callback_list[cache_callback_count].arg = arg;
 
 	++cache_callback_count;
+}
+
+/*
+ * GetCurrentLocalMDVer
+ * 		Return the local mdver
+ */
+mdver_local*
+GetCurrentLocalMDVer(void)
+{
+    return local_mdver;
 }

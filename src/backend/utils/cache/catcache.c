@@ -34,7 +34,7 @@
 #include "utils/rel.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
-
+#include "utils/mdver.h"
 
  /* #define CACHEDEBUG */	/* turns DEBUG elogs on */
 
@@ -1713,6 +1713,13 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	Assert(CacheHdr != NULL);
 
 	reloid = RelationGetRelid(relation);
+        
+	/*
+	 * Add corresponding Metadata Version's Invalidations translation for this action.
+	 * When there is a catalog(metadata) update, call translator to record current command so
+	 * mdcache can be purged(at command end) or new generation id(on tx commit) can be generated.
+	 */
+	mdver_inv_translator(relation);
 
 	/* ----------------
 	 *	for each cache

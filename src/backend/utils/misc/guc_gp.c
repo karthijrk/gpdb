@@ -87,6 +87,8 @@ static const char *assign_optimizer_cost_model(const char *newval,
 							bool doit, GucSource source);
 static const char *assign_gp_workfile_caching_loglevel(const char *newval,
 									bool doit, GucSource source);
+static const char *assign_gp_mdver_loglevel(const char *newval,
+                                                                bool doit, GucSource source);
 static const char *assign_gp_sessionstate_loglevel(const char *newval,
 								bool doit, GucSource source);
 static const char *assign_time_slice_report_level(const char *newval, bool doit,
@@ -99,6 +101,9 @@ static const char *assign_gp_idf_deduplicate(const char *newval, bool doit,
 						  GucSource source);
 static const char *assign_explain_memory_verbosity(const char *newval, bool doit, GucSource source);
 static bool assign_dispatch_log_stats(bool newval, bool doit, GucSource source);
+
+static bool assign_optimizer_release_mdcache(bool newval, bool doit, GucSource source);
+static bool assign_gp_metadata_versioning(bool newval, bool doit, GucSource source);
 
 static const char *assign_debug_dtm_action(const char *newval,
 						bool doit, GucSource source);
@@ -367,6 +372,7 @@ static char *Debug_persistent_store_print_level_str;
 static char *Debug_database_command_print_level_str;
 static char *gp_log_format_string;
 static char *gp_workfile_caching_loglevel_str;
+static char *gp_mdver_loglevel_str;
 static char *gp_sessionstate_loglevel_str;
 static char *explain_memory_verbosity_str;
 
@@ -498,7 +504,7 @@ int			optimizer_cost_model;
 bool		optimizer_print_query;
 bool		optimizer_print_plan;
 bool		optimizer_print_xform;
-bool		optimizer_release_mdcache;
+bool		optimizer_release_mdcache = true; /* Make sure we release MDCache between queries by default */
 bool		optimizer_disable_xform_result_printing;
 bool		optimizer_print_memo_after_exploration;
 bool		optimizer_print_memo_after_implementation;
@@ -571,6 +577,10 @@ bool		optimizer_enable_master_only_queries;
 bool		optimizer_multilevel_partitioning;
 bool		optimizer_enable_derive_stats_all_groups;
 bool		optimizer_explain_show_status;
+
+/* MD Versiong Guc Variables */
+bool		gp_metadata_versioning;
+int		gp_mdver_loglevel = DEBUG1;
 
 /* Security */
 bool		gp_reject_internal_tcp_conn = true;
@@ -694,6 +704,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_workfile_caching,
 		false, NULL, NULL
+	},
+        {
+        	{"gp_metadata_versioning", PGC_SUSET, QUERY_TUNING_OTHER,
+                	gettext_noop("Enable metadata version"),
+	                gettext_noop("When enabled, catalog objects in MD cache "
+                                     "are release only when someone other command modify catalog"),
+        	        GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+        	},
+	        &gp_metadata_versioning,
+        	false, &assign_gp_metadata_versioning, NULL
 	},
 	{
 		{"force_bitmap_table_scan", PGC_USERSET, DEVELOPER_OPTIONS,
@@ -2778,7 +2798,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_release_mdcache,
-		true, NULL, NULL
+		true, &assign_optimizer_release_mdcache, NULL
 	},
 
 	{
@@ -5055,7 +5075,18 @@ struct config_string ConfigureNamesString_gp[] =
 		&gp_workfile_caching_loglevel_str,
 		"debug1", assign_gp_workfile_caching_loglevel, NULL
 	},
-
+        {
+        	{"gp_mdver_loglevel", PGC_SUSET, DEVELOPER_OPTIONS,
+                	gettext_noop("Sets the logging level for metadata version debugging messages"),
+	                gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "
+                                         "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
+                                         "levels that follow it. The later the level, the fewer messages are "
+                                         "sent."),
+                	GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+        	},
+	        &gp_mdver_loglevel_str,
+        	"debug1", assign_gp_mdver_loglevel, NULL
+	},
 	{
 		{"gp_sessionstate_loglevel", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Sets the logging level for session state debugging messages"),
@@ -5663,6 +5694,12 @@ assign_gp_workfile_caching_loglevel(const char *newval,
 }
 
 static const char *
+assign_gp_mdver_loglevel(const char *newval,
+		   bool doit, GucSource source) {
+    return (assign_msglvl(&gp_mdver_loglevel, newval, doit, source));
+}
+
+static const char *
 assign_gp_sessionstate_loglevel(const char *newval,
 								bool doit, GucSource source)
 {
@@ -5922,6 +5959,52 @@ assign_dispatch_log_stats(bool newval, bool doit, GucSource source)
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
 		else if (source != PGC_S_OVERRIDE)
 			return false;
+	}
+	return true;
+}
+
+/*
+ * Validate that if we disable releasing the MD Cache after each query,
+ *   we must have MD Version turned on.
+ */
+static bool
+assign_optimizer_release_mdcache(bool newval, bool doit, GucSource source)
+{
+	 /*
+	  * We want to avoid reaching the following state:
+	  *  - optimizer_release_mdcache = off
+	  *  - gp_metadata_versioning = off
+	  * Other states are fine.
+	  */
+	if (!newval && !gp_metadata_versioning)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot set optimizer_release_mdcache to off when gp_metadata_versioning is off")));
+		return false;
+	}
+	return true;
+}
+
+/*
+ * Validate that if we disable MD Versiong, we are releasing the MD Cache
+ *   after each query.
+ */
+static bool
+assign_gp_metadata_versioning(bool newval, bool doit, GucSource source)
+{
+	 /*
+	  * We want to avoid reaching the following state:
+	  *  - optimizer_release_mdcache = off
+	  *  - gp_metadata_versioning = off
+	  * Other states are fine.
+	  */
+	if (!newval && !optimizer_release_mdcache)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot set gp_metadata_versioning to off when optimizer_release_mdcache is off")));
+		return false;
 	}
 	return true;
 }
