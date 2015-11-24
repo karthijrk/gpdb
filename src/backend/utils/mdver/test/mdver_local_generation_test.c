@@ -13,7 +13,7 @@ extern int gp_command_count;
 void 
 test__mdver_create_local__default_value(void** state)
 {
-    will_return(get_global_generation, 0);
+    will_return(mdver_get_global_generation, 0);
     mdver_local* local_mdver = mdver_create_local();
     assert_true(local_mdver->bump_cmd_id == DEFAULT_BUMP_CMD_ID &&
                 local_mdver->local_generation == 0);

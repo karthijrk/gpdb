@@ -48,13 +48,18 @@ test__mdver_shmem_size__uint64(void** state)
 void
 test__mdver_bump_global_generation__inc(void** state)
 {
+	mdver_local local;
     uint64 global_cache_generation = 0;
     expect_any(ShmemInitStruct, name);
     expect_any(ShmemInitStruct, size);
     expect_any(ShmemInitStruct, foundPtr);
     will_return(ShmemInitStruct, &global_cache_generation);
+    will_return(mdver_enabled, true);
     mdver_shmem_init();
-    mdver_bump_global_generation();
+    mdver_bump_global_generation(&local);
+    assert_true(NULL != mdver_global_generation && 0 == *mdver_global_generation);
+    local.bump_cmd_id = 1;
+    mdver_bump_global_generation(&local);
     assert_true(NULL != mdver_global_generation && 1 == *mdver_global_generation);
 }
 
