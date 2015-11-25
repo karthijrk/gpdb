@@ -80,15 +80,31 @@ mdver_command_begin(void) {
 	Assert(NULL != local_mdver);
 
 #ifdef 	MD_VERSIONING_INSTRUMENTATION
-	elog(gp_mdver_loglevel, "MDVer: New command to optimizer, LG = " UINT64_FORMAT" , GG = " UINT64_FORMAT,
-			local_mdver->local_generation, global_generation);
+	elog(gp_mdver_loglevel, "MDVer: New command to optimizer, LG = " UINT64_FORMAT" , GG = " UINT64_FORMAT " mdver_dirty_mdcache = %d",
+			local_mdver->local_generation, global_generation, mdver_dirty_mdcache);
 #endif
 
 	bool new_generation_detected = false;
-	if (local_mdver->local_generation != global_generation)
+
+	/*
+	 * We updated the local generation and ask a MD Cache purge in two
+	 * scenarios:
+	 *   1. A previous command in this session has updated the
+	 *     catalog (mdver dirty flag true)
+	 *   2. A transaction in another session committed a catalog
+	 *     change and bumped the global generation (LG != GG)
+	 */
+	if (mdver_dirty_mdcache ||
+			local_mdver->local_generation != global_generation)
 	{
 		new_generation_detected = true;
 		local_mdver->local_generation = global_generation;
+		/* We are requesting MD Cache purge, we can reset the "dirty" flag */
+		mdver_dirty_mdcache = false;
+
+#ifdef 	MD_VERSIONING_INSTRUMENTATION
+	elog(gp_mdver_loglevel, "MDVer: MDCache purge requested at command start");
+#endif
 	}
 
 	return new_generation_detected;

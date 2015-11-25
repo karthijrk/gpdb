@@ -34,8 +34,11 @@ typedef struct mdver_local
     int bump_cmd_id;
 } mdver_local;
 
-/* Pointer to the shared memory global cache generation (GG)*/
+/* Pointer to the shared memory global cache generation (GG) */
 extern uint64 *mdver_global_generation;
+
+/* Set to true if mdcache is marked as "dirty" and needs purging */
+extern bool mdver_dirty_mdcache;
 
 /* Metadata Versioning global generation functionality */
 void mdver_shmem_init(void);

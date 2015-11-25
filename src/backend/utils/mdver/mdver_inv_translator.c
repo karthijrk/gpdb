@@ -8,8 +8,18 @@
  *-------------------------------------------------------------------------
  */
 
-#include "utils/mdver.h"
+#include "postgres.h"
+#include "catalog/catalog.h"
 #include "utils/guc.h"
+#include "utils/mdver.h"
+
+/*
+ * Singleton static flag to mark the mdcache as dirty when a local
+ * command updates the catalog
+ */
+bool mdver_dirty_mdcache = false;
+
+static void mdver_mark_dirty_mdcache(void);
 
 /*
  * mdver_inv_translator
@@ -54,4 +64,11 @@ mdver_inv_translator(Relation relation)
 #endif
     
     mdver_local_bump_cmd_id(local_mdver);
+    mdver_mark_dirty_mdcache();
+}
+
+static void
+mdver_mark_dirty_mdcache(void)
+{
+	mdver_dirty_mdcache = true;
 }

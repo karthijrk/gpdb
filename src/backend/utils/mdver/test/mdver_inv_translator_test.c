@@ -23,7 +23,15 @@ test__mdver_inv_translator__set_bmp(void** state)
     mdver_inv_translator(relation);
     printf("%d", local.bump_cmd_id);
     assert_true(local.bump_cmd_id == 10);
-    
+}
+
+/* Testing that the global dirty flag is set to true */
+void
+test__mdver_mark_dirty_mdcache(void **state)
+{
+	mdver_dirty_mdcache = false;
+	mdver_mark_dirty_mdcache();
+	assert_true(mdver_dirty_mdcache);
 }
 
 int
@@ -32,7 +40,8 @@ main(int argc, char* argv[])
     cmockery_parse_arguments(argc, argv);
     
     const UnitTest tests[] = {
-		unit_test(test__mdver_inv_translator__set_bmp)
+		unit_test(test__mdver_inv_translator__set_bmp),
+		unit_test(test__mdver_mark_dirty_mdcache)
 	};
 
     return run_tests(tests);

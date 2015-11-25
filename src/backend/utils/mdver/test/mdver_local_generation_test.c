@@ -37,27 +37,46 @@ test__mdver_local_bump_cmd_id(void** state)
  * test__mdver_command_begin
  *  Testing that at command begin, we correctly check the local and global
  *  generation and take action:
- *    - if LG == GG, nothing to do, return false
+ *    - if LG == GG, mdver_dirty_mdcache = false nothing to do, return false
+ *    - if LG == GG, mdver_dirty_mdcache = true set LG = GG and return true
  *    - if LG != GG, then set LG = GG and return true
  */
 void
 test__mdver_command_begin(void **state)
 {
 	mdver_local local_mdver = {0, 0};
+	bool result = false;
 
-	/* First case, local_generation == global_generation == 10 */
+	/* local_generation == global_generation == 10, mdver_dirty_mdcache = false */
+	mdver_dirty_mdcache = false;
 	local_mdver.local_generation = 10;
 	local_mdver.bump_cmd_id = 20;
 	will_return(mdver_enabled, true);
 	will_return(mdver_get_global_generation, 10);
 	will_return(GetCurrentLocalMDVer, &local_mdver);
 
-	bool result = mdver_command_begin();
+	result = mdver_command_begin();
 	assert_false(result);
 	assert_true(local_mdver.local_generation == 10);
 	assert_true(local_mdver.bump_cmd_id == 20);
+	assert_false(mdver_dirty_mdcache);
 
-	/* Second case, local_generation = 10, global_generation = 15 */
+	/* local_generation == global_generation == 10, mdver_dirty_mdcache = false */
+	mdver_dirty_mdcache = true;
+	local_mdver.local_generation = 10;
+	local_mdver.bump_cmd_id = 20;
+	will_return(mdver_enabled, true);
+	will_return(mdver_get_global_generation, 10);
+	will_return(GetCurrentLocalMDVer, &local_mdver);
+
+	result = mdver_command_begin();
+	assert_true(result);
+	assert_true(local_mdver.local_generation == 10);
+	assert_true(local_mdver.bump_cmd_id == 20);
+	assert_false(mdver_dirty_mdcache);
+
+	/* Third case, local_generation = 10, global_generation = 15. mdver_dirty_mdcache doesn't matter */
+	mdver_dirty_mdcache = false;
 	local_mdver.local_generation = 10;
 	local_mdver.bump_cmd_id = 20;
 	will_return(mdver_enabled, true);
@@ -69,8 +88,7 @@ test__mdver_command_begin(void **state)
 	assert_true(result);
 	assert_true(local_mdver.local_generation == 15);
 	assert_true(local_mdver.bump_cmd_id == 20);
-
-
+	assert_false(mdver_dirty_mdcache);
 }
 
 int

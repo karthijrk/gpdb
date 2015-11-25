@@ -927,16 +927,17 @@ COptTasks::PvOptimizeTask
 	AUTO_MEM_POOL(amp);
 	IMemoryPool *pmp = amp.Pmp();
 
-	// initialize metadata cache
+	// Notify MD Versioning of new command
+	bool reset_mdcache = gpdb::FMDVersioningNewCommand();
+
+	// initialize metadata cache, or purge if needed
 	if (!CMDCache::FInitialized())
 	{
 		CMDCache::Init();
 	}
 	else
 	{
-		// MDCache already initialized. Notify MD Versioning of a new command
-		// If MD Versioning detects a new generation, purge MDCache contents
-		bool reset_mdcache = gpdb::FMDVersioningNewCommand();
+		// If MD Versioning detected a new generation, purge MDCache contents
 		if (reset_mdcache)
 		{
 			CMDCache::Reset();
