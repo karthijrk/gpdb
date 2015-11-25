@@ -59,3 +59,37 @@ mdver_local_bump_cmd_id(mdver_local* local_mdver)
 #endif
 
 }
+
+/*
+ * mdver_command_begin
+ *   Called at the beginning of a new command
+ *   Checks local generation vs global generation. If different, returns true and
+ *   updates the local generation.
+ *   The caller should purge the MD Cache when a new generation is detected.
+ */
+bool
+mdver_command_begin(void) {
+
+	/* Always purge cache if MD Versioning is disabled */
+	if (!mdver_enabled()) {
+		return true;
+	}
+
+	uint64 global_generation = mdver_get_global_generation();
+	mdver_local *local_mdver = GetCurrentLocalMDVer();
+	Assert(NULL != local_mdver);
+
+#ifdef 	MD_VERSIONING_INSTRUMENTATION
+	elog(gp_mdver_loglevel, "MDVer: New command to optimizer, LG = " UINT64_FORMAT" , GG = " UINT64_FORMAT,
+			local_mdver->local_generation, global_generation);
+#endif
+
+	bool new_generation_detected = false;
+	if (local_mdver->local_generation != global_generation)
+	{
+		new_generation_detected = true;
+		local_mdver->local_generation = global_generation;
+	}
+
+	return new_generation_detected;
+}

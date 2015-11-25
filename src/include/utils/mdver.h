@@ -37,20 +37,21 @@ typedef struct mdver_local
 /* Pointer to the shared memory global cache generation (GG)*/
 extern uint64 *mdver_global_generation;
 
-/* MD Lite global cache generation init */
+/* Metadata Versioning global generation functionality */
 void mdver_shmem_init(void);
 Size mdver_shmem_size(void);
 uint64 mdver_get_global_generation(void);
 void mdver_bump_global_generation(mdver_local* local_mdver);
 
-/* MD Lite Local cache generation functions*/
+/* Metadata Versioning local generation functionality */
 mdver_local* mdver_create_local(void);
 void mdver_local_bump_cmd_id(mdver_local* local_mdver);
+bool mdver_command_begin(void);
 
-/*MD Lite Invalidation Translator operations*/
+/* Metadata Versioning Invalidation Translator operations */
 void mdver_inv_translator(Relation relation);
 
-/* MD Lite utility functions */
+/* Metadata Versioning utility functions */
 bool mdver_enabled();
 
 /* inval.c */

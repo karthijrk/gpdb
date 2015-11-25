@@ -15,10 +15,10 @@ test__mdver_inv_translator__set_bmp(void** state)
 {
 	mdver_local local;
     Relation relation;
-    expect_any(IsAoSegmentRelation, relation);
-    will_return(IsAoSegmentRelation, false);
     will_return(mdver_enabled, true);
     will_return(GetCurrentLocalMDVer, &local);
+    expect_any(IsAoSegmentRelation, relation);
+    will_return(IsAoSegmentRelation, false);
     gp_command_count = 10;
     mdver_inv_translator(relation);
     printf("%d", local.bump_cmd_id);

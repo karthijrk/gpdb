@@ -932,6 +932,16 @@ COptTasks::PvOptimizeTask
 	{
 		CMDCache::Init();
 	}
+	else
+	{
+		// MDCache already initialized. Notify MD Versioning of a new command
+		// If MD Versioning detects a new generation, purge MDCache contents
+		bool reset_mdcache = gpdb::FMDVersioningNewCommand();
+		if (reset_mdcache)
+		{
+			CMDCache::Reset();
+		}
+	}
 
 	// load search strategy
 	DrgPss *pdrgpss = PdrgPssLoad(pmp, optimizer_search_strategy_path);

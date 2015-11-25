@@ -68,15 +68,17 @@ cmdId=5 | COMMIT      |             |                             | GG++; GG=6
 3. When the Optimizer requests an object metadata, the MD Cache will go to the
   catalog and request it. It will then store the metadata in the MD Cache.
 
-4. When the Invalidation Translator detects a change to metadata from a command,
-  it does two things: 
+4. When the Invalidation Translator detects a change to metadata from a command: 
   - set BC to the current command id
-  - at the end of the command, purge the contents of the MD Cache
 
-5. When a new read request comes from the Optimizer for an object not in MDC, MD
+5. At command end, backend checks if BC == current command id then:
+  - purge the contents of the MD Cache
+
+6. When a new read request comes from the Optimizer for an object not in MDC, MD
   Cache will again request the metadata from the catalog. The catalog will apply
   the current visibility rules (MVCC, SnapshotNow, etc), and return the most
   up-to-date visible version..  
 
-6. At commit time, if BC != 0, this transaction changed the
-  metadata. Atomically increment GG part of the commit.
+7. At commit time, if BC != 0, this transaction changed the
+metadata. Atomically increment GG part of the commit.
+

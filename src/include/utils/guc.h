@@ -448,7 +448,7 @@ extern bool optimizer_multilevel_partitioning;
 extern bool optimizer_enable_derive_stats_all_groups;
 extern bool optimizer_explain_show_status;
 
-/* MD Lite Guc Variables */
+/* Metadata Versioning Guc Variables */
 extern bool gp_metadata_versioning;
 extern int gp_mdver_loglevel;
 
