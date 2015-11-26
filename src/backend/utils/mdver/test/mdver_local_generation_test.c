@@ -15,22 +15,22 @@ test__mdver_create_local__default_value(void** state)
 {
     will_return(mdver_get_global_generation, 0);
     mdver_local* local_mdver = mdver_create_local();
-    assert_true(local_mdver->bump_cmd_id == DEFAULT_BUMP_CMD_ID &&
+    assert_true(local_mdver->transaction_dirty == false &&
                 local_mdver->local_generation == 0);
     pfree(local_mdver);
 }
 
 /*
- * test__mdver_local_bump_cmd_id
+ * test__mdver_mark_dirty_xact
  * 		Testing setting bump id functionality
  */
 void 
-test__mdver_local_bump_cmd_id(void** state)
+test__mdver_mark_dirty_xact(void** state)
 {
 	mdver_local local;
-	gp_command_count = 10;
-    mdver_local_bump_cmd_id(&local);
-    assert_true(local.bump_cmd_id == 10);
+	local.transaction_dirty = false;
+    mdver_mark_dirty_xact(&local);
+    assert_true(local.transaction_dirty);
 }
 
 /*
@@ -44,13 +44,12 @@ test__mdver_local_bump_cmd_id(void** state)
 void
 test__mdver_command_begin(void **state)
 {
-	mdver_local local_mdver = {0, 0};
+	mdver_local local_mdver = {0, false};
 	bool result = false;
 
 	/* local_generation == global_generation == 10, mdver_dirty_mdcache = false */
 	mdver_dirty_mdcache = false;
 	local_mdver.local_generation = 10;
-	local_mdver.bump_cmd_id = 20;
 	will_return(mdver_enabled, true);
 	will_return(mdver_get_global_generation, 10);
 	will_return(GetCurrentLocalMDVer, &local_mdver);
@@ -58,13 +57,12 @@ test__mdver_command_begin(void **state)
 	result = mdver_command_begin();
 	assert_false(result);
 	assert_true(local_mdver.local_generation == 10);
-	assert_true(local_mdver.bump_cmd_id == 20);
+	assert_false(local_mdver.transaction_dirty);
 	assert_false(mdver_dirty_mdcache);
 
 	/* local_generation == global_generation == 10, mdver_dirty_mdcache = false */
 	mdver_dirty_mdcache = true;
 	local_mdver.local_generation = 10;
-	local_mdver.bump_cmd_id = 20;
 	will_return(mdver_enabled, true);
 	will_return(mdver_get_global_generation, 10);
 	will_return(GetCurrentLocalMDVer, &local_mdver);
@@ -72,13 +70,12 @@ test__mdver_command_begin(void **state)
 	result = mdver_command_begin();
 	assert_true(result);
 	assert_true(local_mdver.local_generation == 10);
-	assert_true(local_mdver.bump_cmd_id == 20);
+	assert_false(local_mdver.transaction_dirty);
 	assert_false(mdver_dirty_mdcache);
 
 	/* Third case, local_generation = 10, global_generation = 15. mdver_dirty_mdcache doesn't matter */
 	mdver_dirty_mdcache = false;
 	local_mdver.local_generation = 10;
-	local_mdver.bump_cmd_id = 20;
 	will_return(mdver_enabled, true);
 	will_return(mdver_get_global_generation, 15);
 	will_return(GetCurrentLocalMDVer, &local_mdver);
@@ -87,7 +84,7 @@ test__mdver_command_begin(void **state)
 
 	assert_true(result);
 	assert_true(local_mdver.local_generation == 15);
-	assert_true(local_mdver.bump_cmd_id == 20);
+	assert_false(local_mdver.transaction_dirty);
 	assert_false(mdver_dirty_mdcache);
 }
 
@@ -98,7 +95,7 @@ main(int argc, char* argv[])
     
     const UnitTest tests[] = {
     		unit_test(test__mdver_create_local__default_value),
-			unit_test(test__mdver_local_bump_cmd_id),
+			unit_test(test__mdver_mark_dirty_xact),
 			unit_test(test__mdver_command_begin)
 	};
 

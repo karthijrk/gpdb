@@ -15,9 +15,6 @@
 #include "postgres.h"
 #include "utils/relcache.h"
 
-#define DEFAULT_BUMP_CMD_ID 0
-
-
 typedef struct mdver_local
 {
 	/*
@@ -28,10 +25,12 @@ typedef struct mdver_local
     uint64 local_generation;
 
     /*
-     * An integer counter stored in the local memory of the Backend process. This
-     * holds the command id of the last local command that changed metadata.
+     * Flag is set to true for a transaction that changed metadata. At the
+     * end of the transaction, this will trigger an update to the global
+     * generation counter (GG).
      */
-    int bump_cmd_id;
+    bool transaction_dirty;
+
 } mdver_local;
 
 /* Pointer to the shared memory global cache generation (GG) */
@@ -48,7 +47,7 @@ void mdver_bump_global_generation(mdver_local* local_mdver);
 
 /* Metadata Versioning local generation functionality */
 mdver_local* mdver_create_local(void);
-void mdver_local_bump_cmd_id(mdver_local* local_mdver);
+void mdver_mark_dirty_xact(mdver_local* local_mdver);
 bool mdver_command_begin(void);
 
 /* Metadata Versioning Invalidation Translator operations */

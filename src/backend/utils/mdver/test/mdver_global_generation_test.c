@@ -54,11 +54,16 @@ test__mdver_bump_global_generation__inc(void** state)
     expect_any(ShmemInitStruct, size);
     expect_any(ShmemInitStruct, foundPtr);
     will_return(ShmemInitStruct, &global_cache_generation);
-    will_return(mdver_enabled, true);
     mdver_shmem_init();
+
+    /* If transaction_dirty is false, leave global generation unchanged */
+    local.transaction_dirty = false;
+    will_return(mdver_enabled, true);
     mdver_bump_global_generation(&local);
     assert_true(NULL != mdver_global_generation && 0 == *mdver_global_generation);
-    local.bump_cmd_id = 1;
+
+    local.transaction_dirty = true;
+    will_return(mdver_enabled, true);
     mdver_bump_global_generation(&local);
     assert_true(NULL != mdver_global_generation && 1 == *mdver_global_generation);
 }
@@ -71,7 +76,8 @@ main(int argc, char* argv[])
     const UnitTest tests[] = {
 		unit_test(test__mdver_shmem_init__NULL_memory),
                 unit_test(test__mdver_shmem_init__No_NULL),
-                unit_test(test__mdver_shmem_size__uint64)
+                unit_test(test__mdver_shmem_size__uint64),
+				unit_test(test__mdver_bump_global_generation__inc)
 	};
 
     return run_tests(tests);

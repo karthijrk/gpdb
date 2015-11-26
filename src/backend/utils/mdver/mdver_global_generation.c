@@ -68,7 +68,7 @@ mdver_get_global_generation(void)
 
 /*
  * mdver_bump_global_generation
- * 		If bump command id is not same as default command id, then it means this tx
+ * 		If transaction_is_dirty flag was set, it means this tx
  * 		has caused some metadata changes and we record that by atomically bump
  * 		global generation by 1
  * 		local_mdver : current local mdver pointer
@@ -78,7 +78,7 @@ mdver_bump_global_generation(mdver_local* local_mdver)
 {
 	if (!mdver_enabled() ||
 		NULL == local_mdver ||
-		local_mdver->bump_cmd_id == DEFAULT_BUMP_CMD_ID) {
+		!local_mdver->transaction_dirty) {
 		return;
 	}
 

@@ -59,11 +59,10 @@ mdver_inv_translator(Relation relation)
     }
     
 #ifdef MD_VERSIONING_INSTRUMENTATION
-    elog(gp_mdver_loglevel, "MDVer : INV Translator setting current command id %u to bump",
-            GetCurrentCommandId());
+    elog(gp_mdver_loglevel, "MDVer : INV Translator marking command and transaction as dirty");
 #endif
     
-    mdver_local_bump_cmd_id(local_mdver);
+    mdver_mark_dirty_xact(local_mdver);
     mdver_mark_dirty_mdcache();
 }
 

@@ -25,8 +25,8 @@ mdver_create_local(void)
     /* sync to global cache generation */
     local_mdver->local_generation = mdver_get_global_generation();
     
-    /* set to default bump command id */
-    local_mdver->bump_cmd_id = DEFAULT_BUMP_CMD_ID;
+    /* transaction is marked as clean initially */
+    local_mdver->transaction_dirty = false;
     
 #ifdef MD_VERSIONING_INSTRUMENTATION
     elog(gp_mdver_loglevel, "MDVer : Creating local cache generation. Gp_role=%d, Gp_identity=%d",
@@ -38,26 +38,22 @@ mdver_create_local(void)
 }
 
 /*
- * mdver_local_bump_cmd_id
- * 		Set  bump command id to current command id.
+ * mdver_mark_dirty_xact
+ * 		Mark the current transaction as "dirty". At commit time, the
+ * 		global generation counter will be updated.
+ *
  * 		local_mdver : current local mdver pointer
  */
 void
-mdver_local_bump_cmd_id(mdver_local* local_mdver)
+mdver_mark_dirty_xact(mdver_local* local_mdver)
 {
     Assert(NULL != local_mdver);
 
-#ifdef MD_VERSIONING_INSTRUMENTATION
-    int old_cmd_id = local_mdver->bump_cmd_id;
-#endif
-
-    local_mdver->bump_cmd_id = gp_command_count;
+    local_mdver->transaction_dirty = true;
 
 #ifdef MD_VERSIONING_INSTRUMENTATION
-    elog(gp_mdver_loglevel, "MDVer: Bump Command id changed from %d to %d",
-            old_cmd_id, local_mdver->bump_cmd_id);
+    elog(gp_mdver_loglevel, "MDVer: transaction_dirty set to true");
 #endif
-
 }
 
 /*
