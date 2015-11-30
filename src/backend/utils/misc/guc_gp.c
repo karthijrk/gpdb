@@ -102,9 +102,6 @@ static const char *assign_gp_idf_deduplicate(const char *newval, bool doit,
 static const char *assign_explain_memory_verbosity(const char *newval, bool doit, GucSource source);
 static bool assign_dispatch_log_stats(bool newval, bool doit, GucSource source);
 
-static bool assign_optimizer_release_mdcache(bool newval, bool doit, GucSource source);
-static bool assign_gp_metadata_versioning(bool newval, bool doit, GucSource source);
-
 static const char *assign_debug_dtm_action(const char *newval,
 						bool doit, GucSource source);
 static const char *assign_debug_dtm_action_target(const char *newval,
@@ -579,7 +576,6 @@ bool		optimizer_enable_derive_stats_all_groups;
 bool		optimizer_explain_show_status;
 
 /* MD Versiong Guc Variables */
-bool		gp_metadata_versioning;
 int		gp_mdver_loglevel = DEBUG1;
 
 /* Security */
@@ -704,16 +700,6 @@ struct config_bool ConfigureNamesBool_gp[] =
 		},
 		&gp_workfile_caching,
 		false, NULL, NULL
-	},
-        {
-        	{"gp_metadata_versioning", PGC_SUSET, QUERY_TUNING_OTHER,
-                	gettext_noop("Enable metadata version"),
-	                gettext_noop("When enabled, catalog objects in MD cache "
-                                     "are release only when someone other command modify catalog"),
-        	        GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
-        	},
-	        &gp_metadata_versioning,
-        	false, &assign_gp_metadata_versioning, NULL
 	},
 	{
 		{"force_bitmap_table_scan", PGC_USERSET, DEVELOPER_OPTIONS,
@@ -2798,7 +2784,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_release_mdcache,
-		true, &assign_optimizer_release_mdcache, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -5959,52 +5945,6 @@ assign_dispatch_log_stats(bool newval, bool doit, GucSource source)
 		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
 		else if (source != PGC_S_OVERRIDE)
 			return false;
-	}
-	return true;
-}
-
-/*
- * Validate that if we disable releasing the MD Cache after each query,
- *   we must have MD Version turned on.
- */
-static bool
-assign_optimizer_release_mdcache(bool newval, bool doit, GucSource source)
-{
-	 /*
-	  * We want to avoid reaching the following state:
-	  *  - optimizer_release_mdcache = off
-	  *  - gp_metadata_versioning = off
-	  * Other states are fine.
-	  */
-	if (!newval && !gp_metadata_versioning)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot set optimizer_release_mdcache to off when gp_metadata_versioning is off")));
-		return false;
-	}
-	return true;
-}
-
-/*
- * Validate that if we disable MD Versiong, we are releasing the MD Cache
- *   after each query.
- */
-static bool
-assign_gp_metadata_versioning(bool newval, bool doit, GucSource source)
-{
-	 /*
-	  * We want to avoid reaching the following state:
-	  *  - optimizer_release_mdcache = off
-	  *  - gp_metadata_versioning = off
-	  * Other states are fine.
-	  */
-	if (!newval && !optimizer_release_mdcache)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot set gp_metadata_versioning to off when optimizer_release_mdcache is off")));
-		return false;
 	}
 	return true;
 }

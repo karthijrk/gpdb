@@ -22,11 +22,11 @@ mdver_enabled()
     /*
     * We only initialized Metadata Version on the master,
     * and only for QD or utility mode process.
-    * MD Version can also be disabled by the guc gp_metadata_versioning.
+    * MD Version can also be disabled by the guc
+    * optimizer_release_mdcache to true
     */
-    /* TODO gcaragea 05/06/2014: Do we need to disable MD Versioning during (auto)vacuum? (MPP-23504) */
     
-    return gp_metadata_versioning &&
+    return !optimizer_release_mdcache &&
             GpIdentity.segindex == MASTER_CONTENT_ID &&
 	   ((GP_ROLE_DISPATCH == Gp_role) || (GP_ROLE_UTILITY == Gp_role));
 }
