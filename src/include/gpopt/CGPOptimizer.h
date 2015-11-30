@@ -41,6 +41,10 @@ class CGPOptimizer
 		// serialize planned statement into DXL
 		static
 		char *SzDXLPlan(Query *pquery);
+
+		//Log Optimizer MDCache Size
+		static
+		void LogOptimizerMDCacheSize();
 };
 
 #endif // CGPOptimizer_H
