@@ -2969,4 +2969,18 @@ gpdb::UlLeafPartitions
 	return 0;
 }
 
+// Notify MD Versioning of a new command beginning
+bool
+gpdb::FMDVersioningNewCommand
+		(
+			void
+		)
+{
+	GP_WRAP_START;
+	return mdver_command_begin();
+	GP_WRAP_END;
+
+	return true;
+}
+
 // EOF
