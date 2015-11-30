@@ -2713,7 +2713,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			NULL
 		},
 		&optimizer,
-		false, assign_optimizer, NULL
+		true, assign_optimizer, NULL
 	},
 
 	{
@@ -2773,7 +2773,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_release_mdcache,
-		true, NULL, NULL
+		false, NULL, NULL
 	},
 
 	{
