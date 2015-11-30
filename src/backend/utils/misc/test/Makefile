@@ -2,7 +2,7 @@ subdir=src/backend/utils/misc
 top_builddir=../../../../..
 include $(top_builddir)/src/Makefile.global
 
-TARGETS=guc ps_status bitstream bitmap_compression
+TARGETS=guc ps_status bitstream bitmap_compression atomic
 
 include $(top_builddir)/src/backend/mock.mk
 
