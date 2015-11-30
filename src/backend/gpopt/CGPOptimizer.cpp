@@ -62,7 +62,7 @@ void
 CGPOptimizer::LogOptimizerMDCacheSize()
 {
 	if (NULL != gpopt::CMDCache::Pcache()) {
-		elog(INFO, "MD Cache : size = %lluMB", gpopt::CMDCache::Pcache()->UllTotalAllocatedSize() / (1024 * 1024));
+		elog(INFO, "MD Cache : size = %LfMB (%llu bytes)", ((1.0 * gpopt::CMDCache::Pcache()->UllTotalAllocatedSize()) / (1024 * 1024)), gpopt::CMDCache::Pcache()->UllTotalAllocatedSize());
 	}
 }
 
