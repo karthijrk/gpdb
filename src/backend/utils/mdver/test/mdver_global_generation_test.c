@@ -29,7 +29,7 @@ test__mdver_shmem_init__No_NULL(void** state)
     expect_any(ShmemInitStruct, foundPtr);
     will_return(ShmemInitStruct, &global_cache_generation);
     mdver_shmem_init();
-    assert_true(NULL != mdver_global_generation && 0 == *mdver_global_generation);
+    assert_true(global_cache_generation = mdver_global_generation && 0 == *mdver_global_generation);
 }
 
 /*
@@ -39,7 +39,11 @@ test__mdver_shmem_init__No_NULL(void** state)
 void 
 test__mdver_shmem_size__uint64(void** state)
 {
+	GpIdentity.segindex = MASTER_CONTENT_ID;
     assert_true(sizeof(uint64) == mdver_shmem_size());
+
+    GpIdentity.segindex = 42;
+    assert_true(0 == mdver_shmem_size());
 }
 
 /* test__mdver_bump_global_generation__inc
@@ -74,11 +78,11 @@ main(int argc, char* argv[])
     cmockery_parse_arguments(argc, argv);
     
     const UnitTest tests[] = {
-		unit_test(test__mdver_shmem_init__NULL_memory),
-                unit_test(test__mdver_shmem_init__No_NULL),
-                unit_test(test__mdver_shmem_size__uint64),
-				unit_test(test__mdver_bump_global_generation__inc)
-	};
+    		unit_test(test__mdver_shmem_init__NULL_memory),
+			unit_test(test__mdver_shmem_init__No_NULL),
+			unit_test(test__mdver_shmem_size__uint64),
+			unit_test(test__mdver_bump_global_generation__inc)
+    };
 
     return run_tests(tests);
 }
