@@ -500,7 +500,7 @@ int			optimizer_cost_model;
 bool		optimizer_print_query;
 bool		optimizer_print_plan;
 bool		optimizer_print_xform;
-bool		optimizer_release_mdcache = true; /* Make sure we release MDCache between queries by default */
+bool		optimizer_release_mdcache;
 bool		optimizer_disable_xform_result_printing;
 bool		optimizer_print_memo_after_exploration;
 bool		optimizer_print_memo_after_implementation;
@@ -5068,7 +5068,7 @@ struct config_string ConfigureNamesString_gp[] =
                                          "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
                                          "levels that follow it. The later the level, the fewer messages are "
                                          "sent."),
-                	GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+                	GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
         	},
 	        &gp_mdver_loglevel_str,
         	"debug1", assign_gp_mdver_loglevel, NULL
