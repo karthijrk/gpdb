@@ -58,7 +58,7 @@ mdver_mark_dirty_xact(mdver_local* local_mdver)
 
 /*
  * mdver_command_begin
- *   Called at the beginning of a new command
+ *   Called at the beginning of a new command.
  *   Checks local generation vs global generation. If different, returns true and
  *   updates the local generation.
  *   The caller should purge the MD Cache when a new generation is detected.
