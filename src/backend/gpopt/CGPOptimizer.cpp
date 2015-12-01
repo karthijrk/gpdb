@@ -58,14 +58,6 @@ CGPOptimizer::PplstmtOptimize
 	return COptTasks::PplstmtOptimize(pquery, pfUnexpectedFailure);
 }
 
-void
-CGPOptimizer::LogOptimizerMDCacheSize()
-{
-	if (NULL != gpopt::CMDCache::Pcache()) {
-		elog(INFO, "MD Cache : size = %LfMB (%llu bytes)", ((1.0 * gpopt::CMDCache::Pcache()->UllTotalAllocatedSize()) / (1024 * 1024)), gpopt::CMDCache::Pcache()->UllTotalAllocatedSize());
-	}
-}
-
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -105,14 +97,26 @@ PlannedStmt *PplstmtOptimize
 }
 }
 
+
+//---------------------------------------------------------------------------
+//	@function:
+//		LogOptimizerMDCacheSize
+//
+//	@doc:
+//		Print MD cache details
+//
+//---------------------------------------------------------------------------
 extern "C"
 {
 void
 LogOptimizerMDCacheSize()
 {
 	if (NULL != gpopt::CMDCache::Pcache()) {
-		elog(INFO, "MD Cache : size = %lluMB", gpopt::CMDCache::Pcache()->UllTotalAllocatedSize() / (1024 * 1024));
-	}
+			ULLONG entries = gpopt::CMDCache::Pcache()->UlpEntries();
+			ULLONG total_size = gpopt::CMDCache::Pcache()->UllTotalAllocatedSize();
+			elog(INFO, "MD Cache : size = %llu MB, # of bytes = %llu bytes, # of entries = %lu",
+					(total_size / (1024 * 1024)), total_size, entries);
+		}
 }
 }
 
