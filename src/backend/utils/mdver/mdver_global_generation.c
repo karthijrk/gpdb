@@ -9,6 +9,7 @@
  */
 
 #include "postgres.h"
+#include "cdb/cdbvars.h"
 #include "utils/mdver.h"
 #include "utils/guc.h"
 
@@ -42,7 +43,7 @@ mdver_shmem_init(void) {
             "MDVer: Creating global cache generation");
 #endif
 
-    Assert(0 == *mdver_global_generation);
+    AssertImply(!attach, 0 == *mdver_global_generation);
 }
 
 /*
@@ -52,7 +53,7 @@ mdver_shmem_init(void) {
 Size
 mdver_shmem_size(void)
 {
-    return sizeof(*mdver_global_generation);
+	return (GpIdentity.segindex == MASTER_CONTENT_ID) ? sizeof(*mdver_global_generation) : 0;
 }
 
 /* 

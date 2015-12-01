@@ -13,26 +13,6 @@
 #define UINT64_MIN 0
 
 
-#define EXPECT_EXCEPTION()     \
-	expect_any(ExceptionalCondition,conditionName); \
-	expect_any(ExceptionalCondition,errorType); \
-	expect_any(ExceptionalCondition,fileName); \
-	expect_any(ExceptionalCondition,lineNumber); \
-    will_be_called_with_sideeffect(ExceptionalCondition, &_ExceptionalCondition, NULL);\
-
-
-/*
- * This method will emulate the real ExceptionalCondition
- * function by re-throwing the exception, essentially falling
- * back to the next available PG_CATCH();
- */
-void
-_ExceptionalCondition()
-{
-     PG_RE_THROW();
-}
-
-
 /*
  * Test gp_atomic_add_int64
  */
@@ -125,18 +105,15 @@ test__gp_atomic_add_uint64(void **state)
 
 	/* Running sub-test: gp_atomic_add_uint64 negative inc */
 #ifdef USE_ASSERT_CHECKING
-	EXPECT_EXCEPTION();
-	PG_TRY();
-	{
-		/* inc should be either zero or a positive integer. So, negative inc should fail. */
-		inc = -4;
-	    	result = gp_atomic_add_uint64(&base, inc);
-		assert_true(false);
-	}
-	PG_CATCH();
-	{
-	}
-	PG_END_TRY();
+	expect_any(ExceptionalCondition,conditionName);
+	expect_any(ExceptionalCondition,errorType);
+	expect_any(ExceptionalCondition,fileName);
+	expect_any(ExceptionalCondition,lineNumber);
+	will_be_called(ExceptionalCondition);
+
+	/* inc should be either zero or a positive integer. So, negative inc should fail. */
+	inc = -4;
+	result = gp_atomic_add_uint64(&base, inc);
 #endif
 
 }
