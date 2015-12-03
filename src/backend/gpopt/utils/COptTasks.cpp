@@ -934,6 +934,7 @@ COptTasks::PvOptimizeTask
 	if (!CMDCache::FInitialized())
 	{
 		CMDCache::Init();
+		CMDCache::SetCacheQuota(optimizer_mdcache_size*1024);
 	}
 	else
 	{
@@ -941,6 +942,7 @@ COptTasks::PvOptimizeTask
 		if (reset_mdcache)
 		{
 			CMDCache::Reset();
+			CMDCache::SetCacheQuota(optimizer_mdcache_size*1024);
 		}
 	}
 
