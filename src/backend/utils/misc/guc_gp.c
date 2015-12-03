@@ -501,6 +501,7 @@ bool		optimizer_partition_selection_log;
 bool		optimizer_minidump;
 int			optimizer_cost_model;
 bool		optimizer_print_query;
+int			optimizer_mdcache_size;
 bool		optimizer_print_plan;
 bool		optimizer_print_xform;
 bool		optimizer_release_mdcache;
@@ -4708,6 +4709,15 @@ struct config_int ConfigureNamesInt_gp[] =
 		},
 		&optimizer_segments,
 		0, 0, INT_MAX, NULL, NULL
+	},
+	{
+			{"optimizer_mdcache_size", PGC_USERSET, RESOURCES_MEM,
+				gettext_noop("Sets the size of MDCache."),
+				NULL,
+				GUC_UNIT_KB | GUC_GPDB_ADDOPT
+			},
+			&optimizer_mdcache_size,
+			0, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"memory_profiler_dataset_size", PGC_USERSET, DEVELOPER_OPTIONS,
