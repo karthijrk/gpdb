@@ -109,12 +109,12 @@ PlannedStmt *PplstmtOptimize
 extern "C"
 {
 void
-LogOptimizerMDCacheSize()
+LogOptimizerMDCacheSize(int log_level)
 {
 	if (NULL != gpopt::CMDCache::Pcache()) {
 			ULLONG entries = gpopt::CMDCache::Pcache()->UlpEntries();
 			ULLONG total_size = gpopt::CMDCache::Pcache()->UllTotalAllocatedSize();
-			elog(INFO, "MD Cache : size = %llu MB, # of bytes = %llu bytes, # of entries = %lu",
+			elog(log_level, "MD Cache : size = %llu MB, # of bytes = %llu bytes, # of entries = %lu",
 					(total_size / (1024 * 1024)), total_size, entries);
 		}
 }

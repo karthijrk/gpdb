@@ -422,6 +422,7 @@ extern bool optimizer_sample_plans;
 extern int	optimizer_plan_id;
 extern int	optimizer_samples_number;
 extern int optimizer_log_failure;
+extern int optimizer_mdcache_loglevel;
 extern double optimizer_cost_threshold;
 extern double optimizer_nestloop_factor;
 extern bool optimizer_cte_inlining;

@@ -93,7 +93,7 @@ static List *register_ordered_aggs(List *tlist, Node *havingqual, List *sub_tlis
 // GP optimizer entry point
 #ifdef USE_ORCA
 extern PlannedStmt *PplstmtOptimize(Query *parse, bool *pfUnexpectedFailure);
-extern void LogOptimizerMDCacheSize();
+extern void LogOptimizerMDCacheSize(int log_level);
 #endif
 
 typedef struct
@@ -267,7 +267,7 @@ planner(Query *parse, int cursorOptions,
 		START_MEMORY_ACCOUNT(MemoryAccounting_CreateAccount(0, MEMORY_OWNER_TYPE_Optimizer));
 		{
 			result = optimize_query(parse, boundParams);
-			LogOptimizerMDCacheSize();
+			LogOptimizerMDCacheSize(optimizer_mdcache_loglevel);
 		}
 		END_MEMORY_ACCOUNT();
 
