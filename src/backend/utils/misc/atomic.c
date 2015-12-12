@@ -186,13 +186,13 @@ gp_atomic_add_int64(int64 *ptr, int64 inc)
 	      "MOVL %0, %%edi; \n\t" /* Load ptr */
 	      "MOVL (%%edi), %%eax; \n\t" /* Load first word from *ptr */
 	      "MOVL 0x4(%%edi), %%edx; \n\t" /* Load second word from *ptr + 4 */
-	   "tryAgain_add_64: \n\t"
+	   "1: \n\t"
 	      "MOVL %1, %%ebx; \n\t"   /* Load addValueLow */
 	      "MOVL %2, %%ecx; \n\t"   /* Load addValueHigh */
 	      "ADDL %%eax, %%ebx; \n\t"  /* Add first word */
 	      "ADCL %%edx, %%ecx; \n\t"  /* Add second word */
 	      "lock cmpxchg8b (%%edi); \n\t"  /* Compare and exchange 8 bytes atomically */
-	      "jnz tryAgain_add_64; \n\t"  /* If ptr has changed, try again with new value */
+	      "jnz 1b\n\t"  /* If ptr has changed, try again with new value */
 
 		  "MOVL %3, %%edi; \n\t"  /* Put result in *newValuePtr */
 		  "MOVL %%ebx, (%%edi); \n\t"  /* first word */
@@ -245,13 +245,13 @@ gp_atomic_add_uint64(uint64 *ptr, int64 inc)
 		  "MOVL %0, %%edi; \n\t" /* Load ptr */
 		  "MOVL (%%edi), %%eax; \n\t" /* Load first word from *ptr */
           "MOVL 0x4(%%edi), %%edx; \n\t" /* Load second word from *ptr + 4 */
-	   "tryAgain_add_uint64: \n\t"
+	   "0: \n\t"
           "MOVL %1, %%ebx; \n\t"   /* Load addValueLow */
           "MOVL %2, %%ecx; \n\t"   /* Load addValueHigh */
           "ADDL %%eax, %%ebx; \n\t"  /* Add first word */
           "ADCL %%edx, %%ecx; \n\t"  /* Add second word */
           "lock cmpxchg8b (%%edi); \n\t"  /* Compare and exchange 8 bytes atomically */
-          "jnz tryAgain_add_uint64; \n\t"  /* If ptr has changed, try again with new value */
+          "jnz 0b\n\t"  /* If ptr has changed, try again with new value */
 
           "MOVL %3, %%edi; \n\t"  /* Put result in *newValuePtr */
           "MOVL %%ebx, (%%edi); \n\t"  /* first word */
