@@ -113,5 +113,7 @@ main(int argc, char* argv[])
 			unit_test(test__mdver_command_begin__set_local_generation)
 	};
 
+    MemoryContextInit();
+
     return run_tests(tests);
 }
