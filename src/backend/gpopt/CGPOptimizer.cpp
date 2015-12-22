@@ -20,6 +20,7 @@
 #include "naucrates/init.h"
 #include "gpopt/init.h"
 #include "gpos/_api.h"
+#include "gpopt/mdcache/CMDCache.h"
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -92,6 +93,29 @@ PlannedStmt *PplstmtOptimize
 	)
 {
 	return CGPOptimizer::PplstmtOptimize(pquery, pfUnexpectedFailure);
+}
+}
+
+
+//---------------------------------------------------------------------------
+//	@function:
+//		LogOptimizerMDCacheSize
+//
+//	@doc:
+//		Print MD cache details
+//
+//---------------------------------------------------------------------------
+extern "C"
+{
+void
+LogOptimizerMDCacheSize(int log_level)
+{
+	if (NULL != gpopt::CMDCache::Pcache()) {
+			ULLONG entries = gpopt::CMDCache::Pcache()->UlpEntries();
+			ULLONG total_size = gpopt::CMDCache::Pcache()->UllTotalAllocatedSize();
+			elog(log_level, "MD Cache : size = %llu MB, # of bytes = %llu bytes, # of entries = %lu",
+					(total_size / (1024 * 1024)), total_size, entries);
+		}
 }
 }
 

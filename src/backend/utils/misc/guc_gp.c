@@ -89,6 +89,9 @@ static const char *assign_gp_workfile_caching_loglevel(const char *newval,
 									bool doit, GucSource source);
 static const char *assign_gp_sessionstate_loglevel(const char *newval,
 								bool doit, GucSource source);
+static const char *assign_optimizer_mdcache_loglevel(const char *newval,
+								bool doit, GucSource source);
+
 static const char *assign_time_slice_report_level(const char *newval, bool doit,
 							   GucSource source);
 static const char *assign_deadlock_hazard_report_level(const char *newval, bool doit,
@@ -368,7 +371,10 @@ static char *Debug_database_command_print_level_str;
 static char *gp_log_format_string;
 static char *gp_workfile_caching_loglevel_str;
 static char *gp_sessionstate_loglevel_str;
+static char *optimizer_mdcache_loglevel_str;
 static char *explain_memory_verbosity_str;
+
+int optimizer_mdcache_loglevel = DEBUG1;
 
 /* Backoff-related GUCs */
 bool		gp_enable_resqueue_priority;
@@ -2698,7 +2704,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			NULL
 		},
 		&optimizer,
-		false, assign_optimizer, NULL
+		true, assign_optimizer, NULL
 	},
 
 	{
@@ -2758,7 +2764,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_release_mdcache,
-		true, NULL, NULL
+		false, NULL, NULL
 	},
 
 	{
@@ -5058,7 +5064,18 @@ struct config_string ConfigureNamesString_gp[] =
 		&gp_sessionstate_loglevel_str,
 		"debug1", assign_gp_sessionstate_loglevel, NULL
 	},
-
+	{
+			{"optimizer_mdcache_loglevel", PGC_SUSET, DEVELOPER_OPTIONS,
+				gettext_noop("Sets the logging level for mdcahe size"),
+				gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "
+							 "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
+							 "levels that follow it. The later the level, the fewer messages are "
+							 "sent."),
+				GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+			},
+			&optimizer_mdcache_loglevel_str,
+			"debug1", assign_optimizer_mdcache_loglevel, NULL
+		},
 	{
 		{"debug_persistent_print_level", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Sets the persistent relation debug message levels that are logged."),
@@ -5657,6 +5674,13 @@ assign_gp_sessionstate_loglevel(const char *newval,
 								bool doit, GucSource source)
 {
 	return (assign_msglvl(&gp_sessionstate_loglevel, newval, doit, source));
+}
+
+static const char *
+assign_optimizer_mdcache_loglevel(const char *newval,
+								bool doit, GucSource source)
+{
+	return (assign_msglvl(&optimizer_mdcache_loglevel, newval, doit, source));
 }
 
 static const char *
