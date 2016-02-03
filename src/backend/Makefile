@@ -34,6 +34,10 @@ ifeq ($(enable_orca),yes)
 SUBDIRS += gpopt
 endif
 
+ifeq ($(enable_balerion),yes)
+SUBDIRS += codegen
+endif
+
 include $(srcdir)/common.mk
 
 # As of 9/2009:
@@ -72,6 +76,11 @@ LIBS := $(LIBS) -L$(OPTIMIZER)/libnaucrates/$(OBJDIR_DEFAULT) -lnaucrates
 LIBS := $(LIBS) -L$(OPTIMIZER)/libgpdbcost/$(OBJDIR_DEFAULT) -lgpdbcost
 LIBS := $(LIBS) -L$(OPTIMIZER)/libgpopt/$(OBJDIR_DEFAULT) -lgpopt
 LIBS := $(LIBS) -L$(top_builddir)/src/backend/gpopt -ldxltranslators
+endif
+
+# Add Balerion shared library.
+ifeq ($(enable_balerion),yes)
+LIBS := $(LIBS) -lbalerion
 endif
 
 # Greenplum uses threads in the backend
