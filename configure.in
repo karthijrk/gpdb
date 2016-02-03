@@ -626,6 +626,15 @@ AC_MSG_RESULT([checking whether to build with ORCA... $enable_orca])
 AC_SUBST(enable_orca)
 
 #
+# Enable Balerion code-generation library
+#
+PGAC_ARG_BOOL(enable, balerion, no, [  --enable-balerion       enable Balerion code generation],
+              [AC_DEFINE([USE_BALERION], 1,
+                         [Define to 1 to build with Balerion. (--enable-balerion)])])
+AC_MSG_RESULT([enable_balerion])
+AC_SUBST(enable_balerion)
+
+#
 # --enable-snmp enables snmp mib and trap/inform
 #
 PGAC_ARG_BOOL(enable, snmp, no, [  --enable-snmp           enable snmp for MIB and alerts via TRAP/INFORM],
@@ -1201,6 +1210,37 @@ AS_IF([test "$enable_orca" = yes],
 [ # then
   AC_CHECK_HEADERS(gpopt/init.h,  [], [AC_MSG_ERROR([gpopt/init.h GPOPT header file is required for Greenplum Query Optimizer (orca)])])
   AC_CHECK_HEADERS(gpos/assert.h, [], [AC_MSG_ERROR([gpos/assert.h GPOS header file is required for Greenplum Query Optimizer (orca)])])
+]) # fi
+
+# Check for Balerion and required LLVM & Clang headers.
+AS_IF([test "$enable_balerion" = yes],
+[ # then
+  AC_LANG_PUSH(C++)
+
+  # Compile C++ sources in C++11 mode.
+  CXXFLAGS="$CXXFLAGS -std=c++11"
+
+  # CPPFLAGS are the same for compiling C and C++. Remember and restore the
+  # original flags after this check.
+  CPPFLAGS_ORIGINAL=$CPPFLAGS
+  CPPFLAGS="$CPPFLAGS -std=c++11"
+
+  AC_CHECK_HEADERS(
+      balerion/code_generator.h,
+      [],
+      [AC_MSG_ERROR([balerion/code_generator.h Balerion header file is required for Balerion])])
+  AC_CHECK_HEADERS(
+      llvm/IR/LLVMContext.h,
+      [],
+      [AC_MSG_ERROR([llvm/IR/LLVMContext.h LLVM header file is required for Balerion])])
+  AC_CHECK_HEADERS(
+      clang/Tooling/Tooling.h,
+      [],
+      [AC_MSG_ERROR([clang/Tooling/Tooling.h Clang header file is required for Balerion])])
+
+  # Restore original CPPFLAGS and language state.
+  CPPFLAGS=$CPPFLAGS_ORIGINAL
+  AC_LANG_POP(C++)
 ]) # fi
 
 dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
