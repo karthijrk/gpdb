@@ -27,6 +27,9 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
+#ifdef USE_BALERION
+#include "codegen/init_codegen.h"
+#endif  // USE_BALERION
 #include "libpq/auth.h"
 #include "libpq/hba.h"
 #include "libpq/libpq-be.h"
@@ -578,6 +581,20 @@ BaseInit(void)
 	InitFileAccess();
 	smgrinit();
 	InitBufferPoolAccess();
+
+#ifdef USE_BALERION
+	if (codegen) {
+		if (InitCodeGen() != 0) {
+			ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("failed to initialize Balerion library"),
+				errhint("Balerion code generation library failed "
+					"to initialize. You may wish to disable "
+					"code generation by turning off the "
+					"\"codegen\" GUC.")));
+		}
+	}
+#endif
 }
 
 

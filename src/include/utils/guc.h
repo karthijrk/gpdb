@@ -452,6 +452,11 @@ extern bool optimizer_explain_show_status;
 extern bool optimizer_prefer_scalar_dqa_multistage_agg;
 
 /**
+ * GUCs related to code generation with Balerion.
+ **/
+extern bool codegen;
+
+/**
  * Enable logging of DPE match in optimizer.
  */
 extern bool	optimizer_partition_selection_log;
