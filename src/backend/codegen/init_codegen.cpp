@@ -18,27 +18,30 @@
 
 // Perform global set-up tasks for Balerion codegen library. Returns 0 on
 // success, nonzero on error.
-extern "C" int InitCodeGen() {
-  return balerion::CodeGenerator::InitializeGlobal() ? 0 : 1;
-}
-
-extern "C" void* ConstructCodeGenerator() {
-	SlotProjectionCodeGen* code_gen = new SlotProjectionCodeGen();
-	code_gen->GenerateDummyIRModule();
-
-	void* ret_val = reinterpret_cast<void*>(code_gen);
-	return ret_val;
-}
-
-extern "C" void PrepareForExecution(void* code_generator)
+extern "C"
 {
-	reinterpret_cast<SlotProjectionCodeGen*>(code_generator)->PrepareForExecution();
-}
+	int InitCodeGen() {
+	  return balerion::CodeGenerator::InitializeGlobal() ? 0 : 1;
+	}
 
-extern "C" void DestructCodeGenerator(void* code_generator) {
-	delete static_cast<SlotProjectionCodeGen*>(code_generator);
-}
+	void* ConstructCodeGenerator() {
+		SlotProjectionCodeGen* code_gen = new SlotProjectionCodeGen();
+		code_gen->GenerateDummyIRModule();
 
-extern "C" int (*GetDummyFunction(void* code_generator)) (int) {
-	return static_cast<SlotProjectionCodeGen*>(code_generator)->GetDummyIRModule();
+		void* ret_val = reinterpret_cast<void*>(code_gen);
+		return ret_val;
+	}
+
+	void PrepareForExecution(void* code_generator)
+	{
+		reinterpret_cast<SlotProjectionCodeGen*>(code_generator)->PrepareForExecution();
+	}
+
+	void DestructCodeGenerator(void* code_generator) {
+		delete static_cast<SlotProjectionCodeGen*>(code_generator);
+	}
+
+	int (*GetDummyFunction(void* code_generator)) (int) {
+		return static_cast<SlotProjectionCodeGen*>(code_generator)->GetDummyIRModule();
+	}
 }
