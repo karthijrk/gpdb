@@ -3408,13 +3408,13 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"codegen", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"codegen", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Enable just-in-time code generation with Balerion."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
 		&codegen,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	/* End-of-list marker */
