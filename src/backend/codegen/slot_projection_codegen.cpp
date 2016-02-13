@@ -33,7 +33,10 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
-
+#include "access/htup.h"
+//#include "access/tupmacs.h"
+//#include "c.h"
+#include "postgres.h"
 
 SlotProjectionCodeGen::SlotProjectionCodeGen() {
 	code_generator_.reset(new balerion::CodeGenerator("test_module"));
@@ -59,6 +62,80 @@ void SlotProjectionCodeGen::GenerateDummyIRModule() {
     code_generator_->ir_builder()->CreateRet(ret_val);
 //    code_generator_->ir_builder()->CreateRet(
 //        code_generator_->GetConstant<int>(42));
+
+}
+
+bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
+	int natts = tupleDesc->natts;
+
+//	bool		hasnulls = HeapTupleHasNulls(tuple);
+//
+//	if (hasnulls)
+//	{
+//		return false;
+//	}
+
+	// bool slot_deform_tuple_func(char* data_start_adress, void* values, void* isnull)
+    llvm::Function* slot_deform_tuple_func
+  	  = code_generator_->CreateFunction<bool, char*, void*>(
+  			  "slot_deform_tuple_gen");
+
+    // BasicBlocks for function entry.
+    llvm::BasicBlock* entry_block = code_generator_->CreateBasicBlock(
+  	  "entry", slot_deform_tuple_func);
+
+    llvm::Value* input = balerion::ArgumentByPosition(slot_deform_tuple_func, 0);
+
+    code_generator_->ir_builder()->SetInsertPoint(entry_block);
+
+    llvm::Value* true_const = code_generator_->GetConstant(true);
+    llvm::Value* datum_size_const = code_generator_->GetConstant(sizeof(Datum));
+    llvm::Value* bool_size_const = code_generator_->GetConstant(sizeof(bool));
+
+	int off = 0;
+
+	Form_pg_attribute *att = tupleDesc->attrs;
+	for (int attnum = 0; attnum < natts; attnum++)
+	{
+		Form_pg_attribute thisatt = att[attnum];
+		off = att_align(off, thisatt->attalign);
+
+		if (thisatt->attlen < 0)
+		{
+			// TODO: Cleanup code generator
+			return false;
+		}
+
+		// Load tp + off
+		// store value
+		// store isnull = true
+		// add value + sizeof(Datum)
+		// add isnull + sizeof(bool)
+
+		// The next address of the input array where we need to read.
+		llvm::Value* next_address_load =
+			code_generator_->ir_builder()->CreateInBoundsGEP(input,
+				{code_generator_->GetConstant(off)});
+
+		// Load the value from the calculated input address.
+		switch(thisat->attlen)
+		{
+		case
+		}
+		llvm::LoadInst* load_instruction =
+			code_generator_->ir_builder()->CreateLoad(next_address, "input");
+
+		off += thisatt->attlen;
+	}
+
+    code_generator_->ir_builder()->CreateRet(code_generator_->GetConstant(true));
+
+//	/*
+//	 * Save state for next execution
+//	 */
+//	slot->PRIVATE_tts_nvalid = attnum;
+//	slot->PRIVATE_tts_off = off;
+//	slot->PRIVATE_tts_slow = slow;
 
 }
 

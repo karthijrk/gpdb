@@ -27,7 +27,6 @@ extern "C"
 	void* ConstructCodeGenerator() {
 		SlotProjectionCodeGen* code_gen = new SlotProjectionCodeGen();
 		code_gen->GenerateDummyIRModule();
-
 		void* ret_val = reinterpret_cast<void*>(code_gen);
 		return ret_val;
 	}

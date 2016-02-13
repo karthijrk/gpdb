@@ -16,6 +16,7 @@ public:
 	SlotProjectionCodeGen();
 	virtual ~SlotProjectionCodeGen() {};
 	void GenerateDummyIRModule();
+	bool GenerateSlotDeformTuple(TupleDesc tupleDesc);
 	void PrepareForExecution();
 	//int (*GetDummyIRModule(int)) ();
 	auto GetDummyIRModule() -> int(*) (int);
