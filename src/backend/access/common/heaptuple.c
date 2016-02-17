@@ -1130,14 +1130,14 @@ heap_deformtuple(HeapTuple tuple,
 static void
 slot_deform_tuple(TupleTableSlot *slot, int natts)
 {
-	static int lastSessionId = gp_session_id;
-	static int lastCommandId = gp_command_count;
-
-	AssertImply(lastSessionId == gp_session_id && lastCommandId == gp_command_count,
-			slot->PRIVATE_tts_nvalid == 0 || slot->PRIVATE_tts_nvalid == natts);
-
-	lastSessionId = gp_session_id;
-	lastCommandId = gp_command_count;
+//	static int lastSessionId = gp_session_id;
+//	static int lastCommandId = gp_command_count;
+//
+//	AssertImply(lastSessionId == gp_session_id && lastCommandId == gp_command_count,
+//			slot->PRIVATE_tts_nvalid == 0 || slot->PRIVATE_tts_nvalid == natts);
+//
+//	lastSessionId = gp_session_id;
+//	lastCommandId = gp_command_count;
 
 	HeapTuple	tuple = TupGetHeapTuple(slot); 
 	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;

@@ -75,9 +75,10 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 //		return false;
 //	}
 
-	// bool slot_deform_tuple_func(char* data_start_adress, void* values, void* isnull)
+	COMPILE_ASSERT(sizeof(datum) == sizeof(int64));
+	// void slot_deform_tuple_func(char* data_start_adress, void* values, void* isnull)
     llvm::Function* slot_deform_tuple_func
-  	  = code_generator_->CreateFunction<bool, char*, void*>(
+  	  = code_generator_->CreateFunction<void, char*, int64*>(
   			  "slot_deform_tuple_gen");
 
     // BasicBlocks for function entry.
@@ -85,8 +86,12 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
   	  "entry", slot_deform_tuple_func);
 
     llvm::Value* input = balerion::ArgumentByPosition(slot_deform_tuple_func, 0);
+    llvm::Value* out_values = balerion::ArgumentByPosition(slot_deform_tuple_func, 1);
 
-    code_generator_->ir_builder()->SetInsertPoint(entry_block);
+	llvm::IRBuilder* irb =
+			code_generator_->ir_builder();
+
+	irb->SetInsertPoint(entry_block);
 
     llvm::Value* true_const = code_generator_->GetConstant(true);
     llvm::Value* datum_size_const = code_generator_->GetConstant(sizeof(Datum));
@@ -114,14 +119,38 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 
 		// The next address of the input array where we need to read.
 		llvm::Value* next_address_load =
-			code_generator_->ir_builder()->CreateInBoundsGEP(input,
+			irb->CreateInBoundsGEP(input,
 				{code_generator_->GetConstant(off)});
 
+		llvm::Value* next_address_store =
+			irb->CreateInBoundsGEP(out_values,
+				{code_generator_->GetConstant(attnum)});
+
+		llvm::Value* colVal = nullptr;
+
 		// Load the value from the calculated input address.
-		switch(thisat->attlen)
+		switch(thisatt->attlen)
 		{
-		case
+		case sizeof(char):
+			// Read 1 byte at next_address_load
+			colVal = irb->CreateLoad(next_address_load);
+			// store colVal into out_values[attnum]
+			break;
+		case sizeof(int16):
+					llvm::Value* colVal = irb->CreateLoad(code_generator_->GetType<char>(), next_address_load);
+			break;
+		case sizeof(int32):
+			break;
+		case sizeof(int64):
+			break;
+		default:
+			//TODO Cleanup
+			return false;
 		}
+
+		llvm::Value* int64ColVal = irb->CreateZExt(colVal, code_generator_->GetType<int64>());
+		irb->CreateStore(int64ColVal, next_address_store);
+
 		llvm::LoadInst* load_instruction =
 			code_generator_->ir_builder()->CreateLoad(next_address, "input");
 
