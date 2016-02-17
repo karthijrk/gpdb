@@ -33,10 +33,10 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
-#include "access/htup.h"
+//#include "access/htup.h"
 //#include "access/tupmacs.h"
 //#include "c.h"
-#include "postgres.h"
+#include "catalog/pg_attribute.h"
 
 SlotProjectionCodeGen::SlotProjectionCodeGen() {
 	code_generator_.reset(new balerion::CodeGenerator("test_module"));
@@ -75,7 +75,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 //		return false;
 //	}
 
-	COMPILE_ASSERT(sizeof(datum) == sizeof(int64));
+	COMPILE_ASSERT(sizeof(Datum) == sizeof(int64));
 	// void slot_deform_tuple_func(char* data_start_adress, void* values, void* isnull)
     llvm::Function* slot_deform_tuple_func
   	  = code_generator_->CreateFunction<void, char*, int64*>(
@@ -88,7 +88,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
     llvm::Value* input = balerion::ArgumentByPosition(slot_deform_tuple_func, 0);
     llvm::Value* out_values = balerion::ArgumentByPosition(slot_deform_tuple_func, 1);
 
-	llvm::IRBuilder* irb =
+	auto irb =
 			code_generator_->ir_builder();
 
 	irb->SetInsertPoint(entry_block);
@@ -137,7 +137,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 			// store colVal into out_values[attnum]
 			break;
 		case sizeof(int16):
-					llvm::Value* colVal = irb->CreateLoad(code_generator_->GetType<char>(), next_address_load);
+			  colVal = irb->CreateLoad(code_generator_->GetType<char>(), next_address_load);
 			break;
 		case sizeof(int32):
 			break;
@@ -152,7 +152,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 		irb->CreateStore(int64ColVal, next_address_store);
 
 		llvm::LoadInst* load_instruction =
-			code_generator_->ir_builder()->CreateLoad(next_address, "input");
+			code_generator_->ir_builder()->CreateLoad(next_address_load, "input");
 
 		off += thisatt->attlen;
 	}
@@ -166,6 +166,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 //	slot->PRIVATE_tts_off = off;
 //	slot->PRIVATE_tts_slow = slow;
 
+    return true;
 }
 
 void SlotProjectionCodeGen::PrepareForExecution()

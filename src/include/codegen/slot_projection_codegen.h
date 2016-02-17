@@ -11,6 +11,13 @@
 #include "balerion/clang_compiler.h"
 #include "balerion/code_generator.h"
 
+#include "postgres.h"
+#include "access/attnum.h"
+#include "catalog/pg_attribute.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "access/tupmacs.h"
+
 class SlotProjectionCodeGen {
 public:
 	SlotProjectionCodeGen();

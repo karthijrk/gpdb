@@ -6,6 +6,6 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = init_codegen.o slot_projection_codegen.o
 
-override CXXFLAGS := -std=c++11 $(CXXFLAGS)
+override CXXFLAGS := -std=c++11 $(CXXFLAGS) -fno-rtti
 
 include $(top_srcdir)/src/backend/common.mk
