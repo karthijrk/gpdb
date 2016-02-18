@@ -137,13 +137,16 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 			// store colVal into out_values[attnum]
 			break;
 		case sizeof(int16):
-			colVal = irb->CreateLoad(code_generator_->GetType<int16>(), next_address_load);
+			colVal = irb->CreateLoad(code_generator_->GetType<int16>(),
+					irb->CreateBitCast(next_address_load, code_generator_->GetType<int16*>()));
 			break;
 		case sizeof(int32):
-			colVal = irb->CreateLoad(code_generator_->GetType<int32>(), next_address_load);
+			colVal = irb->CreateLoad(code_generator_->GetType<int32>(),
+					irb->CreateBitCast(next_address_load, code_generator_->GetType<int32*>()));
 			break;
 		case sizeof(int64):
-			colVal = irb->CreateLoad(code_generator_->GetType<int64>(), next_address_load);
+			colVal = irb->CreateLoad(code_generator_->GetType<int64>(),
+					irb->CreateBitCast(next_address_load, code_generator_->GetType<int64*>()));
 			break;
 		default:
 			//TODO Cleanup
@@ -159,7 +162,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 		off += thisatt->attlen;
 	}
 
-    //code_generator_->ir_builder()->CreateRet(code_generator_->GetConstant(true));
+    irb->CreateRetVoid();
 
 //	/*
 //	 * Save state for next execution

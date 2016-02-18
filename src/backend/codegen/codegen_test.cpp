@@ -17,7 +17,7 @@ int main()
 
 	for (int attnum = 0; attnum < numAttr; ++attnum)
 	{
-		attrs[attnum]->attalign = 'i';
+		attrs[attnum]->attalign = 's';
 		attrs[attnum]->attlen = sizeof(int16);
 	}
 
