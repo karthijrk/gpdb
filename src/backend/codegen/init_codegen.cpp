@@ -43,4 +43,14 @@ extern "C"
 	int (*GetDummyFunction(void* code_generator)) (int) {
 		return static_cast<SlotProjectionCodeGen*>(code_generator)->GetDummyIRModule();
 	}
+
+	void GenerateSlotDeformTuple(void* code_generator, TupleDesc tupleDesc)
+	{
+		static_cast<SlotProjectionCodeGen*>(code_generator)->GenerateSlotDeformTuple(tupleDesc);
+	}
+
+	void (*GetSlotDeformTupleFunction(void* code_generator)) (char*, void*) {
+		return static_cast<SlotProjectionCodeGen*>(code_generator)->GetSlotDeformTupleFunc();
+	}
 }
+

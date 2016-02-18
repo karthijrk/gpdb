@@ -18,6 +18,8 @@
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 
+typedef void (*SlotDeformTupleFn) (char*, void*);
+
 class SlotProjectionCodeGen {
 public:
 	SlotProjectionCodeGen();
@@ -27,6 +29,7 @@ public:
 	void PrepareForExecution();
 	//int (*GetDummyIRModule(int)) ();
 	auto GetDummyIRModule() -> int(*) (int);
+	SlotDeformTupleFn GetSlotDeformTupleFunc();
 
 private:
 	std::unique_ptr<balerion::CodeGenerator> code_generator_;

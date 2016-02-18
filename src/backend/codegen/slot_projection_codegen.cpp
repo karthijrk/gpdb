@@ -159,7 +159,7 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 		off += thisatt->attlen;
 	}
 
-    code_generator_->ir_builder()->CreateRet(code_generator_->GetConstant(true));
+    //code_generator_->ir_builder()->CreateRet(code_generator_->GetConstant(true));
 
 //	/*
 //	 * Save state for next execution
@@ -185,4 +185,9 @@ void SlotProjectionCodeGen::PrepareForExecution()
 auto SlotProjectionCodeGen::GetDummyIRModule() -> int(*) (int) {
 	return code_generator_->GetFunctionPointer<int, int>(
 		          "dummy_func");
+}
+
+SlotDeformTupleFn SlotProjectionCodeGen::GetSlotDeformTupleFunc() {
+	return code_generator_->GetFunctionPointer<void, char*, void*>(
+		          "slot_deform_tuple_gen");
 }
