@@ -3690,7 +3690,7 @@ struct config_int ConfigureNamesInt_gp[] =
 		600000, 0, INT_MAX, NULL, NULL	/* 10 minutes by default on debug
 										 * builds. */
 #else
-		18000, 0, INT_MAX, NULL, NULL
+		600000, 0, INT_MAX, NULL, NULL
 #endif
 	},
 

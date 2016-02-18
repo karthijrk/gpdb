@@ -2,6 +2,10 @@
 #include <cstdio>
 #include <cassert>
 
+#include "postgres.h"
+#include "catalog/pg_attribute.h"
+#include "access/tupdesc.h"
+
 int main()
 {
 	const int numAttr = 2;

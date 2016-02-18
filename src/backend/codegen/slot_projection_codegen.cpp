@@ -76,6 +76,12 @@ bool SlotProjectionCodeGen::GenerateSlotDeformTuple(TupleDesc tupleDesc) {
 //	}
 
 	COMPILE_ASSERT(sizeof(Datum) == sizeof(int64));
+
+	if (tupleDesc->natts != 1 || tupleDesc->attrs[0]->attlen != sizeof(int32))
+	{
+		return false;
+	}
+
 	// void slot_deform_tuple_func(char* data_start_adress, void* values, void* isnull)
     llvm::Function* slot_deform_tuple_func
   	  = code_generator_->CreateFunction<void, char*, int64*>(

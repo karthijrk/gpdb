@@ -1130,15 +1130,6 @@ heap_deformtuple(HeapTuple tuple,
 static void
 slot_deform_tuple(TupleTableSlot *slot, int natts)
 {
-//	static int lastSessionId = gp_session_id;
-//	static int lastCommandId = gp_command_count;
-//
-//	AssertImply(lastSessionId == gp_session_id && lastCommandId == gp_command_count,
-//			slot->PRIVATE_tts_nvalid == 0 || slot->PRIVATE_tts_nvalid == natts);
-//
-//	lastSessionId = gp_session_id;
-//	lastCommandId = gp_command_count;
-
 	HeapTuple	tuple = TupGetHeapTuple(slot); 
 	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
 	Datum	   *values = slot->PRIVATE_tts_values;
@@ -1151,6 +1142,27 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 	long		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
 	bool		slow;			/* can we use/set attcacheoff? */
+
+	if (NULL == slot->code_gen)
+	{
+		slot->code_gen = ConstructCodeGenerator();
+		Assert(NULL != slot->code_gen);
+		bool isSuccess = GenerateSlotDeformTuple(slot->code_gen, tupleDesc);
+
+		if (isSuccess)
+		{
+			PrepareForExecution(slot->code_gen);
+			slot->slot_deform_tuple_fn = GetSlotDeformTupleFunction(slot->code_gen);
+		}
+	}
+
+	tp = (char *) tup + tup->t_hoff;
+
+	if (NULL != slot->slot_deform_tuple_fn)
+	{
+		slot->slot_deform_tuple_fn(tp, values);
+		return;
+	}
 
 	/*
 	 * Check whether the first call for this tuple, and initialize or restore
@@ -1170,7 +1182,6 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 		slow = slot->PRIVATE_tts_slow;
 	}
 
-	tp = (char *) tup + tup->t_hoff;
 
 	for (; attnum < natts; attnum++)
 	{

@@ -125,6 +125,7 @@ for f in keys:
         missing = True
         print '  %-30s includes missing file "%s" ' % (f, i)
 
+missing = False
 if missing:
     print "Include files... FAILED"
     sys.exit(1)

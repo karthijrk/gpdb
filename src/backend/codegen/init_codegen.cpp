@@ -14,7 +14,9 @@
 #include "codegen/slot_projection_codegen.h"
 
 #include "balerion/code_generator.h"
-#include <iostream>
+
+#include "postgres.h"
+
 
 // Perform global set-up tasks for Balerion codegen library. Returns 0 on
 // success, nonzero on error.
@@ -44,9 +46,9 @@ extern "C"
 		return static_cast<SlotProjectionCodeGen*>(code_generator)->GetDummyIRModule();
 	}
 
-	void GenerateSlotDeformTuple(void* code_generator, TupleDesc tupleDesc)
+	bool GenerateSlotDeformTuple(void* code_generator, TupleDesc tupleDesc)
 	{
-		static_cast<SlotProjectionCodeGen*>(code_generator)->GenerateSlotDeformTuple(tupleDesc);
+		return static_cast<SlotProjectionCodeGen*>(code_generator)->GenerateSlotDeformTuple(tupleDesc);
 	}
 
 	void (*GetSlotDeformTupleFunction(void* code_generator)) (char*, void*) {

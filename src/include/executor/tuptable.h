@@ -19,6 +19,7 @@
 #include "access/heapam.h"
 #include "access/memtup.h"
 #include "storage/buf.h"
+#include "codegen/init_codegen.h"
 
 /*----------
  * The executor stores tuples in a "tuple table" which is composed of
@@ -140,6 +141,9 @@ typedef struct TupleTableSlot
 
     /* System attributes */
     Oid         tts_tableOid;
+
+    void* code_gen;
+    SlotDeformTupleFn slot_deform_tuple_fn;
 } TupleTableSlot;
 
 static inline bool TupIsNull(TupleTableSlot *slot)
