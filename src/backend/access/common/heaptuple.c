@@ -1158,9 +1158,11 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 
 	tp = (char *) tup + tup->t_hoff;
 
-	if (NULL != slot->slot_deform_tuple_fn)
+	if (!hasnulls && NULL != slot->slot_deform_tuple_fn)
 	{
 		slot->slot_deform_tuple_fn(tp, values);
+		// All attributes are non-null
+		memset(isnull, 0, sizeof(isnull[0]) * natts);
 		return;
 	}
 
