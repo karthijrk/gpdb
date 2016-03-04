@@ -2,7 +2,6 @@
 create schema qp_misc_rio_schema;
 set search_path to qp_misc_rio_schema, public;
 drop table if exists t1;
-NOTICE:  table "t1" does not exist, skipping
 CREATE TABLE t1(c1 int, c2 varchar);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'c1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -122,6 +121,7 @@ select * FROM (select attnum::information_schema.cardinal_number from pg_attribu
 DROP FUNCTION IF EXISTS func_setof_spi_in_iterator_plpythonu();
 NOTICE:  function func_setof_spi_in_iterator_plpythonu() does not exist, skipping
 CREATE LANGUAGE plpythonu;
+ERROR:  language "plpythonu" already exists
 CREATE LANGUAGE plpgsql;
 NOTICE:  language "plpgsql" already exists, skipping
 CREATE OR REPLACE FUNCTION func_setof_spi_in_iterator_plpythonu()
@@ -370,6 +370,7 @@ FROM testtable0006 GROUP BY s5 order by s5;
  55 |   1 |     1 |     1
 (6 rows)
 
+-- start_ignore
 drop view if exists testtable0006 cascade;
 drop view if exists testtable0005 cascade;
 drop view if exists testtable0004 cascade;
@@ -549,26 +550,26 @@ INSERT INTO tbl_test_data_1 VALUES(1,10);
 INSERT INTO tbl_test_data_1 VALUES('Infinity',20);
 -- end_ignore
 SELECT mregr_coef(y,array[x,1]::float[]) FROM tbl_test_data_1;
-ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=13938)
+ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=58299)
 SELECT mregr_r2(y,array[x,1]::float[]) FROM tbl_test_data_1;
-ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=13938)
+ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=58299)
 SELECT mregr_tstats(y,array[x,1]::float[]) FROM tbl_test_data_1;
-ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=13938)
+ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=58299)
 SELECT mregr_pvalues(y,array[x,1]::float[]) FROM tbl_test_data_1;
-ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=13938)
+ERROR:  design matrix is not finite  (seg1 slice1 krajaraman:25433 pid=58299)
 -- start_ignore
 CREATE TABLE tbl_test_data_2(x float, y float) DISTRIBUTED BY (x);
 INSERT INTO tbl_test_data_2 VALUES(1,10);
 INSERT INTO tbl_test_data_2 VALUES('-Infinity',20);
 -- end_ignore
 SELECT mregr_coef(y,array[x,1]::float[]) FROM tbl_test_data_2;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_r2(y,array[x,1]::float[]) FROM tbl_test_data_2;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_tstats(y,array[x,1]::float[]) FROM tbl_test_data_2;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_pvalues(y,array[x,1]::float[]) FROM tbl_test_data_2;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 -- start_ignore
 -- NaN value
 CREATE TABLE tbl_test_data_3(x float, y float) DISTRIBUTED BY (x);
@@ -576,13 +577,13 @@ INSERT INTO tbl_test_data_3 VALUES(1,10);
 INSERT INTO tbl_test_data_3 VALUES('NaN',20);
 -- end_ignore
 SELECT mregr_coef(y,array[x,1]::float[]) FROM tbl_test_data_3;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_r2(y,array[x,1]::float[]) FROM tbl_test_data_3;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_tstats(y,array[x,1]::float[]) FROM tbl_test_data_3;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 SELECT mregr_pvalues(y,array[x,1]::float[]) FROM tbl_test_data_3;
-ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=13937)
+ERROR:  design matrix is not finite  (seg0 slice1 krajaraman:25432 pid=58289)
 -- start_ignore
 -- NULL value
 CREATE TABLE tbl_test_data_4(x float, y float) DISTRIBUTED BY (x);
@@ -684,7 +685,6 @@ NOTICE:  table "parts" does not exist, skipping
 drop table if exists shipped cascade;
 NOTICE:  table "shipped" does not exist, skipping
 drop table if exists int4_tbl;
-NOTICE:  table "int4_tbl" does not exist, skipping
 create table parts (
     partnum     text,
     cost        float8
@@ -982,7 +982,7 @@ SELECT 1::FLOAT8 AS y,
 DISTRIBUTED BY (y);
 -- end_ignore
 SELECT mregr_coef(y, x) FROM regtest_65536;
-ERROR:  number of independent variables is too large  (seg2 slice1 krajaraman:25434 pid=13939)
+ERROR:  number of independent variables is too large  (seg2 slice1 krajaraman:25434 pid=58303)
 SELECT mregr_coef(y, x)
 FROM (
       SELECT 1::FLOAT8 AS y,
@@ -1124,7 +1124,7 @@ AS $$
         return plpy.execute(sqlstm);
 $$ LANGUAGE plpythonu;
 INSERT INTO testdata_out SELECT * FROM func_plpythonu(10);
-ERROR:  plpy.SPIError: function cannot execute on segment because it accesses relation "qp_misc_rio_schema.testdata_in" (plpython.c:4648)  (entry db krajaraman:15432 pid=17121)
+ERROR:  plpy.SPIError: function cannot execute on segment because it accesses relation "qp_misc_rio_schema.testdata_in" (plpython.c:4648)  (entry db krajaraman:15432 pid=62582)
 DETAIL:  
 Traceback (most recent call last):
   PL/Python function "func_plpythonu", line 3, in <module>
@@ -1175,6 +1175,7 @@ drop schema co_nestloop_idxscan cascade;
 NOTICE:  drop cascades to table co_nestloop_idxscan.bar
 NOTICE:  drop cascades to append only columnar table co_nestloop_idxscan.foo
 drop resource queue test_q;
+ERROR:  resource queue "test_q" does not exist
 --end_ignore
 -- Create resource queue with cost_overcommit=true
 create resource queue test_q with (active_statements = 6,max_cost=5e+06 ,cost_overcommit=true, min_cost=50000);
@@ -1237,6 +1238,8 @@ CONTEXT:  PL/Python function "func_exec_query_plpythonu"
 
 -- start_ignore
 DROP FUNCTION IF EXISTS func_exec_query_plpythonu( text );
+DROP LANGUAGE plpythonu;
+CREATE LANGUAGE plpythonu;
 DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
 NOTICE:  function func_split_plpythonu(int8) does not exist, skipping
 DROP TYPE IF EXISTS tuple_split CASCADE;
@@ -1271,44 +1274,13 @@ SELECT (func_split_plpythonu(10)).*;
 (2 rows)
 
 -- start_ignore
-DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
-DROP TYPE IF EXISTS tuple_split CASCADE;
-DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
-NOTICE:  function func_split_plpythonu(int8) does not exist, skipping
-DROP TYPE IF EXISTS tuple_split CASCADE;
-NOTICE:  type "tuple_split" does not exist, skipping
-CREATE TYPE tuple_split AS (a INT8, b INT8);
-CREATE OR REPLACE FUNCTION func_split_plpythonu(input INT8)
-RETURNS SETOF tuple_split
-AS $$
-    yield [input, input];
-    yield [input, input]
-$$ LANGUAGE plpythonu;
--- end_ignore
-SELECT * FROM func_split_plpythonu(10);
- a  | b  
-----+----
- 10 | 10
- 10 | 10
-(2 rows)
-
-SELECT func_split_plpythonu(10);
- func_split_plpythonu 
-----------------------
- (10,10)
- (10,10)
-(2 rows)
-
-SELECT (func_split_plpythonu(10)).*;
- a  | b  
-----+----
- 10 | 10
- 10 | 10
-(2 rows)
-
--- start_ignore
-DROP TABLE IF EXISTS emp;
-NOTICE:  table "emp" does not exist, skipping
+DROP TABLE IF EXISTS emp CASCADE;
+NOTICE:  drop cascades to table stud_emp
+NOTICE:  drop cascades to function overpaid(emp)
+NOTICE:  drop cascades to rule _RETURN on view xmlview4
+NOTICE:  drop cascades to view xmlview4
+NOTICE:  drop cascades to rule _RETURN on view toyemp
+NOTICE:  drop cascades to view toyemp
 -- end_ignore
     
 -- Create a non-privileged user triggertest_nopriv_a
@@ -1353,7 +1325,7 @@ after insert on emp
     for each row execute procedure process_emp_audit();
 -- Verified the trigger works correctly
 insert into emp values ('Tammy', 100000);
-NOTICE:  100000  (seg0 krajaraman:25432 pid=20561)
+NOTICE:  100000  (seg0 krajaraman:25432 pid=58289)
 -- end_ignore
 -- connect as non-privileged user "triggertest_nopriv_b"
 SET ROLE triggertest_nopriv_b;
@@ -1396,7 +1368,7 @@ after insert on my_emp
     for each row execute procedure process_emp_audit();
 -- Verified trigger can be run correctly
 insert into my_emp values ('Tammy', 100000);
-NOTICE:  100000  (seg0 krajaraman:25432 pid=20561)
+NOTICE:  100000  (seg0 krajaraman:25432 pid=58289)
 -- end_ignore
 -- Now to confirm that we only check trigger function's EXECUTE
 -- permission at trigger create time, but not at trigger run time
@@ -1411,7 +1383,7 @@ SET ROLE triggertest_nopriv_b;
 -- even the current user does NOT have the EXECUTE permission 
 -- on the trigger function.
 insert into my_emp values ('Sammy', 100001);
-NOTICE:  100001  (seg1 krajaraman:25433 pid=20562)
+NOTICE:  100001  (seg1 krajaraman:25433 pid=58299)
 -- start_ignore 
 -- Clean up
 DROP TRIGGER my_emp_audit on my_emp;

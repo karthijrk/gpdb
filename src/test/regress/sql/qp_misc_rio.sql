@@ -847,6 +847,8 @@ SELECT func_exec_query_plpythonu( 'SELECT x' );
 
 DROP FUNCTION IF EXISTS func_exec_query_plpythonu( text );
 
+DROP LANGUAGE plpythonu;
+CREATE LANGUAGE plpythonu;
 DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
 DROP TYPE IF EXISTS tuple_split CASCADE;
 
@@ -866,31 +868,8 @@ SELECT func_split_plpythonu(10);
 SELECT (func_split_plpythonu(10)).*;
 
 -- start_ignore
-DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
-DROP TYPE IF EXISTS tuple_split CASCADE;
 
-DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
-DROP TYPE IF EXISTS tuple_split CASCADE;
-
-
-CREATE TYPE tuple_split AS (a INT8, b INT8);
-CREATE OR REPLACE FUNCTION func_split_plpythonu(input INT8)
-RETURNS SETOF tuple_split
-AS $$
-    yield [input, input];
-    yield [input, input]
-$$ LANGUAGE plpythonu;
-
--- end_ignore
-
-SELECT * FROM func_split_plpythonu(10);
-SELECT * FROM func_split_plpythonu(10);
-SELECT func_split_plpythonu(10);
-SELECT (func_split_plpythonu(10)).*;
-
--- start_ignore
-
-DROP TABLE IF EXISTS emp;
+DROP TABLE IF EXISTS emp CASCADE;
 
 -- end_ignore
     
