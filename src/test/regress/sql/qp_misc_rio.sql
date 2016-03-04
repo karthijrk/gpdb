@@ -697,42 +697,6 @@ DROP FUNCTION pytest();
 SELECT * FROM pg_pltemplate WHERE tmplname LIKE '%pljava%' ORDER BY tmplname;
 
 -- start_ignore
-CREATE OR REPLACE FUNCTION crypt(text, text)
-RETURNS text
-AS '$libdir/pgcrypto', 'pg_crypt'
-LANGUAGE C IMMUTABLE STRICT;
--- end_ignore
-
--- Test $2x$ special case
-SELECT crypt('', '$2x$06$RQiOJ.3ELirrXwxIZY8q0O');
-SELECT crypt('foox', '$2x$06$RQiOJ.3ELirrXwxIZY8q0O');
-
-CREATE TABLE ctest (data text, res text, salt text) DISTRIBUTED RANDOMLY;
-INSERT INTO ctest VALUES ('password', '', '');
-
-UPDATE ctest SET salt = '$2x$08$rjbaSMbC2O1isp1KJ26gl.';
-UPDATE ctest SET res = crypt(data, salt);
-SELECT res = crypt(data, res) AS "worked"
-FROM ctest;
-
--- start_ignore
-DROP TABLE ctest;
--- end_ignore
-
--- Test the $2a$ normal case
-SELECT crypt('', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
-SELECT crypt('foox', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
-
-CREATE TABLE ctest (data text, res text, salt text) DISTRIBUTED RANDOMLY;
-INSERT INTO ctest VALUES ('password', '', '');
-
-UPDATE ctest SET salt = '$2x$08$rjbaSMbC2O1isp1KJ26gl.';
-UPDATE ctest SET res = crypt(data, salt);
-SELECT res = crypt(data, res) AS "worked"
-FROM ctest;
-
--- start_ignore
-DROP TABLE ctest;
 drop table if exists tbl;
 
 create table tbl (c1 int, c2 int) with (appendonly=true, compresstype=none, compresslevel=2) distributed by (c1);

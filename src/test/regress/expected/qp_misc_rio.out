@@ -1025,83 +1025,11 @@ SELECT * FROM pg_pltemplate WHERE tmplname LIKE '%pljava%' ORDER BY tmplname;
 (2 rows)
 
 -- start_ignore
-CREATE OR REPLACE FUNCTION crypt(text, text)
-RETURNS text
-AS '$libdir/pgcrypto', 'pg_crypt'
-LANGUAGE C IMMUTABLE STRICT;
-CREATE FUNCTION
-
-SELECT crypt('', '$2x$06$RQiOJ.3ELirrXwxIZY8q0O');
-                            crypt                             
---------------------------------------------------------------
- $2x$06$RQiOJ.3ELirrXwxIZY8q0OlGbBEpDmx7IRZlNYvGJ1SHXwNi2cEKK
-(1 row)
-
-SELECT crypt('foox', '$2x$06$RQiOJ.3ELirrXwxIZY8q0O');
-                            crypt                             
---------------------------------------------------------------
- $2x$06$RQiOJ.3ELirrXwxIZY8q0OR3CVJrAfda1z26CCHPnB6mmVZD8p0/C
-(1 row)
-
-CREATE TABLE mpp14454_ctest (data text, res text, salt text) DISTRIBUTED RANDOMLY;
-CREATE TABLE
-INSERT INTO mpp14454_ctest VALUES ('password', '', '');
-INSERT 0 1
-UPDATE mpp14454_ctest SET salt = '$2x$08$rjbaSMbC2O1isp1KJ26gl.';
-UPDATE 1
-UPDATE mpp14454_ctest SET res = crypt(data, salt);
-UPDATE 1
-SELECT res = crypt(data, res) AS "worked"
-FROM mpp14454_ctest;
- worked 
---------
- t
-(1 row)
-
-DROP TABLE mpp14454_ctest;
-DROP TABLE
-
-SELECT crypt('', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
-                            crypt                             
---------------------------------------------------------------
- $2a$06$RQiOJ.3ELirrXwxIZY8q0OlGbBEpDmx7IRZlNYvGJ1SHXwNi2cEKK
-(1 row)
-
-SELECT crypt('foox', '$2a$06$RQiOJ.3ELirrXwxIZY8q0O');
-                            crypt                             
---------------------------------------------------------------
- $2a$06$RQiOJ.3ELirrXwxIZY8q0OR3CVJrAfda1z26CCHPnB6mmVZD8p0/C
-(1 row)
-
-CREATE TABLE mpp14454_ctest (data text, res text, salt text) DISTRIBUTED RANDOMLY;
-CREATE TABLE
-INSERT INTO mpp14454_ctest VALUES ('password', '', '');
-INSERT 0 1
-UPDATE mpp14454_ctest SET salt = '$2x$08$rjbaSMbC2O1isp1KJ26gl.';
-UPDATE 1
-UPDATE mpp14454_ctest SET res = crypt(data, salt);
-UPDATE 1
-SELECT res = crypt(data, res) AS "worked"
-FROM mpp14454_ctest;
- worked 
---------
- t
-(1 row)
-
-DROP TABLE mpp14454_ctest;
-DROP TABLE
---start_ignore
-drop table if exists tbl_mpp14504;
-psql:/data/anu/dev/cdbfast/main/misc_jiras_rio/mpp14504.sql:2: NOTICE:  table "tbl_mpp14504" does not exist, skipping
-DROP TABLE
---end_ignore
-create table tbl_mpp14504 (c1 int, c2 int) with (appendonly=true, compresstype=none, compresslevel=2) distributed by (c1);
-CREATE TABLE
-insert into tbl_mpp14504 values (1,2);
-INSERT 0 1
-drop table tbl_mpp14504;
-DROP TABLE
---start_ignore
+drop table if exists tbl;
+NOTICE:  table "tbl" does not exist, skipping
+create table tbl (c1 int, c2 int) with (appendonly=true, compresstype=none, compresslevel=2) distributed by (c1);
+insert into tbl values (1,2);
+drop table tbl;
 drop table if exists A;
 NOTICE:  table "a" does not exist, skipping
 drop table if exists B;
@@ -1196,7 +1124,7 @@ AS $$
         return plpy.execute(sqlstm);
 $$ LANGUAGE plpythonu;
 INSERT INTO testdata_out SELECT * FROM func_plpythonu(10);
-ERROR:  plpy.SPIError: function cannot execute on segment because it accesses relation "qp_misc_rio_schema.testdata_in" (plpython.c:4648)  (entry db krajaraman:15432 pid=14382)
+ERROR:  plpy.SPIError: function cannot execute on segment because it accesses relation "qp_misc_rio_schema.testdata_in" (plpython.c:4648)  (entry db krajaraman:15432 pid=17121)
 DETAIL:  
 Traceback (most recent call last):
   PL/Python function "func_plpythonu", line 3, in <module>
