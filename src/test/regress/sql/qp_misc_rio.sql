@@ -1,4 +1,7 @@
 -- start_ignore
+drop role if exists qp_misc_rio_role;
+create role qp_misc_rio_role;
+set role qp_misc_rio_role;
 create schema qp_misc_rio_schema;
 set search_path to qp_misc_rio_schema, public;
 
@@ -987,7 +990,7 @@ DROP TABLE IF EXISTS emp;
 
 DROP FUNCTION IF EXISTS func_split_plpythonu(INT8);
 DROP TYPE IF EXISTS tuple_split CASCADE;
-DROP LANGUAGE plpythonu;
-DROP LANGUAGE plpgsql;
-DROP SCHEMA qp_misc_rio_schema;
+set role qp_misc_rio_role;
+DROP RESOURCE QUEUE test_q;
+DROP SCHEMA qp_misc_rio_schema CASCADE;
 -- end_ignore
