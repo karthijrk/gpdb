@@ -26,8 +26,8 @@
 #include <utility>
 #include <vector>
 
+#include "codegen/utils/codegen_utils.h"
 #include "codegen/utils/annotated_type.h"
-#include "codegen/utils/code_generator.h"
 
 #ifdef CODEGEN_HAVE_TEMPORARY_FILE
 #include "codegen/utils/temporary_file.h"
@@ -255,7 +255,7 @@ std::string ClangCompiler::CppTypeFromAnnotatedType(
 
 std::string ClangCompiler::GenerateExternalFunctionDeclarations() const {
   std::string declarations;
-  for (const CodeGenerator::NamedExternalFunction& external_fn
+  for (const CodeGenUtils::NamedExternalFunction& external_fn
        : code_generator_->named_external_functions_) {
     // Mark extern "C" to avoid name-mangling.
     declarations.append("extern \"C\" ");
