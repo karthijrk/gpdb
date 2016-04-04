@@ -14,12 +14,6 @@
 #include "codegen/codegen_manager.h"
 #include "codegen/slot_deform_tuple_codegen.h"
 
-#include "postgres.h"
-#include "c.h"
-#include "access/htup.h"
-#include "access/tupmacs.h"
-#include "catalog/pg_attribute.h"
-#include "executor/tuptable.h"
 #include "codegen/utils/codegen_utils.h"
 
 using namespace gpcodegen;
