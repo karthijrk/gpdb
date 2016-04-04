@@ -12,7 +12,9 @@
 #ifndef CODEGEN_WRAPPER_H_
 #define CODEGEN_WRAPPER_H_
 
+#ifndef __cplusplus
 #include "c.h"
+#endif
 
 struct TupleTableSlot;
 

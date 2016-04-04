@@ -38,7 +38,7 @@
 //#include "access/htup.h"
 //#include "access/tupmacs.h"
 //#include "c.h"
-#include "catalog/pg_attribute.h"
+//#include "catalog/pg_attribute.h"
 
 using namespace gpcodegen;
 
