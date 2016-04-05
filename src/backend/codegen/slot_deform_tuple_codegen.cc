@@ -34,15 +34,9 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 
-/* extern "C" {
-#include "postgres.h"
-#include "c.h"
-#include "access/htup.h"
-#include "access/tupmacs.h"
-#include "catalog/pg_attribute.h"
-#include "executor/tuptable.h"
+extern "C" {
 #include "utils/elog.h"
-}*/
+}
 
 using namespace gpcodegen;
 
@@ -57,7 +51,7 @@ SlotDeformTupleCodeGen::SlotDeformTupleCodeGen(TupleTableSlot* slot,
 }
 
 static void ElogWrapper(const char* func_name) {
-	//elog(INFO, "Calling wrapped function: %s", func_name);
+	elog(INFO, "Calling wrapped function: %s", func_name);
 }
 
 bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
