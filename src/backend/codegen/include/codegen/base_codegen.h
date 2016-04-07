@@ -33,10 +33,10 @@ namespace gpcodegen {
 template<class FuncPtrType>
 class BaseCodeGen: public CodeGenInterface {
  public:
-	/**
-	 * @brief Destroys the code generator and reverts back to using regular
-	 * 		version of the generated function.
-	 **/
+  /**
+   * @brief Destroys the code generator and reverts back to using regular
+   * 		version of the generated function.
+   **/
   virtual ~BaseCodeGen() {
     SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
   }
@@ -84,23 +84,23 @@ class BaseCodeGen: public CodeGenInterface {
     return is_generated_;
   }
 
-	/**
-	 * @return Regular version of the corresponding generated function.
-	 *
-	 **/
+  /**
+   * @return Regular version of the corresponding generated function.
+   *
+   **/
   FuncPtrType GetRegularFuncPointer() {
     return regular_func_ptr_;
   }
 
-	/**
-	 * @brief Sets up the caller to use the corresponding regular version of the
-	 *        generated function.
-	 *
-	 * @param regular_func_ptr       Regular version of the generated function.
-	 * @param ptr_to_chosen_func_ptr Reference to caller.
-	 *
-	 * @return true on setting to regular version.
-	 **/
+  /**
+   * @brief Sets up the caller to use the corresponding regular version of the
+   *        generated function.
+   *
+   * @param regular_func_ptr       Regular version of the generated function.
+   * @param ptr_to_chosen_func_ptr Reference to caller.
+   *
+   * @return true on setting to regular version.
+   **/
   static bool SetToRegular(FuncPtrType regular_func_ptr,
                            FuncPtrType* ptr_to_chosen_func_ptr) {
     *ptr_to_chosen_func_ptr = regular_func_ptr;
@@ -108,17 +108,17 @@ class BaseCodeGen: public CodeGenInterface {
   }
 
  protected:
-	/**
-	 * @brief Constructor
-	 *
-	 * @param orig_func_name         Original function name.
-	 * @param regular_func_ptr       Regular version of the generated function.
-	 * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
-	 *
-	 * @note 	The ptr_to_chosen_func_ptr can refer to either the generated function or the
-	 * 			corresponding regular version.
-	 *
-	 **/
+  /**
+   * @brief Constructor
+   *
+   * @param orig_func_name         Original function name.
+   * @param regular_func_ptr       Regular version of the generated function.
+   * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
+   *
+   * @note 	The ptr_to_chosen_func_ptr can refer to either the generated function or the
+   * 			corresponding regular version.
+   *
+   **/
   explicit BaseCodeGen(const std::string& orig_func_name,
                        FuncPtrType regular_func_ptr,
                        FuncPtrType* ptr_to_chosen_func_ptr)
@@ -131,18 +131,18 @@ class BaseCodeGen: public CodeGenInterface {
     SetToRegular(regular_func_ptr, ptr_to_chosen_func_ptr);
   }
 
-	/**
-	 * @brief Generates specialized code at run time.
-	 *
-	 * @note 	A template method design pattern to be overridden by the sub-class to implement
-	 * 			the actual code generation.
-	 *
-	 * @note  	This is being called from GenerateCode and derived class will implement actual
-	 *        	code generation
-	 *
-	 * @param codegen_utils Utility to ease the code generation process.
-	 * @return true on successful generation.
-	 **/
+  /**
+   * @brief Generates specialized code at run time.
+   *
+   * @note 	A template method design pattern to be overridden by the sub-class to implement
+   * 			the actual code generation.
+   *
+   * @note  	This is being called from GenerateCode and derived class will implement actual
+   *        	code generation
+   *
+   * @param codegen_utils Utility to ease the code generation process.
+   * @return true on successful generation.
+   **/
   virtual bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) = 0;
 
  private:
