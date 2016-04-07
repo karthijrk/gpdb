@@ -187,7 +187,7 @@ add_custom_target(check
     COMMAND ${CMAKE_CTEST_COMMAND})
 add_custom_target(unittest-check 
     COMMAND ${CMAKE_COMMAND} .
-    COMMAND make check
+    COMMAND ${CMAKE_MAKE_PROGRAM} check
 )
 include_directories(${TOP_SRC_DIR}/src/test/unit/cmockery)
 
