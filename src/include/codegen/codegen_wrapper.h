@@ -12,15 +12,41 @@
 #ifndef CODEGEN_WRAPPER_H_
 #define CODEGEN_WRAPPER_H_
 
+#include "pg_config.h"
+
+/*
+ * Code that needs to be shared irrespective of whether USE_CODEGEN is enabled or not.
+ */
+struct TupleTableSlot;
+typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
+
+#ifndef USE_CODEGEN
+
+#define InitCodeGen();
+#define CodeGeneratorManager_Create() NULL
+#define CodeGeneratorManager_GenerateCode(manager);
+#define CodeGeneratorManager_PrepareGeneratedFunctions(manager) true
+#define CodeGeneratorManager_NotifyParameterChange(manager) true
+#define CodeGeneratorManager_Destroy(manager);
+#define GetActiveCodeGeneratorManager() NULL
+#define SetActiveCodeGeneratorManager(manager);
+#define SlotDeformTupleCodeGen_Enroll(slot, regular_func_ptr, ptr_to_regular_func_ptr) NULL
+
+#define START_CODE_GENERATOR_MANAGER(newManager)
+#define END_CODE_GENERATOR_MANAGER()
+
+#else
+
 #ifndef __cplusplus
 #include "c.h"
 #endif
 
-struct TupleTableSlot;
+/*
+ * Forward extern declaration of slot deform tuple if code gen is enabled
+ */
+extern void slot_deform_tuple(struct TupleTableSlot *slot, int natts);
 
-typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
-
-/**
+/*
  * @brief Life span of Code generator instance
  *
  * @note Each code generator is responsible to generate code for one specific function.
@@ -28,46 +54,76 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
  *       invalidate and regenerate this function. The enroller is responsible to know
  *       how long a generated code should be valid.
  *
- **/
+ *
+ */
 typedef enum CodeGenFuncLifespan
 {
-	// does not depend on parameter changes
+	// Does not depend on parameter changes
 	CodeGenFuncLifespan_Parameter_Invariant,
-	// has to be regenerated as the parameter changes
+	// Has to be regenerated as the parameter changes
 	CodeGenFuncLifespan_Parameter_Variant
 } CodeGenFuncLifespan;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Do one-time global initialization of LLVM library. Returns 0
-// on success, nonzero on error.
-int InitCodeGen();
+/*
+ * Do one-time global initialization of LLVM library. Returns 0
+ * on success, nonzero on error.
+ */
+int
+InitCodeGen();
 
-// creates a manager for an operator
-void* CodeGeneratorManager_Create();
+/*
+ * Creates a manager for an operator
+ */
+void*
+CodeGeneratorManager_Create();
 
-// calls all the registered CodeGenFuncInfo to generate code
-bool CodeGeneratorManager_GenerateCode(void* manager);
+/*
+ * Calls all the registered CodeGenInterface to generate code
+ */
+bool
+CodeGeneratorManager_GenerateCode(void* manager);
 
-// compiles and prepares all the code gened function pointers
-bool CodeGeneratorManager_PrepareGeneratedFunctions(void* manager);
+/*
+ * Compiles and prepares all the CodeGen function pointers
+ */
+bool
+CodeGeneratorManager_PrepareGeneratedFunctions(void* manager);
 
-// notifies a manager that the underlying operator has a parameter change
-bool CodeGeneratorManager_NotifyParameterChange(void* manager);
+/*
+ * Notifies a manager that the underlying operator has a parameter change
+ */
+bool
+CodeGeneratorManager_NotifyParameterChange(void* manager);
 
-// destroys a manager for an operator
-void CodeGeneratorManager_Destroy(void* manager);
+/*
+ * Destroys a manager for an operator
+ */
+void
+CodeGeneratorManager_Destroy(void* manager);
 
-// get the active code generator manager
-void* GetActiveCodeGeneratorManager();
+/*
+ * Get the active code generator manager
+ */
+void*
+GetActiveCodeGeneratorManager();
 
-// set the active code generator manager
-void SetActiveCodeGeneratorManager(void* manager);
+/*
+ * Set the active code generator manager
+ */
+void
+SetActiveCodeGeneratorManager(void* manager);
 
-// returns the pointer to the CodeGenFuncInfo
-void* SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot, SlotDeformTupleFn regular_func_ptr, SlotDeformTupleFn* ptr_to_regular_func_ptr);
+/*
+ * returns the pointer to the CodeGenFuncInfo
+ */
+void*
+SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot,
+		SlotDeformTupleFn regular_func_ptr, SlotDeformTupleFn* ptr_to_regular_func_ptr);
 
 
 #ifdef __cplusplus
@@ -92,5 +148,6 @@ void* SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot, SlotDeformTuple
 		SetActiveCodeGeneratorManager(oldManager);\
 	} while (0);
 
+#endif //USE_CODEGEN
 
 #endif  // CODEGEN_WRAPPER_H_

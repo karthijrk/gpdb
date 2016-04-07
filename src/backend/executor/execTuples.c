@@ -334,7 +334,7 @@ ExecAllocTableSlot(TupleTable table)
  *		a reference.
  * --------------------------------
  */
-extern void slot_deform_tuple(TupleTableSlot *slot, int natts);
+
 void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 					  TupleDesc tupdesc)		/* new tuple descriptor */
@@ -361,11 +361,12 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 
 		MemoryContextSwitchTo(oldcontext);
 	}
-
 	slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGen_Enroll(slot,
 			slot_deform_tuple, &slot->slot_deform_tuple_gen_info.slot_deform_tuple_fn);
+#ifdef USE_CODEGEN
 	/* The enrollment process ensures that the slot_deform_tuple_fn pointer is set to the regular version initially */
 	Assert(slot->slot_deform_tuple_gen_info.slot_deform_tuple_fn == slot_deform_tuple);
+#endif
 }
 
 /* --------------------------------
