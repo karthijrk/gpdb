@@ -14,12 +14,12 @@
 #ifndef TUPTABLE_H
 #define TUPTABLE_H
 
-#include "codegen/codegen_wrapper.h"
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "access/heapam.h"
 #include "access/memtup.h"
 #include "storage/buf.h"
+#include "codegen/codegen_wrapper.h"
 
 /*----------
  * The executor stores tuples in a "tuple table" which is composed of
