@@ -1,20 +1,21 @@
 //---------------------------------------------------------------------------
-//	Greenplum Database
-//	Copyright (C) 2016 Pivotal Software, Inc.
+//  Greenplum Database
+//  Copyright (C) 2016 Pivotal Software, Inc.
 //
-//	@filename:
-//		codegen_interface.cc
+//  @filename:
+//    codegen_interface.cc
 //
-//	@doc:
-//		Implementation of codegen interface's static function
+//  @doc:
+//    Implementation of codegen interface's static function
 //
 //---------------------------------------------------------------------------
 #include "codegen/codegen_interface.h"
 
-using namespace gpcodegen;
+using gpcodegen::CodeGenInterface;
 
-long CodeGenInterface::unique_counter_ = 0;
+unsigned CodeGenInterface::unique_counter_ = 0;
 
-std::string CodeGenInterface::GenerateUniqueName(const std::string& orig_func_name) {
-	return orig_func_name + std::to_string(unique_counter_++);
+std::string CodeGenInterface::GenerateUniqueName(
+    const std::string& orig_func_name) {
+  return orig_func_name + std::to_string(unique_counter_++);
 }

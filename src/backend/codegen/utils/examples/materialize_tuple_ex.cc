@@ -6,8 +6,8 @@
 //    materialize_tuple_ex.cc
 //
 //  @doc:
-//    Contains an example that implements the MaterializeTuple() function that 
-//    uses type information available at runtime to generate an output tuple 
+//    Contains an example that implements the MaterializeTuple() function that
+//    uses type information available at runtime to generate an output tuple
 //    in a buffer.
 //
 //  @test:
@@ -26,8 +26,8 @@ namespace {
 typedef void (*MaterializeTupleFunction)(char *);
 
 enum Types {
-  kBool = 0, // 1 byte
-  kInt       // 4 bytes
+  kBool = 0,  // 1 byte
+  kInt        // 4 bytes
 };
 
 const int kTupleSize = 9;
@@ -79,8 +79,7 @@ void materializeTuple(char *tuple) {
 // external
 //
 MaterializeTupleFunction
-GenerateCodeForMaterializeTuple(gpcodegen::CodegenUtils *codegen_utils) {
-
+GenerateCodeForMaterializeTuple(gpcodegen::CodeGenUtils *codegen_utils) {
   auto irb = codegen_utils->ir_builder();
   llvm::Function *mt_function =
       codegen_utils->CreateFunction<void, char *>("materializeTuple");
@@ -214,19 +213,19 @@ GenerateCodeForMaterializeTuple(gpcodegen::CodegenUtils *codegen_utils) {
   assert(!llvm::verifyModule(*codegen_utils->module()));
 
   bool prepare_ok = codegen_utils->PrepareForExecution(
-             gpcodegen::CodegenUtils::OptimizationLevel::kDefault, true);
+             gpcodegen::CodeGenUtils::OptimizationLevel::kDefault, true);
   assert(prepare_ok);
 
   return codegen_utils->GetFunctionPointer<void, char *>("materializeTuple");
 }
-}
+}  // namespace
 
 int main() {
-  bool init_ok = gpcodegen::CodegenUtils::InitializeGlobal();
+  bool init_ok = gpcodegen::CodeGenUtils::InitializeGlobal();
   assert(init_ok);
 
   std::printf("Testing static compiled version:\n");
-  gpcodegen::CodegenUtils codegen_utils("materializeTuple");
+  gpcodegen::CodeGenUtils codegen_utils("materializeTuple");
   testMaterializeTuple(materializeTuple);
 
   std::printf("Testing JIT compiled version:\n");
