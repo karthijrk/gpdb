@@ -13,11 +13,11 @@
 //
 //---------------------------------------------------------------------------
 
-#ifndef GPCODEGEN_UTILITY_H_
+#ifndef GPCODEGEN_UTILITY_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_UTILITY_H_
 
-#include "llvm/IR/Function.h"
 #include <utility>
+#include "llvm/IR/Function.h"
 
 namespace gpcodegen {
 

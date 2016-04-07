@@ -1,17 +1,17 @@
 //---------------------------------------------------------------------------
-//	Greenplum Database
-//	Copyright (C) 2016 Pivotal Software, Inc.
+//  Greenplum Database
+//  Copyright (C) 2016 Pivotal Software, Inc.
 //
-//	@filename:
-//		slot_deform_tuple_codegen.h
+//  @filename:
+//    slot_deform_tuple_codegen.h
 //
-//	@doc:
-//		Headers for slot_deform_tuple codegen
+//  @doc:
+//    Headers for slot_deform_tuple codegen
 //
 //---------------------------------------------------------------------------
 
-#ifndef SLOT_DEFORM_TUPLE_CODEGEN_H_
-#define SLOT_DEFORM_TUPLE_CODEGEN_H_
+#ifndef GPCODEGEN_SLOT_DEFORM_TUPLE_CODEGEN_H_  // NOLINT(build/header_guard)
+#define GPCODEGEN_SLOT_DEFORM_TUPLE_CODEGEN_H_
 
 #include "codegen/codegen_wrapper.h"
 #include "codegen/base_codegen.h"
@@ -23,7 +23,7 @@ namespace gpcodegen {
  */
 
 class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
-public:
+ public:
 	/**
 	 * @brief Constructor
 	 *
@@ -35,20 +35,19 @@ public:
 	 * 			corresponding regular version.
 	 *
 	 **/
-	explicit SlotDeformTupleCodeGen(TupleTableSlot* slot,
-			SlotDeformTupleFn regular_func_ptr,
-			SlotDeformTupleFn* ptr_to_regular_func_ptr);
+  explicit SlotDeformTupleCodeGen(TupleTableSlot* slot,
+                                  SlotDeformTupleFn regular_func_ptr,
+                                  SlotDeformTupleFn* ptr_to_regular_func_ptr);
 
-	virtual ~SlotDeformTupleCodeGen() = default;
+  virtual ~SlotDeformTupleCodeGen() = default;
 
-protected:
-	virtual bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils)
-			override final;
+ protected:
+  bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) final;
 
-private:
-	TupleTableSlot* slot_;
+ private:
+  TupleTableSlot* slot_;
 
-	static constexpr char kSlotDeformTupleNamePrefix[] = "slot_deform_tuple";
+  static constexpr char kSlotDeformTupleNamePrefix[] = "slot_deform_tuple";
 
 	/**
 	 * @brief Generates runtime code that calls slot_deform_tuple as an external function.
@@ -56,10 +55,10 @@ private:
 	 * @param codegen_utils Utility to ease the code generation process.
 	 * @return true on successful generation.
 	 **/
-	bool GenerateSimpleSlotDeformTuple(gpcodegen::CodegenUtils* codegen_utils);
+  bool GenerateSimpleSlotDeformTuple(gpcodegen::CodeGenUtils* codegen_utils);
 };
 
 /** @} */
 
-}
-#endif // SLOT_DEFORM_TUPLE_CODEGEN_H_
+}  // namespace gpcodegen
+#endif  // GPCODEGEN_SLOT_DEFORM_TUPLE_CODEGEN_H_

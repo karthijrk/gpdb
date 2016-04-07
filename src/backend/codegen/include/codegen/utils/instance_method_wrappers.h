@@ -14,7 +14,7 @@
 //
 //---------------------------------------------------------------------------
 
-#ifndef GPCODEGEN_INSTANCE_METHOD_WRAPPERS_H_
+#ifndef GPCODEGEN_INSTANCE_METHOD_WRAPPERS_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_INSTANCE_METHOD_WRAPPERS_H_
 
 #include <utility>
@@ -284,6 +284,6 @@ void WrapDestructor(ClassType* object) {
 
 /** @} */
 
-}  // namespace codegen
+}  // namespace gpcodegen
 
 #endif  // GPCODEGEN_INSTANCE_METHOD_WRAPPERS_H_

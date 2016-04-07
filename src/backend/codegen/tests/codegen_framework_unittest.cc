@@ -70,20 +70,18 @@ SumFunc failed_func_ptr = nullptr;
 UncompilableFunc uncompilable_func_ptr = nullptr;
 
 class SumCodeGenerator : public BaseCodeGen<SumFunc> {
-  public:
+ public:
   explicit SumCodeGenerator(SumFunc regular_func_ptr,
                              SumFunc* ptr_to_regular_func_ptr) :
                              BaseCodeGen(kAddFuncNamePrefix,
                                          regular_func_ptr,
                                          ptr_to_regular_func_ptr) {
-
   }
 
   virtual ~SumCodeGenerator() = default;
 
  protected:
-  virtual bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils)
-  override final {
+  bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) final {
     llvm::Function* add2_func
        = codegen_utils->CreateFunctionTypeDef<SumFunc>(GetUniqueFuncName());
     llvm::BasicBlock* add2_body = codegen_utils->CreateBasicBlock("body",
@@ -96,65 +94,58 @@ class SumCodeGenerator : public BaseCodeGen<SumFunc> {
 
     return true;
   }
-  public:
+
+ public:
   static constexpr char kAddFuncNamePrefix[] = "SumFunc";
 };
 
 class FailingCodeGenerator : public BaseCodeGen<SumFunc> {
  public:
-   explicit FailingCodeGenerator(SumFunc regular_func_ptr,
-                               SumFunc* ptr_to_regular_func_ptr):
-                               BaseCodeGen(kFailingFuncNamePrefix,
-                                           regular_func_ptr,
-                                           ptr_to_regular_func_ptr)
-   {
+  explicit FailingCodeGenerator(SumFunc regular_func_ptr,
+                                SumFunc* ptr_to_regular_func_ptr):
+                                BaseCodeGen(kFailingFuncNamePrefix,
+                                            regular_func_ptr,
+                                            ptr_to_regular_func_ptr) {
+  }
 
-   }
-
-   virtual ~FailingCodeGenerator() = default;
+  virtual ~FailingCodeGenerator() = default;
 
  protected:
-   virtual bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils)
-       override final
-       {
-         return false;
-       }
+  bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) final {
+     return false;
+  }
 
  private:
-
-   static constexpr char kFailingFuncNamePrefix[] = "SumFuncFailing";
+  static constexpr char kFailingFuncNamePrefix[] = "SumFuncFailing";
 };
 
 class UncompilableCodeGenerator : public BaseCodeGen<UncompilableFunc> {
  public:
-   explicit UncompilableCodeGenerator(UncompilableFunc regular_func_ptr,
-                                      UncompilableFunc* ptr_to_regular_func_ptr) :
-                             BaseCodeGen(kUncompilableFuncNamePrefix,
-                                         regular_func_ptr,
-                                         ptr_to_regular_func_ptr)
-   {
+  explicit UncompilableCodeGenerator(
+      UncompilableFunc regular_func_ptr,
+      UncompilableFunc* ptr_to_regular_func_ptr)
+  : BaseCodeGen(kUncompilableFuncNamePrefix,
+                regular_func_ptr,
+                ptr_to_regular_func_ptr) {
+  }
 
-   }
-
-   virtual ~UncompilableCodeGenerator() = default;
+  virtual ~UncompilableCodeGenerator() = default;
 
  protected:
-   virtual bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils)
-       override final {
-     llvm::Function* dummy_func
-                = codegen_utils->CreateFunctionTypeDef<UncompilableFunc>(GetUniqueFuncName());
-     llvm::BasicBlock* dummy_func_body = codegen_utils->CreateBasicBlock("body",
+  bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) final {
+    llvm::Function* dummy_func
+                = codegen_utils->CreateFunctionTypeDef<UncompilableFunc>(
+                    GetUniqueFuncName());
+    llvm::BasicBlock* dummy_func_body = codegen_utils->CreateBasicBlock("body",
                                                                   dummy_func);
-     codegen_utils->ir_builder()->SetInsertPoint(dummy_func_body);
-     llvm::Value* int_value = codegen_utils->GetConstant(4);
-     codegen_utils->ir_builder()->CreateRet(int_value);
-     return true;
-
-   }
+    codegen_utils->ir_builder()->SetInsertPoint(dummy_func_body);
+    llvm::Value* int_value = codegen_utils->GetConstant(4);
+    codegen_utils->ir_builder()->CreateRet(int_value);
+    return true;
+  }
 
  private:
-
-   static constexpr char kUncompilableFuncNamePrefix[] = "UncompilableFunc";
+  static constexpr char kUncompilableFuncNamePrefix[] = "UncompilableFunc";
 };
 
 constexpr char SumCodeGenerator::kAddFuncNamePrefix[];
@@ -166,13 +157,12 @@ constexpr char UncompilableCodeGenerator::kUncompilableFuncNamePrefix[];
 class CodeGenManagerTestEnvironment : public ::testing::Environment {
  public:
   virtual void SetUp() {
-    ASSERT_TRUE(InitCodeGen() == 0);
+    ASSERT_EQ(InitCodeGen(), 0);
   }
 };
 
 class CodeGenManagerTest : public ::testing::Test {
  protected:
-
   virtual void SetUp() {
     manager_.reset(new CodeGenManager());
   }
@@ -181,8 +171,9 @@ class CodeGenManagerTest : public ::testing::Test {
   void EnrollCodeGen(FuncType reg_func, FuncType* ptr_to_chosen_func) {
     ClassType* code_gen = new ClassType(reg_func, ptr_to_chosen_func);
     ASSERT_TRUE(reg_func == *ptr_to_chosen_func);
-    ASSERT_TRUE(manager_->EnrollCodeGenerator(CodeGenFuncLifespan_Parameter_Invariant,
-                                              code_gen));
+    ASSERT_TRUE(manager_->EnrollCodeGenerator(
+        CodeGenFuncLifespan_Parameter_Invariant,
+        code_gen));
   }
 
   std::unique_ptr<CodeGenManager> manager_;
@@ -190,18 +181,20 @@ class CodeGenManagerTest : public ::testing::Test {
 
 TEST_F(CodeGenManagerTest, TestGetters) {
   sum_func_ptr = nullptr;
-  SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular, &sum_func_ptr);
+  SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular,
+                                                    &sum_func_ptr);
 
-  EXPECT_EQ(SumCodeGenerator::kAddFuncNamePrefix, code_gen->GetOrigFuncName());
-  // Static unique_counter will be zero to begin with. So uniqueFuncName return with
-  // with suffix zero.
-  EXPECT_EQ(SumCodeGenerator::kAddFuncNamePrefix + std::to_string(0), code_gen->GetUniqueFuncName());
-  ASSERT_TRUE(manager_->EnrollCodeGenerator(CodeGenFuncLifespan_Parameter_Invariant,
-                                                 code_gen));
+  EXPECT_EQ(SumCodeGenerator::kAddFuncNamePrefix,
+            code_gen->GetOrigFuncName());
+  // Static unique_counter will be zero to begin with.
+  // So uniqueFuncName return with suffix zero.
+  EXPECT_EQ(SumCodeGenerator::kAddFuncNamePrefix + std::to_string(0),
+            code_gen->GetUniqueFuncName());
+  ASSERT_TRUE(manager_->EnrollCodeGenerator(
+      CodeGenFuncLifespan_Parameter_Invariant, code_gen));
   ASSERT_FALSE(code_gen->IsGenerated());
   EXPECT_EQ(1, manager_->GenerateCode());
   ASSERT_TRUE(code_gen->IsGenerated());
-
 }
 
 TEST_F(CodeGenManagerTest, EnrollCodeGeneratorTest) {
@@ -209,15 +202,6 @@ TEST_F(CodeGenManagerTest, EnrollCodeGeneratorTest) {
   EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
   EXPECT_EQ(1, manager_->GetEnrollmentCount());
 }
-
-//TEST_F(CodeGenManagerTest, EnrollCodeGeneratorExceptionTest) {
-//  SumFunc* local_func_ptr = new SumFunc();
-//  EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, local_func_ptr);
-//  //EXPECT_EQ(1, manager_->GetEnrollmentCount());
-//  delete local_func_ptr;
-//  local_func_ptr = nullptr;
-//  manager_.reset(nullptr);
-//}
 
 TEST_F(CodeGenManagerTest, GenerateCodeTest) {
   // With no generator it should return false
@@ -230,12 +214,14 @@ TEST_F(CodeGenManagerTest, GenerateCodeTest) {
 
   // Test if generation fails with FailingCodeGenerator
   failed_func_ptr = nullptr;
-  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular, &failed_func_ptr);
+  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
+                                               &failed_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Test if generation pass with UncompiledCodeGenerator
   uncompilable_func_ptr = nullptr;
-  EnrollCodeGen<UncompilableCodeGenerator, UncompilableFunc>(UncompilableFuncRegular, &uncompilable_func_ptr);
+  EnrollCodeGen<UncompilableCodeGenerator, UncompilableFunc>(
+      UncompilableFuncRegular, &uncompilable_func_ptr);
   EXPECT_EQ(2, manager_->GenerateCode());
 }
 
@@ -247,19 +233,24 @@ TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
 
   // Test if generation fails with FailingCodeGenerator
   failed_func_ptr = nullptr;
-  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular, &failed_func_ptr);
+  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
+                                               &failed_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Make sure both the function pointers refer to regular versions
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
   ASSERT_TRUE(SumFuncRegular == failed_func_ptr);
 
-  // This should update function pointers to generated version, if generation was successful
+  // This should update function pointers to generated version,
+  // if generation was successful
   ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
 
-  // For sum_func_ptr, we successfully generated code. So, pointer should reflect that.
+  // For sum_func_ptr, we successfully generated code.
+  // So, pointer should reflect that.
   ASSERT_TRUE(SumFuncRegular != sum_func_ptr);
-  // For failed_func_ptr, code generation was unsuccessful. So, pointer should not change.
+
+  // For failed_func_ptr, code generation was unsuccessful.
+  // So, pointer should not change.
   ASSERT_TRUE(SumFuncRegular == failed_func_ptr);
 
   // Check generate SumFuncRegular works as expected;
@@ -268,7 +259,8 @@ TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
   // Reset the manager, so that all the code generators go away
   manager_.reset(nullptr);
 
-  // The manager reset should have restored all the function pointers to point to regular version
+  // The manager reset should have restored all the function pointers
+  // to point to regular version
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
   ASSERT_TRUE(SumFuncRegular == failed_func_ptr);
 }
@@ -299,29 +291,31 @@ TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
 
 TEST_F(CodeGenManagerTest, ResetTest) {
   sum_func_ptr = nullptr;
-  SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular, &sum_func_ptr);
+  SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular,
+                                                    &sum_func_ptr);
 
-  ASSERT_TRUE(manager_->EnrollCodeGenerator(CodeGenFuncLifespan_Parameter_Invariant,
-                                                   code_gen));
+  ASSERT_TRUE(manager_->EnrollCodeGenerator(
+      CodeGenFuncLifespan_Parameter_Invariant, code_gen));
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Make sure the function pointers refer to regular versions
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
 
-  // This should update function pointers to generated version, if generation was successful
+  // This should update function pointers to generated version,
+  // if generation was successful
   ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
 
-  // For sum_func_ptr, we successfully generated code. So, pointer should reflect that.
+  // For sum_func_ptr, we successfully generated code.
+  // So, pointer should reflect that.
   ASSERT_TRUE(SumFuncRegular != sum_func_ptr);
 
   code_gen->Reset();
 
   // Make sure Reset set the function pointer back to regular version.
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
-
 }
 
-} //namespace gpcodegen
+}  // namespace gpcodegen
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

@@ -1,12 +1,12 @@
 //---------------------------------------------------------------------------
-//	Greenplum Database
-//	Copyright (C) 2016 Pivotal Software, Inc.
+//  Greenplum Database
+//  Copyright (C) 2016 Pivotal Software, Inc.
 //
-//	@filename:
-//		codegen_manager.cpp
+//  @filename:
+//    codegen_manager.cpp
 //
-//	@doc:
-//		Implementation of a code generator manager
+//  @doc:
+//    Implementation of a code generator manager
 //
 //---------------------------------------------------------------------------
 
@@ -35,63 +35,56 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
-//#include "access/htup.h"
-//#include "access/tupmacs.h"
-//#include "c.h"
-//#include "catalog/pg_attribute.h"
 
-using namespace gpcodegen;
+using gpcodegen::CodeGenManager;
 
 CodeGenManager::CodeGenManager() {
-	codegen_utils_.reset(new gpcodegen::CodegenUtils("test_module"));
+  codegen_utils_.reset(new gpcodegen::CodeGenUtils("test_module"));
 }
 
-bool CodeGenManager::EnrollCodeGenerator(CodeGenFuncLifespan funcLifespan, CodeGenInterface* generator) {
-  	// Only CodeGenFuncLifespan_Parameter_Invariant is supported as of now
-	assert(funcLifespan == CodeGenFuncLifespan_Parameter_Invariant);
-	assert(nullptr != generator);
-	enrolled_code_generators_.emplace_back(generator);
-	return true;
+bool CodeGenManager::EnrollCodeGenerator(
+    CodeGenFuncLifespan funcLifespan, CodeGenInterface* generator) {
+  // Only CodeGenFuncLifespan_Parameter_Invariant is supported as of now
+  assert(funcLifespan == CodeGenFuncLifespan_Parameter_Invariant);
+  assert(nullptr != generator);
+  enrolled_code_generators_.emplace_back(generator);
+  return true;
 }
 
 size_t CodeGenManager::GenerateCode() {
-	size_t success_count = 0;
-	for(auto& generator : enrolled_code_generators_) {
-		success_count += (generator->GenerateCode(codegen_utils_.get()) == true ? 1 : 0);
-	}
-
-	return success_count;
+  size_t success_count = 0;
+  for (auto& generator : enrolled_code_generators_) {
+    success_count +=
+        (generator->GenerateCode(codegen_utils_.get()) == true ? 1 : 0);
+  }
+  return success_count;
 }
 
 bool CodeGenManager::PrepareGeneratedFunctions() {
-  // Call CodegenUtils to compile entire module
-	bool compilation_status = codegen_utils_->PrepareForExecution
-	    (gpcodegen::CodegenUtils::OptimizationLevel::kNone, true);
+  // Call CodeGenUtils to compile entire module
+  bool compilation_status = codegen_utils_->PrepareForExecution(
+      gpcodegen::CodeGenUtils::OptimizationLevel::kNone, true);
 
-	if (!compilation_status)
-	{
-		return compilation_status;
-	}
+  if (!compilation_status) {
+    return compilation_status;
+  }
 
-  	// On successful compilation, go through all generator and swap
-  	// the pointer so compiled function get called
-	gpcodegen::CodegenUtils* codegen_utils = codegen_utils_.get();
-	for(auto& generator : enrolled_code_generators_) {
-		generator->SetToGenerated(codegen_utils);
-	}
-
-	return true;
+  // On successful compilation, go through all generator and swap
+  // the pointer so compiled function get called
+  gpcodegen::CodeGenUtils* codegen_utils = codegen_utils_.get();
+  for (auto& generator : enrolled_code_generators_) {
+    generator->SetToGenerated(codegen_utils);
+  }
+  return true;
 }
 
-// notifies that the underlying operator has a parameter change
 void CodeGenManager::NotifyParameterChange() {
-	// no support for parameter change yet
-	assert(false);
+  // no support for parameter change yet
+  assert(false);
 }
 
-// Invalidate all generated functions
 bool CodeGenManager::InvalidateGeneratedFunctions() {
-	// no support for invalidation of generated function
-	assert(false);
-	return false;
+  // no support for invalidation of generated function
+  assert(false);
+  return false;
 }

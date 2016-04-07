@@ -2041,7 +2041,7 @@ TEST_F(CodegenUtilsTest, IterationTest) {
 // Macro that provides some syntactic sugar for a call to
 // CheckGetPointerToMemberConstant(). Automates deduction of the expected
 // member type and calculation of the expected offset within the struct.
-#define GPCODEGEN_TEST_GET_POINTER_TO_STRUCT_ELEMENT(struct_ptr, element_name)  \
+#define GPCODEGEN_TEST_GET_POINTER_TO_STRUCT_ELEMENT(struct_ptr, element_name) \
   CheckGetPointerToMemberConstant<                                             \
       std::remove_reference<decltype((struct_ptr)->element_name)>::type>(      \
           &pointer_check_addresses,                                            \
@@ -2052,7 +2052,7 @@ TEST_F(CodegenUtilsTest, IterationTest) {
 
 // Similar to above, but tests accesing a field nested inside a struct member of
 // the top-level struct.
-#define GPCODEGEN_TEST_GET_POINTER_TO_NESTED_STRUCT_ELEMENT(                    \
+#define GPCODEGEN_TEST_GET_POINTER_TO_NESTED_STRUCT_ELEMENT(                   \
     struct_ptr,                                                                \
     top_element_name,                                                          \
     nested_element_name)                                                       \
