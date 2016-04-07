@@ -35,10 +35,10 @@ class CodeGenInterface;
  **/
 class CodeGenManager {
  public:
-	/**
-	 * @brief Constructor.
-	 *
-	 **/
+  /**
+   * @brief Constructor.
+   *
+   **/
   CodeGenManager();
 
   ~CodeGenManager() = default;
@@ -55,36 +55,36 @@ class CodeGenManager {
   bool EnrollCodeGenerator(CodeGenFuncLifespan funcLifespan,
                            CodeGenInterface* generator);
 
-	/**
-	 * @brief Make all enrolled generators to generate code.
-	 *
-	 * @return The number of enrolled codegen that successfully generated code.
-	 **/
+  /**
+   * @brief Make all enrolled generators to generate code.
+   *
+   * @return The number of enrolled codegen that successfully generated code.
+   **/
   size_t GenerateCode();
 
-	/**
-	 * @brief Compile all the generated functions. On success, caller gets
-	 * 		to call the generated method.
-	 *
-	 * @return true on successful compilation or return false
-	 **/
+  /**
+   * @brief Compile all the generated functions. On success, caller gets
+   * 		to call the generated method.
+   *
+   * @return true on successful compilation or return false
+   **/
   bool PrepareGeneratedFunctions();
 
-	/**
-	 * @brief 	Notifies the manager of a parameter change.
-	 *
-	 * @note 	This is called during a ReScan or other parameter change process.
-	 * 			Upon receiving this notification the manager may invalidate all the
-	 * 			generated code that depend on parameters.
-	 *
-	 **/
+  /**
+   * @brief 	Notifies the manager of a parameter change.
+   *
+   * @note 	This is called during a ReScan or other parameter change process.
+   * 			Upon receiving this notification the manager may invalidate all the
+   * 			generated code that depend on parameters.
+   *
+   **/
   void NotifyParameterChange();
 
-	/**
-	 * @brief Invalidate all generated functions.
-	 *
-	 * @return true if successfully invalidated.
-	 **/
+  /**
+   * @brief Invalidate all generated functions.
+   *
+   * @return true if successfully invalidated.
+   **/
   bool InvalidateGeneratedFunctions();
 
   /**
