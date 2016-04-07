@@ -1,16 +1,16 @@
 //---------------------------------------------------------------------------
-//	Greenplum Database
-//	Copyright (C) 2016 Pivotal Software, Inc.
+//  Greenplum Database
+//  Copyright (C) 2016 Pivotal Software, Inc.
 //
-//	@filename:
-//		base_codegen.h
+//  @filename:
+//    base_codegen.h
 //
-//	@doc:
-//		Base class for all the code generators with common implementation
+//  @doc:
+//    Base class for all the code generators with common implementation
 //
 //---------------------------------------------------------------------------
-#ifndef BASE_CODEGEN_H_
-#define BASE_CODEGEN_H_
+#ifndef GPCODEGEN_BASE_CODEGEN_H_  // NOLINT(build/header_guard)
+#define GPCODEGEN_BASE_CODEGEN_H_
 
 #include <string>
 #include <vector>
@@ -32,69 +32,65 @@ namespace gpcodegen {
  **/
 template<class FuncPtrType>
 class BaseCodeGen: public CodeGenInterface {
-
-public:
-
+ public:
 	/**
 	 * @brief Destroys the code generator and reverts back to using regular
 	 * 		version of the generated function.
 	 **/
-	virtual ~BaseCodeGen() {
-		SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
-	}
+  virtual ~BaseCodeGen() {
+    SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
+  }
 
-	virtual bool GenerateCode(gpcodegen::CodeGenUtils* codegen_utils)
-	override final {
-		is_generated_ = DoCodeGeneration(codegen_utils);
-		return is_generated_;
-	}
+  bool GenerateCode(gpcodegen::CodeGenUtils* codegen_utils) final {
+    is_generated_ = DoCodeGeneration(codegen_utils);
+    return is_generated_;
+  }
 
-	virtual bool SetToRegular() override final {
-		assert(nullptr != regular_func_ptr_);
-		SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
-		return true;
-	}
+  bool SetToRegular() final {
+    assert(nullptr != regular_func_ptr_);
+    SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
+    return true;
+  }
 
-	virtual bool SetToGenerated(gpcodegen::CodeGenUtils* codegen_utils)
-	override final {
-		if (false == IsGenerated()) {
-			assert(*ptr_to_chosen_func_ptr_ == regular_func_ptr_);
-			return false;
-		}
+  bool SetToGenerated(gpcodegen::CodeGenUtils* codegen_utils) final {
+    if (false == IsGenerated()) {
+      assert(*ptr_to_chosen_func_ptr_ == regular_func_ptr_);
+      return false;
+    }
 
-		auto compiled_func_ptr = codegen_utils->GetFunctionPointerTypeDef<
-				FuncPtrType>(GetUniqueFuncName());
+    auto compiled_func_ptr = codegen_utils->GetFunctionPointerTypeDef<
+        FuncPtrType>(GetUniqueFuncName());
 
-		if (nullptr != compiled_func_ptr) {
-			*ptr_to_chosen_func_ptr_ = compiled_func_ptr;
-			return true;
-		}
-		return false;
-	}
+    if (nullptr != compiled_func_ptr) {
+      *ptr_to_chosen_func_ptr_ = compiled_func_ptr;
+      return true;
+    }
+    return false;
+  }
 
-	virtual void Reset() override final {
-		SetToRegular();
-	}
+  void Reset() final {
+    SetToRegular();
+  }
 
-	virtual const std::string& GetOrigFuncName() const override final {
-		return orig_func_name_;
-	}
+  const std::string& GetOrigFuncName() const final {
+    return orig_func_name_;
+  }
 
-	virtual const std::string& GetUniqueFuncName() const override final {
-		return unique_func_name_;
-	}
+  const std::string& GetUniqueFuncName() const final {
+    return unique_func_name_;
+  }
 
-	virtual bool IsGenerated() const override final {
-		return is_generated_;
-	}
+  bool IsGenerated() const final {
+    return is_generated_;
+  }
 
 	/**
 	 * @return Regular version of the corresponding generated function.
 	 *
 	 **/
-	FuncPtrType GetRegularFuncPointer() {
-		return regular_func_ptr_;
-	}
+  FuncPtrType GetRegularFuncPointer() {
+    return regular_func_ptr_;
+  }
 
 	/**
 	 * @brief Sets up the caller to use the corresponding regular version of the
@@ -105,14 +101,13 @@ public:
 	 *
 	 * @return true on setting to regular version.
 	 **/
-	static bool SetToRegular(FuncPtrType regular_func_ptr,
-			FuncPtrType* ptr_to_chosen_func_ptr) {
-		*ptr_to_chosen_func_ptr = regular_func_ptr;
-		return true;
-	}
+  static bool SetToRegular(FuncPtrType regular_func_ptr,
+                           FuncPtrType* ptr_to_chosen_func_ptr) {
+    *ptr_to_chosen_func_ptr = regular_func_ptr;
+    return true;
+  }
 
-protected:
-
+ protected:
 	/**
 	 * @brief Constructor
 	 *
@@ -124,17 +119,17 @@ protected:
 	 * 			corresponding regular version.
 	 *
 	 **/
-	explicit BaseCodeGen(const std::string& orig_func_name,
-			FuncPtrType regular_func_ptr, FuncPtrType* ptr_to_chosen_func_ptr) :
-			orig_func_name_(orig_func_name),
-			unique_func_name_(CodeGenInterface::GenerateUniqueName(orig_func_name)),
-			regular_func_ptr_(regular_func_ptr),
-			ptr_to_chosen_func_ptr_(ptr_to_chosen_func_ptr),
-			is_generated_(false) {
-
-		// Initialize the caller to use regular version of generated function.
-		SetToRegular(regular_func_ptr, ptr_to_chosen_func_ptr);
-	}
+  explicit BaseCodeGen(const std::string& orig_func_name,
+                       FuncPtrType regular_func_ptr,
+                       FuncPtrType* ptr_to_chosen_func_ptr)
+  : orig_func_name_(orig_func_name),
+    unique_func_name_(CodeGenInterface::GenerateUniqueName(orig_func_name)),
+    regular_func_ptr_(regular_func_ptr),
+    ptr_to_chosen_func_ptr_(ptr_to_chosen_func_ptr),
+    is_generated_(false) {
+    // Initialize the caller to use regular version of generated function.
+    SetToRegular(regular_func_ptr, ptr_to_chosen_func_ptr);
+  }
 
 	/**
 	 * @brief Generates specialized code at run time.
@@ -148,16 +143,16 @@ protected:
 	 * @param codegen_utils Utility to ease the code generation process.
 	 * @return true on successful generation.
 	 **/
-	virtual bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) = 0;
+  virtual bool DoCodeGeneration(gpcodegen::CodeGenUtils* codegen_utils) = 0;
 
-private:
-	std::string orig_func_name_;
-	std::string unique_func_name_;
-	FuncPtrType regular_func_ptr_;
-	FuncPtrType* ptr_to_chosen_func_ptr_;
-	bool is_generated_;
+ private:
+  std::string orig_func_name_;
+  std::string unique_func_name_;
+  FuncPtrType regular_func_ptr_;
+  FuncPtrType* ptr_to_chosen_func_ptr_;
+  bool is_generated_;
 };
 /** @} */
-}
+}  // namespace gpcodegen
 
-#endif  // BASE_CODEGEN_H_
+#endif  // GPCODEGEN_BASE_CODEGEN_H_

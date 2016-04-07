@@ -1,17 +1,17 @@
 //---------------------------------------------------------------------------
-//	Greenplum Database
-//	Copyright (C) 2016 Pivotal Software, Inc.
+//  Greenplum Database
+//  Copyright (C) 2016 Pivotal Software, Inc.
 //
-//	@filename:
-//		codegen_manager.h
+//  @filename:
+//    codegen_manager.h
 //
-//	@doc:
-//		Object that manage all CodeGen and CodeGenUtils
+//  @doc:
+//    Object that manage all CodeGen and CodeGenUtils
 //
 //---------------------------------------------------------------------------
 
-#ifndef CODEGEN_MANAGER_H_
-#define CODEGEN_MANAGER_H_
+#ifndef GPCODEGEN_CODEGEN_MANAGER_H_  // NOLINT(build/header_guard)
+#define GPCODEGEN_CODEGEN_MANAGER_H_
 
 #include <memory>
 #include <vector>
@@ -34,33 +34,33 @@ class CodeGenInterface;
  * @brief Object that manages all code gen.
  **/
 class CodeGenManager {
-public:
+ public:
 	/**
 	 * @brief Constructor.
 	 *
 	 **/
-	explicit CodeGenManager();
+  CodeGenManager();
 
-	~CodeGenManager() = default;
+  ~CodeGenManager() = default;
 
-	/**
-	 * @brief Enroll a code generator with manager
-	 *
-	 * @note Manager manages the memory of enrolled generator.
-	 *
-	 * @param funcLifespan Based on life span corresponding CodeGen_Utils will be used to generate
-	 * @param generator    Generator that needs to be enrolled with manager.
-	 * @return true on successful enrollment.
-	 **/
-	bool EnrollCodeGenerator(CodeGenFuncLifespan funcLifespan,
-			CodeGenInterface* generator);
+  /**
+   * @brief Enroll a code generator with manager
+   *
+   * @note Manager manages the memory of enrolled generator.
+   *
+   * @param funcLifespan Based on life span corresponding CodeGen_Utils will be used to generate
+   * @param generator    Generator that needs to be enrolled with manager.
+   * @return true on successful enrollment.
+   **/
+  bool EnrollCodeGenerator(CodeGenFuncLifespan funcLifespan,
+                           CodeGenInterface* generator);
 
 	/**
 	 * @brief Make all enrolled generators to generate code.
 	 *
 	 * @return The number of enrolled codegen that successfully generated code.
 	 **/
-	size_t GenerateCode();
+  size_t GenerateCode();
 
 	/**
 	 * @brief Compile all the generated functions. On success, caller gets
@@ -68,7 +68,7 @@ public:
 	 *
 	 * @return true on successful compilation or return false
 	 **/
-	bool PrepareGeneratedFunctions();
+  bool PrepareGeneratedFunctions();
 
 	/**
 	 * @brief 	Notifies the manager of a parameter change.
@@ -78,34 +78,33 @@ public:
 	 * 			generated code that depend on parameters.
 	 *
 	 **/
-	void NotifyParameterChange();
+  void NotifyParameterChange();
 
 	/**
 	 * @brief Invalidate all generated functions.
 	 *
 	 * @return true if successfully invalidated.
 	 **/
-	bool InvalidateGeneratedFunctions();
+  bool InvalidateGeneratedFunctions();
 
   /**
    * @return Number of enrolled generators.
    **/
-	size_t GetEnrollmentCount() {
-	  return enrolled_code_generators_.size();
-	}
+  size_t GetEnrollmentCount() {
+    return enrolled_code_generators_.size();
+  }
 
-private:
-	// CodeGenUtils provides a facade to LLVM subsystem.
-	std::unique_ptr<gpcodegen::CodeGenUtils> codegen_utils_;
+ private:
+  // CodeGenUtils provides a facade to LLVM subsystem.
+  std::unique_ptr<gpcodegen::CodeGenUtils> codegen_utils_;
 
-	// List of all enrolled code generators.
-	std::vector<std::unique_ptr<CodeGenInterface>> enrolled_code_generators_;
+  // List of all enrolled code generators.
+  std::vector<std::unique_ptr<CodeGenInterface>> enrolled_code_generators_;
 
-	DISALLOW_COPY_AND_ASSIGN(CodeGenManager);
-
+  DISALLOW_COPY_AND_ASSIGN(CodeGenManager);
 };
 
 /** @} */
 
-}
-#endif  // CODEGEN_MANAGER_H_
+}  // namespace gpcodegen
+#endif  // GPCODEGEN_CODEGEN_MANAGER_H_

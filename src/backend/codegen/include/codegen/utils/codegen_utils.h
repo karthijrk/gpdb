@@ -13,7 +13,7 @@
 //
 //---------------------------------------------------------------------------
 
-#ifndef GPCODEGEN_CODEGEN_UTILS_H_
+#ifndef GPCODEGEN_CODEGEN_UTILS_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_CODEGEN_UTILS_H_
 
 #include <cassert>
@@ -1000,34 +1000,40 @@ class FunctionTypeUnpacker;
  * CreateFunction
  **/
 template<typename ReturnType, typename... ArgumentTypes>
-class FunctionTypeUnpacker<ReturnType(*)(ArgumentTypes...)>
-{
-public:
+class FunctionTypeUnpacker<ReturnType(*)(ArgumentTypes...)> {
+ public:
   using R = ReturnType;
-  static auto GetFunctionPointerHelper(gpcodegen::CodeGenUtils* codegen_utils, const std::string& func_name)
+  static auto GetFunctionPointerHelper(gpcodegen::CodeGenUtils* codegen_utils,
+                                       const std::string& func_name)
     -> ReturnType (*)(ArgumentTypes...) {
-    return codegen_utils->GetFunctionPointer<ReturnType, ArgumentTypes...>(func_name);
+    return codegen_utils->GetFunctionPointer<ReturnType, ArgumentTypes...>(
+        func_name);
   }
 
-  static llvm::Function* CreateFunctionHelper(gpcodegen::CodeGenUtils* codegen_utils,
-                                              const llvm::Twine& name,
-                                                  const llvm::GlobalValue::LinkageTypes linkage
-                                                      = llvm::GlobalValue::ExternalLinkage) {
-    return codegen_utils->CreateFunction<ReturnType, ArgumentTypes...>(name, linkage);
+  static llvm::Function* CreateFunctionHelper(
+      CodeGenUtils* codegen_utils,
+      const llvm::Twine& name,
+      const llvm::GlobalValue::LinkageTypes linkage =
+          llvm::GlobalValue::ExternalLinkage) {
+    return codegen_utils->CreateFunction<ReturnType, ArgumentTypes...>(
+        name, linkage);
   }
 };
-} // namespace codegen_utils_detail
+}  // namespace codegen_utils_detail
 
 template <typename FunctionType>
-FunctionType CodeGenUtils::GetFunctionPointerTypeDef(const std::string& function_name) {
-  return codegen_utils_detail::FunctionTypeUnpacker<FunctionType>::GetFunctionPointerHelper(this, function_name);
+FunctionType CodeGenUtils::GetFunctionPointerTypeDef(
+    const std::string& function_name) {
+  return codegen_utils_detail::FunctionTypeUnpacker<FunctionType>::
+      GetFunctionPointerHelper(this, function_name);
 }
 
 template <typename FunctionType>
 llvm::Function* CodeGenUtils::CreateFunctionTypeDef(
     const llvm::Twine& name,
     const llvm::GlobalValue::LinkageTypes linkage) {
-  return codegen_utils_detail::FunctionTypeUnpacker<FunctionType>::CreateFunctionHelper(this, name, linkage);
+  return codegen_utils_detail::FunctionTypeUnpacker<FunctionType>::
+      CreateFunctionHelper(this, name, linkage);
 }
 
 }  // namespace gpcodegen
