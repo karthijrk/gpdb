@@ -585,8 +585,8 @@ BaseInit(void)
 		if (InitCodeGen() != 0) {
 			ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("failed to initialize Balerion library"),
-				errhint("Balerion code generation library failed "
+				errmsg("failed to initialize LLVM library"),
+				errhint("LLVM library for code generation failed "
 					"to initialize. You may wish to disable "
 					"code generation by turning off the "
 					"\"codegen\" GUC.")));
