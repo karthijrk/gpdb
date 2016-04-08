@@ -68,8 +68,6 @@ class CodeGenInterface {
   virtual void Reset() = 0;
 
   /**
-   * @note   It is expected that returned const char* memory will be valid
-   *         as long as this interface instance is valid.
    *
    * @return Original function name.
    *
