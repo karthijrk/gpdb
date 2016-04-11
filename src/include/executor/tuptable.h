@@ -149,7 +149,9 @@ typedef struct TupleTableSlot
     /* System attributes */
     Oid         tts_tableOid;
 
+#ifdef USE_CODEGEN
     SlotDeformTupleCodeGenInfo slot_deform_tuple_gen_info;
+#endif
 } TupleTableSlot;
 
 static inline bool TupIsNull(TupleTableSlot *slot)
