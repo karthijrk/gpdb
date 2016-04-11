@@ -61,25 +61,46 @@ void SetActiveCodeGeneratorManager(void* manager) {
   ActiveCodeGeneratorManager = manager;
 }
 
-void* SlotDeformTupleCodeGen_Enroll(
-    TupleTableSlot* slot,
-    SlotDeformTupleFn regular_func_ptr,
-    SlotDeformTupleFn* ptr_to_chosen_func_ptr) {
+/**
+ * @brief Template function to facilitate enroll for any type of
+ *        codegen
+ *
+ * @tparam ClassType Type of Code Generator class
+ * @tparam FuncType Type of the regular function
+ * @tparam Args Variable argument that ClassType will take in its constructor
+ *
+ * @param regular_func_ptr Regular version of the generated function.
+ * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
+ * @param args Variable length argument for ClassType
+ *
+ * @return Pointer to ClassType
+ **/
+template <typename ClassType, typename FuncType, typename ...Args>
+ClassType* CodeGenEnroll(FuncType regular_func_ptr,
+                          FuncType* ptr_to_chosen_func_ptr,
+                          Args&&... args) {
   CodeGenManager* manager = static_cast<CodeGenManager*>(
-      GetActiveCodeGeneratorManager());
-
+        GetActiveCodeGeneratorManager());
   if (nullptr == manager) {
-    BaseCodeGen<SlotDeformTupleFn>::SetToRegular(
-        regular_func_ptr, ptr_to_chosen_func_ptr);
-    return nullptr;
-  }
+      BaseCodeGen<FuncType>::SetToRegular(
+          regular_func_ptr, ptr_to_chosen_func_ptr);
+      return nullptr;
+    }
 
-  SlotDeformTupleCodeGen* generator = new SlotDeformTupleCodeGen(
-      slot, regular_func_ptr, ptr_to_chosen_func_ptr);
-  assert(nullptr != manager);
-  bool is_enrolled = manager->EnrollCodeGenerator(
-      CodeGenFuncLifespan_Parameter_Invariant, generator);
-  assert(is_enrolled);
+  ClassType* generator = new ClassType(
+      regular_func_ptr, ptr_to_chosen_func_ptr, std::forward<Args>(args)...);
+    bool is_enrolled = manager->EnrollCodeGenerator(
+        CodeGenFuncLifespan_Parameter_Invariant, generator);
+    assert(is_enrolled);
+    return generator;
+}
+
+void* SlotDeformTupleCodeGen_Enroll(
+    SlotDeformTupleFn regular_func_ptr,
+    SlotDeformTupleFn* ptr_to_chosen_func_ptr,
+    TupleTableSlot* slot) {
+  SlotDeformTupleCodeGen* generator = CodeGenEnroll<SlotDeformTupleCodeGen>(
+      regular_func_ptr, ptr_to_chosen_func_ptr, slot);
   return generator;
 }
 
