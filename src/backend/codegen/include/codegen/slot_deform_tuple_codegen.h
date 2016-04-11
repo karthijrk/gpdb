@@ -27,17 +27,17 @@ class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
   /**
    * @brief Constructor
    *
-   * @param slot         The slot to use for generating code.
    * @param regular_func_ptr       Regular version of the generated function.
    * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
+   * @param slot         The slot to use for generating code.
    *
    * @note 	The ptr_to_chosen_func_ptr can refer to either the generated function or the
    * 			corresponding regular version.
    *
    **/
-  explicit SlotDeformTupleCodeGen(TupleTableSlot* slot,
-                                  SlotDeformTupleFn regular_func_ptr,
-                                  SlotDeformTupleFn* ptr_to_regular_func_ptr);
+  explicit SlotDeformTupleCodeGen(SlotDeformTupleFn regular_func_ptr,
+                                  SlotDeformTupleFn* ptr_to_regular_func_ptr,
+                                  TupleTableSlot* slot);
 
   virtual ~SlotDeformTupleCodeGen() = default;
 
