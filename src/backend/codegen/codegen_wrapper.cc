@@ -31,25 +31,25 @@ int InitCodeGen() {
   return !is_codegen_initalized;
 }
 
-void* CodeGeneratorManager_Create(const char* module_name) {
+void* CodeGeneratorManagerCreate(const char* module_name) {
   return new CodeGenManager(module_name);
 }
 
-unsigned int CodeGeneratorManager_GenerateCode(void* manager) {
+unsigned int CodeGeneratorManagerGenerateCode(void* manager) {
   return static_cast<CodeGenManager*>(manager)->GenerateCode();
 }
 
-unsigned int CodeGeneratorManager_PrepareGeneratedFunctions(void* manager) {
+unsigned int CodeGeneratorManagerPrepareGeneratedFunctions(void* manager) {
   return static_cast<CodeGenManager*>(manager)->PrepareGeneratedFunctions();
 }
 
-bool CodeGeneratorManager_NotifyParameterChange(void* manager) {
+bool CodeGeneratorManagerNotifyParameterChange(void* manager) {
   // parameter change notification is not supported yet
   assert(false);
   return false;
 }
 
-void CodeGeneratorManager_Destroy(void* manager) {
+void CodeGeneratorManagerDestroy(void* manager) {
   delete (static_cast<CodeGenManager*>(manager));
 }
 
@@ -78,7 +78,7 @@ void SetActiveCodeGeneratorManager(void* manager) {
 template <typename ClassType, typename FuncType, typename ...Args>
 ClassType* CodeGenEnroll(FuncType regular_func_ptr,
                           FuncType* ptr_to_chosen_func_ptr,
-                          Args&&... args) {
+                          Args&&... args) {  // NOLINT(build/c++11)
   CodeGenManager* manager = static_cast<CodeGenManager*>(
         GetActiveCodeGeneratorManager());
   if (nullptr == manager) {
@@ -95,7 +95,7 @@ ClassType* CodeGenEnroll(FuncType regular_func_ptr,
     return generator;
 }
 
-void* SlotDeformTupleCodeGen_Enroll(
+void* SlotDeformTupleCodeGenEnroll(
     SlotDeformTupleFn regular_func_ptr,
     SlotDeformTupleFn* ptr_to_chosen_func_ptr,
     TupleTableSlot* slot) {

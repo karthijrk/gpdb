@@ -23,11 +23,11 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 #ifndef USE_CODEGEN
 
 #define InitCodeGen();
-#define CodeGeneratorManager_Create(module_name) NULL
-#define CodeGeneratorManager_GenerateCode(manager);
-#define CodeGeneratorManager_PrepareGeneratedFunctions(manager) true
-#define CodeGeneratorManager_NotifyParameterChange(manager) true
-#define CodeGeneratorManager_Destroy(manager);
+#define CodeGeneratorManagerCreate(module_name) NULL
+#define CodeGeneratorManagerGenerateCode(manager);
+#define CodeGeneratorManagerPrepareGeneratedFunctions(manager) true
+#define CodeGeneratorManagerNotifyParameterChange(manager) true
+#define CodeGeneratorManagerDestroy(manager);
 #define GetActiveCodeGeneratorManager() NULL
 #define SetActiveCodeGeneratorManager(manager);
 
@@ -83,32 +83,32 @@ InitCodeGen();
  * Creates a manager for an operator
  */
 void*
-CodeGeneratorManager_Create(const char* module_name);
+CodeGeneratorManagerCreate(const char* module_name);
 
 /*
  * Calls all the registered CodeGenInterface to generate code
  */
 unsigned int
-CodeGeneratorManager_GenerateCode(void* manager);
+CodeGeneratorManagerGenerateCode(void* manager);
 
 /*
  * Compiles and prepares all the CodeGen function pointers. Returns
  * number of successfully generated functions
  */
 unsigned int
-CodeGeneratorManager_PrepareGeneratedFunctions(void* manager);
+CodeGeneratorManagerPrepareGeneratedFunctions(void* manager);
 
 /*
  * Notifies a manager that the underlying operator has a parameter change
  */
 bool
-CodeGeneratorManager_NotifyParameterChange(void* manager);
+CodeGeneratorManagerNotifyParameterChange(void* manager);
 
 /*
  * Destroys a manager for an operator
  */
 void
-CodeGeneratorManager_Destroy(void* manager);
+CodeGeneratorManagerDestroy(void* manager);
 
 /*
  * Get the active code generator manager
@@ -126,7 +126,7 @@ SetActiveCodeGeneratorManager(void* manager);
  * returns the pointer to the CodeGenFuncInfo
  */
 void*
-SlotDeformTupleCodeGen_Enroll(SlotDeformTupleFn regular_func_ptr,
+SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
                               SlotDeformTupleFn* ptr_to_regular_func_ptr,
                               struct TupleTableSlot* slot);
 
@@ -183,7 +183,7 @@ SlotDeformTupleCodeGen_Enroll(SlotDeformTupleFn regular_func_ptr,
  * is set to the regular version initially
  */
 #define enroll_slot_deform_tuple_codegen(regular_func, ptr_to_regular_func_ptr, slot) \
-		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGen_Enroll( \
+		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGenEnroll( \
 				regular_func, ptr_to_regular_func_ptr, slot); \
 		Assert(slot->slot_deform_tuple_gen_info.slot_deform_tuple_fn == regular_func); \
 

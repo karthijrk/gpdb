@@ -223,7 +223,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 	MemoryAccount* curMemoryAccount = NULL;
 
-	void* codeGenManager = CodeGeneratorManager_Create("execProcnode");
+	void* codeGenManager = CodeGeneratorManagerCreate("execProcnode");
 	START_CODE_GENERATOR_MANAGER(codeGenManager);
 	{
 
@@ -753,8 +753,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	{
 		SAVE_EXECUTOR_MEMORY_ACCOUNT(result, curMemoryAccount);
 		result->CodeGenManager = codeGenManager;
-		CodeGeneratorManager_GenerateCode(codeGenManager);
-		CodeGeneratorManager_PrepareGeneratedFunctions(codeGenManager);
+		CodeGeneratorManagerGenerateCode(codeGenManager);
+		CodeGeneratorManagerPrepareGeneratedFunctions(codeGenManager);
 	}
 	}
 	END_CODE_GENERATOR_MANAGER();
@@ -1757,7 +1757,7 @@ ExecEndNode(PlanState *node)
 	}
 
 	Assert(NULL != node->CodeGenManager);
-	CodeGeneratorManager_Destroy(node->CodeGenManager);
+	CodeGeneratorManagerDestroy(node->CodeGenManager);
 	node->CodeGenManager = NULL;
 
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
