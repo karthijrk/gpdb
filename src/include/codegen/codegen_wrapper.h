@@ -88,13 +88,14 @@ CodeGeneratorManager_Create(const char* module_name);
 /*
  * Calls all the registered CodeGenInterface to generate code
  */
-bool
+unsigned int
 CodeGeneratorManager_GenerateCode(void* manager);
 
 /*
- * Compiles and prepares all the CodeGen function pointers
+ * Compiles and prepares all the CodeGen function pointers. Returns
+ * number of successfully generated functions
  */
-bool
+unsigned int
 CodeGeneratorManager_PrepareGeneratedFunctions(void* manager);
 
 /*
