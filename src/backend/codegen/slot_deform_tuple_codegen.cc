@@ -43,9 +43,9 @@ using gpcodegen::SlotDeformTupleCodeGen;
 constexpr char SlotDeformTupleCodeGen::kSlotDeformTupleNamePrefix[];
 
 SlotDeformTupleCodeGen::SlotDeformTupleCodeGen(
-    TupleTableSlot* slot,
     SlotDeformTupleFn regular_func_ptr,
-    SlotDeformTupleFn* ptr_to_regular_func_ptr) :
+    SlotDeformTupleFn* ptr_to_regular_func_ptr,
+    TupleTableSlot* slot) :
         BaseCodeGen(
             kSlotDeformTupleNamePrefix,
             regular_func_ptr,

@@ -30,14 +30,13 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 #define CodeGeneratorManager_Destroy(manager);
 #define GetActiveCodeGeneratorManager() NULL
 #define SetActiveCodeGeneratorManager(manager);
-#define SlotDeformTupleCodeGen_Enroll(slot, regular_func_ptr, ptr_to_regular_func_ptr) NULL
 
 #define START_CODE_GENERATOR_MANAGER(newManager)
 #define END_CODE_GENERATOR_MANAGER()
 
 #define init_codegen()
 #define call_slot_deform_tuple(slot, attno) slot_deform_tuple(slot, attno)
-#define enroll_slot_deform_tuple_codegen(slot, regular_func, ptr_to_chosen_func)
+#define enroll_slot_deform_tuple_codegen(regular_func, ptr_to_chosen_func, slot)
 
 #else
 
@@ -126,8 +125,9 @@ SetActiveCodeGeneratorManager(void* manager);
  * returns the pointer to the CodeGenFuncInfo
  */
 void*
-SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot,
-		SlotDeformTupleFn regular_func_ptr, SlotDeformTupleFn* ptr_to_regular_func_ptr);
+SlotDeformTupleCodeGen_Enroll(SlotDeformTupleFn regular_func_ptr,
+                              SlotDeformTupleFn* ptr_to_regular_func_ptr,
+                              struct TupleTableSlot* slot);
 
 
 #ifdef __cplusplus
@@ -181,9 +181,9 @@ SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot,
  * The enrollment process also ensures that the slot_deform_tuple_fn pointer
  * is set to the regular version initially
  */
-#define enroll_slot_deform_tuple_codegen(slot, regular_func, ptr_to_regular_func_ptr) \
-		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGen_Enroll(slot, \
-				regular_func, ptr_to_regular_func_ptr); \
+#define enroll_slot_deform_tuple_codegen(regular_func, ptr_to_regular_func_ptr, slot) \
+		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGen_Enroll( \
+				regular_func, ptr_to_regular_func_ptr, slot); \
 		Assert(slot->slot_deform_tuple_gen_info.slot_deform_tuple_fn == regular_func); \
 
 
