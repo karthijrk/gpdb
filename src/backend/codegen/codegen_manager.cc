@@ -53,7 +53,7 @@ bool CodeGenManager::EnrollCodeGenerator(
 
 unsigned int CodeGenManager::GenerateCode() {
   unsigned int success_count = 0;
-  for (auto& generator : enrolled_code_generators_) {
+  for (std::unique_ptr<CodeGenInterface>& generator : enrolled_code_generators_) {
     success_count +=
         (generator->GenerateCode(codegen_utils_.get()) == true ? 1 : 0);
   }
@@ -74,7 +74,7 @@ unsigned int CodeGenManager::PrepareGeneratedFunctions() {
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
   gpcodegen::CodeGenUtils* codegen_utils = codegen_utils_.get();
-  for (auto& generator : enrolled_code_generators_) {
+  for (std::unique_ptr<CodeGenInterface>& generator : enrolled_code_generators_) {
     success_count +=
         (generator->SetToGenerated(codegen_utils) == true ? 1 : 0);
   }
