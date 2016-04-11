@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "codegen/utils/macros.h"
 #include "codegen/codegen_wrapper.h"
@@ -38,8 +39,10 @@ class CodeGenManager {
   /**
    * @brief Constructor.
    *
+   * @param module_name A human-readable name for the module that this
+   *        CodeGenManager will manage.
    **/
-  CodeGenManager();
+  explicit CodeGenManager(const std::string& module_name);
 
   ~CodeGenManager() = default;
 

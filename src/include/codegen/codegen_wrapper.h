@@ -23,7 +23,7 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 #ifndef USE_CODEGEN
 
 #define InitCodeGen();
-#define CodeGeneratorManager_Create() NULL
+#define CodeGeneratorManager_Create(module_name) NULL
 #define CodeGeneratorManager_GenerateCode(manager);
 #define CodeGeneratorManager_PrepareGeneratedFunctions(manager) true
 #define CodeGeneratorManager_NotifyParameterChange(manager) true
@@ -84,7 +84,7 @@ InitCodeGen();
  * Creates a manager for an operator
  */
 void*
-CodeGeneratorManager_Create();
+CodeGeneratorManager_Create(const char* module_name);
 
 /*
  * Calls all the registered CodeGenInterface to generate code

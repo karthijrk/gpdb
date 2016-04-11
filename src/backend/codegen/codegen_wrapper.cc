@@ -31,8 +31,8 @@ int InitCodeGen() {
   return !is_codegen_initalized;
 }
 
-void* CodeGeneratorManager_Create() {
-  return new CodeGenManager();
+void* CodeGeneratorManager_Create(const char* module_name) {
+  return new CodeGenManager(module_name);
 }
 
 bool CodeGeneratorManager_GenerateCode(void* manager) {

@@ -38,8 +38,8 @@
 
 using gpcodegen::CodeGenManager;
 
-CodeGenManager::CodeGenManager() {
-  codegen_utils_.reset(new gpcodegen::CodeGenUtils("test_module"));
+CodeGenManager::CodeGenManager(const std::string& module_name) {
+  codegen_utils_.reset(new gpcodegen::CodeGenUtils(module_name));
 }
 
 bool CodeGenManager::EnrollCodeGenerator(
