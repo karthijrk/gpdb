@@ -580,19 +580,8 @@ BaseInit(void)
 	smgrinit();
 	InitBufferPoolAccess();
 
-#ifdef USE_CODEGEN
-	if (codegen) {
-		if (InitCodeGen() != 0) {
-			ereport(FATAL,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("failed to initialize LLVM library"),
-				errhint("LLVM library for code generation failed "
-					"to initialize. You may wish to disable "
-					"code generation by turning off the "
-					"\"codegen\" GUC.")));
-		}
-	}
-#endif
+	/* Initialize llvm library if USE_CODEGEN is defined */
+	init_codegen();
 }
 
 
