@@ -51,8 +51,8 @@ bool CodeGenManager::EnrollCodeGenerator(
   return true;
 }
 
-size_t CodeGenManager::GenerateCode() {
-  size_t success_count = 0;
+unsigned int CodeGenManager::GenerateCode() {
+  unsigned int success_count = 0;
   for (auto& generator : enrolled_code_generators_) {
     success_count +=
         (generator->GenerateCode(codegen_utils_.get()) == true ? 1 : 0);
@@ -60,22 +60,25 @@ size_t CodeGenManager::GenerateCode() {
   return success_count;
 }
 
-bool CodeGenManager::PrepareGeneratedFunctions() {
+unsigned int CodeGenManager::PrepareGeneratedFunctions() {
   // Call CodeGenUtils to compile entire module
   bool compilation_status = codegen_utils_->PrepareForExecution(
       gpcodegen::CodeGenUtils::OptimizationLevel::kNone, true);
 
+  unsigned int success_count = 0;
+
   if (!compilation_status) {
-    return compilation_status;
+    return success_count;
   }
 
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
   gpcodegen::CodeGenUtils* codegen_utils = codegen_utils_.get();
   for (auto& generator : enrolled_code_generators_) {
-    generator->SetToGenerated(codegen_utils);
+    success_count +=
+        (generator->SetToGenerated(codegen_utils) == true ? 1 : 0);
   }
-  return true;
+  return success_count;
 }
 
 void CodeGenManager::NotifyParameterChange() {

@@ -35,11 +35,11 @@ void* CodeGeneratorManager_Create(const char* module_name) {
   return new CodeGenManager(module_name);
 }
 
-bool CodeGeneratorManager_GenerateCode(void* manager) {
+unsigned int CodeGeneratorManager_GenerateCode(void* manager) {
   return static_cast<CodeGenManager*>(manager)->GenerateCode();
 }
 
-bool CodeGeneratorManager_PrepareGeneratedFunctions(void* manager) {
+unsigned int CodeGeneratorManager_PrepareGeneratedFunctions(void* manager) {
   return static_cast<CodeGenManager*>(manager)->PrepareGeneratedFunctions();
 }
 
