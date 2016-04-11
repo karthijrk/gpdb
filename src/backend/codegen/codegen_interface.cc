@@ -13,6 +13,7 @@
 
 using gpcodegen::CodeGenInterface;
 
+// Initalization of unique counter
 unsigned CodeGenInterface::unique_counter_ = 0;
 
 std::string CodeGenInterface::GenerateUniqueName(
