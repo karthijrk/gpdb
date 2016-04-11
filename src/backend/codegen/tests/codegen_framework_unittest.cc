@@ -265,30 +265,6 @@ TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
   ASSERT_TRUE(SumFuncRegular == failed_func_ptr);
 }
 
-/*TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsCompilationErrorTest) {
-  // Test if generation happens successfully
-  sum_func_ptr = nullptr;
-  EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
-  EXPECT_EQ(1, manager_->GenerateCode());
-
-  // Test if generation fails with FailingCodeGenerator
-  uncompilable_func_ptr = nullptr;
-  EnrollCodeGen<UncompilableCodeGenerator, UncompilableFunc>(UncompilableFuncRegular, &uncompilable_func_ptr);
-  EXPECT_EQ(2, manager_->GenerateCode());
-
-  // Make sure both the function pointers refer to regular versions
-  ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
-  ASSERT_TRUE(UncompilableFuncRegular == uncompilable_func_ptr);
-
-  // Compilation should fail
-  ASSERT_FALSE(manager_->PrepareGeneratedFunctions());
-
-  // For sum_func_ptr, we successfully generated code. So, pointer should reflect that.
-  ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
-  // For failed_func_ptr, code generation was unsuccessful. So, pointer should not change.
-  ASSERT_TRUE(UncompilableFuncRegular == uncompilable_func_ptr);
-}*/
-
 TEST_F(CodeGenManagerTest, ResetTest) {
   sum_func_ptr = nullptr;
   SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular,
