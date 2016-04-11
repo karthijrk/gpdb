@@ -63,15 +63,15 @@ class CodeGenManager {
    *
    * @return The number of enrolled codegen that successfully generated code.
    **/
-  size_t GenerateCode();
+  unsigned int GenerateCode();
 
   /**
    * @brief Compile all the generated functions. On success, caller gets
    * 		to call the generated method.
    *
-   * @return true on successful compilation or return false
+   * @return The number of enrolled codegen that successully generated code and 0 on failure
    **/
-  bool PrepareGeneratedFunctions();
+  unsigned int PrepareGeneratedFunctions();
 
   /**
    * @brief 	Notifies the manager of a parameter change.
