@@ -111,10 +111,14 @@
 #define         TTS_SHOULDFREE 	2
 #define         TTS_VIRTUAL     4
 
-// Interface to the code generation manager for the code generator of slot_deform_tuple
+/*
+ * Interface to the CodeGenManager for slot_deform_tuple code generation
+ */
 typedef struct SlotDeformTupleCodeGenInfo
 {
+	/* Pointer to store SlotDeformTupleCodeGen from CodeGen */
 	void* code_generator;
+	/* Function pointer that points to either regular or generated slot_deform_tuple */
 	SlotDeformTupleFn slot_deform_tuple_fn;
 } SlotDeformTupleCodeGenInfo;
 
