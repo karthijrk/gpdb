@@ -189,8 +189,16 @@ add_custom_target(unittest-check
     COMMAND ${CMAKE_COMMAND} .
     COMMAND ${CMAKE_MAKE_PROGRAM} check
 )
-include_directories(${TOP_SRC_DIR}/src/test/unit/cmockery)
 
+# Googletest framework for tests.
+SET(GTEST_DIR ../../../gpAux/extensions/gtest)
+add_subdirectory(${GTEST_DIR} ${CMAKE_BINARY_DIR}/gtest EXCLUDE_FROM_ALL)
+enable_testing()
+
+SET (TEST_LIB_INC_DIRECTORIES
+${TOP_SRC_DIR}/src/test/unit/cmockery
+${GTEST_DIR}/include)
+			
 function(prepend_path var prefix)
    SET(listVar "")
    FOREACH(f ${ARGN})
@@ -201,16 +209,11 @@ endfunction(prepend_path)
 
 function(add_simple_gtest TEST_NAME TEST_SRC)
     add_executable(${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_SRC})
+	target_include_directories(${TEST_NAME} PUBLIC ${TEST_LIB_INC_DIRECTORIES})
     target_link_libraries(${TEST_NAME} gpcodegen gtest)
     add_test(${TEST_NAME} ${TEST_NAME})
     add_dependencies(check ${TEST_NAME})
 endfunction(add_simple_gtest)
-
-# Googletest framework for tests.
-SET(GTEST_DIR ../../../gpAux/extensions/gtest)
-add_subdirectory(${GTEST_DIR} ${CMAKE_BINARY_DIR}/gtest EXCLUDE_FROM_ALL)
-include_directories(${GTEST_DIR}/include)
-enable_testing()
 
 add_simple_gtest(clang_compiler_unittest tests/clang_compiler_unittest.cc)
 add_simple_gtest(codegen_utils_unittest tests/codegen_utils_unittest.cc)
@@ -244,6 +247,7 @@ function(add_cmockery_gtest TEST_NAME TEST_SOURCES)
         ${MOCK_OBJS} 
         ${CMOCKERY_OBJS}
     )
+    target_include_directories(${TEST_NAME} PUBLIC ${TEST_LIB_INC_DIRECTORIES})
     # Bring these from $ENV{LIBS}
     target_link_libraries(${TEST_NAME} "-ldl -lbz2 -lxml2 -lz -lm -lcurl -L../../port -lpgport_srv" gpcodegen gtest)
     add_test(${TEST_NAME} ${TEST_NAME})
