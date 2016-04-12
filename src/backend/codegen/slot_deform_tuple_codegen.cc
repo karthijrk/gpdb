@@ -68,7 +68,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   assert(llvm_regular_function != nullptr);
 
   llvm::Function* llvm_function =
-      codegen_utils->CreateFunctionTypeDef<decltype(regular_func_pointer)>(
+      codegen_utils->CreateFunctionTypeDef<SlotDeformTupleFn>(
           GetUniqueFuncName());
 
   llvm::BasicBlock* function_body = codegen_utils->CreateBasicBlock(
@@ -89,13 +89,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   llvm::CallInst* call = codegen_utils->ir_builder()->CreateCall(
       llvm_regular_function, forwarded_args);
 
-  // Return the result of the call, or void if the function returns void.
-  if (std::is_same<codegen_utils_detail::FunctionTypeUnpacker<
-      decltype(regular_func_pointer)>::R, void>::value) {
-    codegen_utils->ir_builder()->CreateRetVoid();
-  } else {
-    codegen_utils->ir_builder()->CreateRet(call);
-  }
+  codegen_utils->ir_builder()->CreateRetVoid();
 
   return true;
 }
