@@ -39,7 +39,7 @@
 using gpcodegen::CodeGenManager;
 
 CodeGenManager::CodeGenManager(const std::string& module_name) {
-  codegen_utils_.reset(new gpcodegen::CodeGenUtils(module_name));
+  codegen_utils_.reset(new gpcodegen::CodegenUtils(module_name));
 }
 
 bool CodeGenManager::EnrollCodeGenerator(
@@ -61,9 +61,9 @@ unsigned int CodeGenManager::GenerateCode() {
 }
 
 unsigned int CodeGenManager::PrepareGeneratedFunctions() {
-  // Call CodeGenUtils to compile entire module
+  // Call CodegenUtils to compile entire module
   bool compilation_status = codegen_utils_->PrepareForExecution(
-      gpcodegen::CodeGenUtils::OptimizationLevel::kNone, true);
+      gpcodegen::CodegenUtils::OptimizationLevel::kNone, true);
 
   unsigned int success_count = 0;
 
@@ -73,7 +73,7 @@ unsigned int CodeGenManager::PrepareGeneratedFunctions() {
 
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
-  gpcodegen::CodeGenUtils* codegen_utils = codegen_utils_.get();
+  gpcodegen::CodegenUtils* codegen_utils = codegen_utils_.get();
   for (std::unique_ptr<CodeGenInterface>& generator :
       enrolled_code_generators_) {
     success_count += generator->SetToGenerated(codegen_utils);

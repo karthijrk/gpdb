@@ -57,12 +57,12 @@ static void ElogWrapper(const char* func_name) {
 }
 
 bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
-    gpcodegen::CodeGenUtils* codegen_utils) {
+    gpcodegen::CodegenUtils* codegen_utils) {
   llvm::Function* llvm_elog_wrapper = codegen_utils->RegisterExternalFunction(
       ElogWrapper);
   assert(llvm_elog_wrapper != nullptr);
 
-  FuncPtrType regular_func_pointer = GetRegularFuncPointer();
+  SlotDeformTupleFn regular_func_pointer = GetRegularFuncPointer();
   llvm::Function* llvm_regular_function =
       codegen_utils->RegisterExternalFunction(regular_func_pointer);
   assert(llvm_regular_function != nullptr);
@@ -100,7 +100,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   return true;
 }
 
-bool SlotDeformTupleCodeGen::DoCodeGeneration(CodeGenUtils* codegen_utils) {
+bool SlotDeformTupleCodeGen::DoCodeGeneration(CodegenUtils* codegen_utils) {
   GenerateSimpleSlotDeformTuple(codegen_utils);
   return true;
 }
