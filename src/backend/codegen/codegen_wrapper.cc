@@ -28,7 +28,7 @@ extern bool codegen;  //defined from guc
 
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
-unsigned int InitCodeGen() {
+unsigned int InitCodegen() {
   return gpcodegen::CodegenUtils::InitializeGlobal();
 }
 

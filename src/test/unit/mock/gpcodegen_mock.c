@@ -4,40 +4,40 @@
 
 // Do one-time global initialization of LLVM library. Returns 0
 // on success, nonzero on error.
-int
-InitCodeGen()
+unsigned int
+InitCodegen()
 {
-	elog(ERROR, "mock implementation of InitCodeGen called");
+	elog(ERROR, "mock implementation of InitCodegen called");
 	return 0;
 }
 
 // creates a manager for an operator
 void*
-CodeGeneratorManager_Create()
+CodeGeneratorManagerCreate()
 {
 	elog(ERROR, "mock implementation of CodeGeneratorManager_Create called");
 	return NULL;
 }
 
 // calls all the registered CodeGenFuncInfo to generate code
-bool
-CodeGeneratorManager_GenerateCode(void* manager)
+unsigned int
+CodeGeneratorManagerGenerateCode(void* manager)
 {
 	elog(ERROR, "mock implementation of CodeGeneratorManager_GenerateCode called");
 	return true;
 }
 
 // compiles and prepares all the code gened function pointers
-bool
-CodeGeneratorManager_PrepareGeneratedFunctions(void* manager)
+unsigned int
+CodeGeneratorManagerPrepareGeneratedFunctions(void* manager)
 {
 	elog(ERROR, "mock implementation of CodeGeneratorManager_PrepareGeneratedFunctions called");
 	return true;
 }
 
 // notifies a manager that the underlying operator has a parameter change
-bool
-CodeGeneratorManager_NotifyParameterChange(void* manager)
+unsigned int
+CodeGeneratorManagerNotifyParameterChange(void* manager)
 {
 	elog(ERROR, "mock implementation of CodeGeneratorManager_NotifyParameterChange called");
 	return true;
@@ -45,7 +45,7 @@ CodeGeneratorManager_NotifyParameterChange(void* manager)
 
 // destroys a manager for an operator
 void
-CodeGeneratorManager_Destroy(void* manager)
+CodeGeneratorManagerDestroy(void* manager)
 {
 	elog(ERROR, "mock implementation of CodeGeneratorManager_Destroy called");
 }
@@ -67,9 +67,9 @@ SetActiveCodeGeneratorManager(void* manager)
 
 // returns the pointer to the CodeGenFuncInfo
 void*
-SlotDeformTupleCodeGen_Enroll(struct TupleTableSlot* slot,
-    SlotDeformTupleFn regular_func_ptr,
-    SlotDeformTupleFn* ptr_to_regular_func_ptr)
+SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
+        SlotDeformTupleFn* ptr_to_regular_func_ptr,
+        struct TupleTableSlot* slot)
 {
   *ptr_to_regular_func_ptr = regular_func_ptr;
 	elog(ERROR, "mock implementation of SlotDeformTupleCodeGen_Enroll called");
