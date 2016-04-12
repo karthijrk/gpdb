@@ -44,10 +44,10 @@ struct AnnotatedType;
  * more user-friendly for programmers. The basic workflow for code generation
  * from C++ is as follows:
  *
- *    1. Create a CodeGenUtils object to manage the actual compilation and
+ *    1. Create a CodegenUtils object to manage the actual compilation and
  *       execution.
  *    2. Create a ClangCompiler object to act as front-end for compiling C++
- *       source code for use with the CodeGenUtils.
+ *       source code for use with the CodegenUtils.
  *    3. Build up C++ source code from in-memory strings as an llvm::Twine
  *       (llvm's Twine class is a string-like data type that allows for
  *       efficient concatenation). Note that any generated functions that we
@@ -55,13 +55,13 @@ struct AnnotatedType;
  *       and can be refered to by an ordinary non-mangled name when they are
  *       compiled.
  *    4. Call ClangCompiler::CompileCppSource() to compile C++ source code into
- *       an llvm Module managed by the CodeGenUtils.
- *    5. Call CodeGenUtils::Optimize() and CodeGenUtils::PrepareForExecution()
+ *       an llvm Module managed by the CodegenUtils.
+ *    5. Call CodegenUtils::Optimize() and CodegenUtils::PrepareForExecution()
  *       to compile the code and get it ready to execute. Note that we would do
  *       the same thing to compile generated IR code, except that it makes sense
  *       to use higher levels of optimization when starting from C++ sources, as
  *       the initial output of the clang frontend is NOT well-optimized IR.
- *    6. Call CodeGenUtils::GetFunctionPointer() to get a callable function
+ *    6. Call CodegenUtils::GetFunctionPointer() to get a callable function
  *       pointer to any desired generated function.
  **/
 class ClangCompiler {
@@ -69,23 +69,23 @@ class ClangCompiler {
   /**
    * @brief Constructor.
    *
-   * @param codegen_utils The CodeGenUtils instance to compile with. The
-   *        specified CodeGenUtils's LLVMContext will be used, and all
+   * @param codegen_utils The CodegenUtils instance to compile with. The
+   *        specified CodegenUtils's LLVMContext will be used, and all
    *        successfully-compiled modules will be inserted into the
-   *        CodeGenUtils.
+   *        CodegenUtils.
    **/
-  explicit ClangCompiler(CodeGenUtils* codegen_utils)
+  explicit ClangCompiler(CodegenUtils* codegen_utils)
       : code_generator_(codegen_utils) {
   }
 
   /**
    * @brief Compile a C++ source-code snippet (i.e. an in-memory translation
-   *        unit) to an LLVM IR Module and place it in the CodeGenUtils.
+   *        unit) to an LLVM IR Module and place it in the CodegenUtils.
    *
    * @note It is recommended to mark any function you wish to call from outside
    *       of generated code as extern "C" so that its name will not be mangled
    *       and you can easily retrieve it by name from
-   *       CodeGenUtils::GetFunctionPointer().
+   *       CodegenUtils::GetFunctionPointer().
    *
    * @param source_code The C++ source code to compile.
    * @param debug If true, generate additional debugging information and dump
@@ -115,7 +115,7 @@ class ClangCompiler {
    *       becomes a pointer, otherwise the distinction is preserved).
    *
    * @param annotated_type An AnnotatedType created by
-   *        CodeGenUtils::GetAnnotatedType().
+   *        CodegenUtils::GetAnnotatedType().
    * @return The equivalent of annotated_type as a C++ type (in string form).
    **/
   static std::string CppTypeFromAnnotatedType(
@@ -123,17 +123,17 @@ class ClangCompiler {
 
   /**
    * @brief Generate forward-declarations for the named external functions
-   *        registered in the CodeGenUtils that this ClangCompiler is attached
+   *        registered in the CodegenUtils that this ClangCompiler is attached
    *        to.
    *
    * This allows (named) external functions registered with
-   * CodeGenUtils::RegisterExternalFunction() to be called from generated C++
+   * CodegenUtils::RegisterExternalFunction() to be called from generated C++
    * code. The string returned by this method can be concatenated with other
    * C++ source code that calls the external function(s) and passed to
    * CompileCppSource() for compilation.
    *
    * @return A C++ source snippet with forward declarations (marked extern "C")
-   *         for each named external function registered in the CodeGenUtils.
+   *         for each named external function registered in the CodegenUtils.
    **/
   std::string GenerateExternalFunctionDeclarations() const;
 
@@ -154,7 +154,7 @@ class ClangCompiler {
   std::string GetLiteralConstant(const CppType constant_value);
 
  private:
-  CodeGenUtils* code_generator_;
+  CodegenUtils* code_generator_;
 
   DISALLOW_COPY_AND_ASSIGN(ClangCompiler);
 };
@@ -175,7 +175,7 @@ std::string HexDouble(const double value);
 
 // ConstantPrinter has template specializations to handle different categories
 // of C++ types. Specializations provide a static Print() method that takes a
-// const CppType 'value' and a CodeGenUtils* pointer (referring to the
+// const CppType 'value' and a CodegenUtils* pointer (referring to the
 // 'code_generator_' member of the calling ClangCompiler) and returns a string
 // containing a C++ source snippet that parses to the original literal 'value'.
 template <typename CppType, typename Enable = void>
@@ -186,7 +186,7 @@ class ConstantPrinter {
 template <>
 class ConstantPrinter<bool> {
  public:
-  static std::string Print(const bool value, CodeGenUtils* codegen_utils) {
+  static std::string Print(const bool value, CodegenUtils* codegen_utils) {
     return value ? "true" : "false";
   }
 };
@@ -197,7 +197,7 @@ class ConstantPrinter<
     IntType,
     typename std::enable_if<std::is_integral<IntType>::value>::type> {
  public:
-  static std::string Print(const IntType value, CodeGenUtils* codegen_utils) {
+  static std::string Print(const IntType value, CodegenUtils* codegen_utils) {
     // Enclose the literal in a static_cast that transforms it to the exact type
     // expected.
     std::string literal("static_cast<");
@@ -231,7 +231,7 @@ class ConstantPrinter<
 template <>
 class ConstantPrinter<float> {
  public:
-  static std::string Print(const float value, CodeGenUtils* codegen_utils) {
+  static std::string Print(const float value, CodegenUtils* codegen_utils) {
     // Get an unambiguously-rounded representation of the literal, then append
     // an "f" to denote that the literal is a 32-bit float instead of a 64-bit
     // double.
@@ -245,7 +245,7 @@ class ConstantPrinter<float> {
 template <>
 class ConstantPrinter<double> {
  public:
-  static std::string Print(const double value, CodeGenUtils* codegen_utils) {
+  static std::string Print(const double value, CodegenUtils* codegen_utils) {
     return HexDouble(value);
   }
 };
@@ -258,7 +258,7 @@ class ConstantPrinter<
     typename std::enable_if<std::is_enum<EnumType>::value>::type> {
  public:
   static std::string Print(const EnumType value,
-                           CodeGenUtils* codegen_utils) {
+                           CodegenUtils* codegen_utils) {
     return ConstantPrinter<typename std::underlying_type<EnumType>::type>
         ::Print(static_cast<typename std::underlying_type<EnumType>::type>(
                     value),
@@ -271,7 +271,7 @@ template <typename PointedType>
 class ConstantPrinter<PointedType*> {
  public:
   static std::string Print(PointedType* const value,
-                           CodeGenUtils* codegen_utils) {
+                           CodegenUtils* codegen_utils) {
     if (value == nullptr) {
       std::string literal("static_cast<");
       literal.append(ClangCompiler::CppTypeFromAnnotatedType(
@@ -298,7 +298,7 @@ template <>
 class ConstantPrinter<std::nullptr_t> {
  public:
   static std::string Print(std::nullptr_t value,
-                           CodeGenUtils* codegen_utils) {
+                           CodegenUtils* codegen_utils) {
     return "nullptr";
   }
 };

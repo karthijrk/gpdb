@@ -79,7 +79,7 @@ void materializeTuple(char *tuple) {
 // external
 //
 MaterializeTupleFunction
-GenerateCodeForMaterializeTuple(gpcodegen::CodeGenUtils *codegen_utils) {
+GenerateCodeForMaterializeTuple(gpcodegen::CodegenUtils *codegen_utils) {
 
   auto irb = codegen_utils->ir_builder();
   llvm::Function *mt_function =
@@ -214,7 +214,7 @@ GenerateCodeForMaterializeTuple(gpcodegen::CodeGenUtils *codegen_utils) {
   assert(!llvm::verifyModule(*codegen_utils->module()));
 
   bool prepare_ok = codegen_utils->PrepareForExecution(
-             gpcodegen::CodeGenUtils::OptimizationLevel::kDefault, true);
+             gpcodegen::CodegenUtils::OptimizationLevel::kDefault, true);
   assert(prepare_ok);
 
   return codegen_utils->GetFunctionPointer<void, char *>("materializeTuple");
@@ -222,11 +222,11 @@ GenerateCodeForMaterializeTuple(gpcodegen::CodeGenUtils *codegen_utils) {
 }
 
 int main() {
-  bool init_ok = gpcodegen::CodeGenUtils::InitializeGlobal();
+  bool init_ok = gpcodegen::CodegenUtils::InitializeGlobal();
   assert(init_ok);
 
   std::printf("Testing static compiled version:\n");
-  gpcodegen::CodeGenUtils codegen_utils("materializeTuple");
+  gpcodegen::CodegenUtils codegen_utils("materializeTuple");
   testMaterializeTuple(materializeTuple);
 
   std::printf("Testing JIT compiled version:\n");

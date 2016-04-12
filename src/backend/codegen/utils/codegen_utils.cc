@@ -40,7 +40,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/CodeGen.h"
+#include "llvm/Support/Codegen.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -58,19 +58,19 @@ namespace {
 // Almost-trivial conversion from Codegen enum for optimization level to the
 // LLVM equivalent.
 inline llvm::CodeGenOpt::Level OptLevelCodegenToLLVM(
-    const CodeGenUtils::OptimizationLevel codegen_opt_level) {
+    const CodegenUtils::OptimizationLevel codegen_opt_level) {
   switch (codegen_opt_level) {
-    case CodeGenUtils::OptimizationLevel::kNone:
+    case CodegenUtils::OptimizationLevel::kNone:
       return llvm::CodeGenOpt::None;
-    case CodeGenUtils::OptimizationLevel::kLess:
+    case CodegenUtils::OptimizationLevel::kLess:
       return llvm::CodeGenOpt::Less;
-    case CodeGenUtils::OptimizationLevel::kDefault:
+    case CodegenUtils::OptimizationLevel::kDefault:
       return llvm::CodeGenOpt::Default;
-    case CodeGenUtils::OptimizationLevel::kAggressive:
+    case CodegenUtils::OptimizationLevel::kAggressive:
       return llvm::CodeGenOpt::Aggressive;
     default: {
       std::fprintf(stderr,
-                   "FATAL: Unrecognized CodeGenUtils::OptimizationLevel\n");
+                   "FATAL: Unrecognized CodegenUtils::OptimizationLevel\n");
       std::exit(1);
     }
   }
@@ -78,17 +78,17 @@ inline llvm::CodeGenOpt::Level OptLevelCodegenToLLVM(
 
 }  // namespace
 
-constexpr char CodeGenUtils::kExternalVariableNamePrefix[];
-constexpr char CodeGenUtils::kExternalFunctionNamePrefix[];
+constexpr char CodegenUtils::kExternalVariableNamePrefix[];
+constexpr char CodegenUtils::kExternalFunctionNamePrefix[];
 
-CodeGenUtils::CodeGenUtils(llvm::StringRef module_name)
+CodegenUtils::CodegenUtils(llvm::StringRef module_name)
     : ir_builder_(context_),
       module_(new llvm::Module(module_name, context_)),
       external_variable_counter_(0),
       external_function_counter_(0) {
 }
 
-bool CodeGenUtils::InitializeGlobal() {
+bool CodegenUtils::InitializeGlobal() {
   // These LLVM initialization routines return true if there is no native
   // target available, false if initialization was OK. So, if all 3 return
   // false, then initialization is fine.
@@ -97,7 +97,7 @@ bool CodeGenUtils::InitializeGlobal() {
          && !llvm::InitializeNativeTargetAsmParser();
 }
 
-bool CodeGenUtils::Optimize(const OptimizationLevel generic_opt_level,
+bool CodegenUtils::Optimize(const OptimizationLevel generic_opt_level,
                              const SizeLevel size_level,
                              const bool optimize_for_host_cpu) {
   // This method's implementation is loosely based on the LLVM "opt"
@@ -200,7 +200,7 @@ bool CodeGenUtils::Optimize(const OptimizationLevel generic_opt_level,
   return true;
 }
 
-bool CodeGenUtils::PrepareForExecution(const OptimizationLevel cpu_opt_level,
+bool CodegenUtils::PrepareForExecution(const OptimizationLevel cpu_opt_level,
                                         const bool optimize_for_host_cpu) {
   if (engine_.get() != nullptr) {
     // This method was already called successfully.
@@ -263,7 +263,7 @@ bool CodeGenUtils::PrepareForExecution(const OptimizationLevel cpu_opt_level,
   return true;
 }
 
-llvm::GlobalVariable* CodeGenUtils::AddExternalGlobalVariable(
+llvm::GlobalVariable* CodegenUtils::AddExternalGlobalVariable(
     llvm::Type* type,
     const void* address) {
   external_global_variables_.emplace_back(
@@ -278,7 +278,7 @@ llvm::GlobalVariable* CodeGenUtils::AddExternalGlobalVariable(
                                   external_global_variables_.back().first);
 }
 
-void CodeGenUtils::CheckFunctionType(
+void CodegenUtils::CheckFunctionType(
     const std::string& function_name,
     const llvm::FunctionType* expected_function_type) {
   // Look up function in the ExecutionEngine if PrepareForExecution() has
@@ -292,7 +292,7 @@ void CodeGenUtils::CheckFunctionType(
   }
 }
 
-std::string CodeGenUtils::GenerateExternalVariableName() {
+std::string CodegenUtils::GenerateExternalVariableName() {
   char print_buffer[sizeof(kExternalVariableNamePrefix)
                     + (sizeof(unsigned) << 1) + 1] = {};
   int chars_printed = std::snprintf(print_buffer,
@@ -304,7 +304,7 @@ std::string CodeGenUtils::GenerateExternalVariableName() {
   return std::string(print_buffer);
 }
 
-std::string CodeGenUtils::GenerateExternalFunctionName() {
+std::string CodegenUtils::GenerateExternalFunctionName() {
   // Prefix for generated names is only 10 chars. Up to 16 chars (including
   // null-terminator) are typically stored inline for C++ standard library
   // implementations that use the short-string optimization for std::string
@@ -326,7 +326,7 @@ std::string CodeGenUtils::GenerateExternalFunctionName() {
   return std::string(print_buffer);
 }
 
-llvm::Value* CodeGenUtils::GetPointerToMemberImpl(
+llvm::Value* CodegenUtils::GetPointerToMemberImpl(
     llvm::Value* base_ptr,
     llvm::Type* cast_type,
     const std::size_t cumulative_offset) {

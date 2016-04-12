@@ -53,14 +53,14 @@ enum class UInt16Enum : std::uint16_t {
 class ClangCompilerTestEnvironment : public ::testing::Environment {
  public:
   virtual void SetUp() {
-    ASSERT_TRUE(CodeGenUtils::InitializeGlobal());
+    ASSERT_TRUE(CodegenUtils::InitializeGlobal());
   }
 };
 
 class ClangCompilerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    codegen_utils_.reset(new CodeGenUtils("test_module"));
+    codegen_utils_.reset(new CodegenUtils("test_module"));
     clang_compiler_.reset(new ClangCompiler(codegen_utils_.get()));
   }
 
@@ -76,7 +76,7 @@ class ClangCompilerTest : public ::testing::Test {
 
   // Helper method for CppTypeFromAnnotatedTypeTest. Checks that invoking
   // ClangCompiler::CppTypeFromAnnotatedType() on the AnnotatedType produced
-  // by CodeGenUtils::GetType<T>() returns 'expected_cpp_type'.
+  // by CodegenUtils::GetType<T>() returns 'expected_cpp_type'.
   template <typename T>
   void CheckCppTypeFromAnnotatedType(const std::string& expected_cpp_type) {
     EXPECT_EQ(expected_cpp_type,
@@ -91,7 +91,7 @@ class ClangCompilerTest : public ::testing::Test {
               clang_compiler_->GetLiteralConstant(original_value));
   }
 
-  std::unique_ptr<CodeGenUtils> codegen_utils_;
+  std::unique_ptr<CodegenUtils> codegen_utils_;
   std::unique_ptr<ClangCompiler> clang_compiler_;
 };
 
@@ -115,7 +115,7 @@ TEST_F(ClangCompilerTest, BasicCompilationTest) {
 
   // Now do actual codegen and try and call the function.
   EXPECT_TRUE(codegen_utils_->PrepareForExecution(
-      CodeGenUtils::OptimizationLevel::kNone,
+      CodegenUtils::OptimizationLevel::kNone,
       false));
 
   unsigned (*binomial_coefficient)(const unsigned, const unsigned)
@@ -161,7 +161,7 @@ TEST_F(ClangCompilerTest, MultiModuleCompilationTest) {
 
   // Now do actual codegen and try and call the function.
   EXPECT_TRUE(codegen_utils_->PrepareForExecution(
-      CodeGenUtils::OptimizationLevel::kNone,
+      CodegenUtils::OptimizationLevel::kNone,
       false));
 
   unsigned (*binomial_coefficient)(const unsigned, const unsigned)
@@ -382,7 +382,7 @@ TEST_F(ClangCompilerTest, ExternalFunctionTest) {
           .concat(kExternalFunctionBinomialCoefficientSource)));
 
   EXPECT_TRUE(codegen_utils_->PrepareForExecution(
-      CodeGenUtils::OptimizationLevel::kNone,
+      CodegenUtils::OptimizationLevel::kNone,
       false));
 
   unsigned (*binomial_coefficient)(const unsigned, const unsigned)
@@ -453,7 +453,7 @@ TEST_F(ClangCompilerTest, ExternalMethodTest) {
           .concat(kExternalMethodInvocationSource)));
 
   EXPECT_TRUE(codegen_utils_->PrepareForExecution(
-      CodeGenUtils::OptimizationLevel::kNone,
+      CodegenUtils::OptimizationLevel::kNone,
       false));
 
   double (*AddWithAccumulator)(const double, const double, const double)

@@ -33,7 +33,7 @@
 #include "codegen/utils/temporary_file.h"
 #endif
 
-#include "clang/CodeGen/CodeGenAction.h"
+#include "clang/Codegen/CodegenAction.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
@@ -255,7 +255,7 @@ std::string ClangCompiler::CppTypeFromAnnotatedType(
 
 std::string ClangCompiler::GenerateExternalFunctionDeclarations() const {
   std::string declarations;
-  for (const CodeGenUtils::NamedExternalFunction& external_fn
+  for (const CodegenUtils::NamedExternalFunction& external_fn
        : code_generator_->named_external_functions_) {
     // Mark extern "C" to avoid name-mangling.
     declarations.append("extern \"C\" ");

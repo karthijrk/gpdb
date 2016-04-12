@@ -14,6 +14,6 @@
 
 #include "codegen/utils/codegen_utils.h"
 
-extern "C" int InitCodeGen() {
-  return gpcodegen::CodeGenUtils::InitializeGlobal() ? 0 : 1;
+extern "C" int InitCodegen() {
+  return gpcodegen::CodegenUtils::InitializeGlobal() ? 0 : 1;
 }
