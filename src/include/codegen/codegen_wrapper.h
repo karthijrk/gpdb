@@ -25,8 +25,8 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 #define InitCodeGen();
 #define CodeGeneratorManagerCreate(module_name) NULL
 #define CodeGeneratorManagerGenerateCode(manager);
-#define CodeGeneratorManagerPrepareGeneratedFunctions(manager) true
-#define CodeGeneratorManagerNotifyParameterChange(manager) true
+#define CodeGeneratorManagerPrepareGeneratedFunctions(manager) 1
+#define CodeGeneratorManagerNotifyParameterChange(manager) 1
 #define CodeGeneratorManagerDestroy(manager);
 #define GetActiveCodeGeneratorManager() NULL
 #define SetActiveCodeGeneratorManager(manager);
@@ -39,10 +39,6 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 #define enroll_slot_deform_tuple_codegen(regular_func, ptr_to_chosen_func, slot)
 
 #else
-
-#ifndef __cplusplus
-#include "c.h"
-#endif
 
 /*
  * Forward extern declaration of slot deform tuple if code gen is enabled
@@ -73,10 +69,10 @@ extern "C" {
 #endif
 
 /*
- * Do one-time global initialization of LLVM library. Returns 0
- * on success, nonzero on error.
+ * Do one-time global initialization of LLVM library. Returns 1
+ * on success, 0 on error.
  */
-int
+unsigned int
 InitCodeGen();
 
 /*
@@ -101,7 +97,7 @@ CodeGeneratorManagerPrepareGeneratedFunctions(void* manager);
 /*
  * Notifies a manager that the underlying operator has a parameter change
  */
-bool
+unsigned int
 CodeGeneratorManagerNotifyParameterChange(void* manager);
 
 /*
@@ -159,7 +155,7 @@ SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
  */
 #define init_codegen() \
 	if (codegen) { \
-			if (InitCodeGen() != 0) { \
+			if (InitCodeGen() == 0) { \
 				ereport(FATAL, \
 					(errcode(ERRCODE_INTERNAL_ERROR), \
 					errmsg("failed to initialize LLVM library"), \
