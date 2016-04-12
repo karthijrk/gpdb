@@ -26,9 +26,8 @@ static bool is_codegen_initalized = false;
 
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
-int InitCodeGen() {
-  is_codegen_initalized = gpcodegen::CodeGenUtils::InitializeGlobal();
-  return !is_codegen_initalized;
+unsigned int InitCodeGen() {
+  return gpcodegen::CodeGenUtils::InitializeGlobal();
 }
 
 void* CodeGeneratorManagerCreate(const char* module_name) {
@@ -43,10 +42,10 @@ unsigned int CodeGeneratorManagerPrepareGeneratedFunctions(void* manager) {
   return static_cast<CodeGenManager*>(manager)->PrepareGeneratedFunctions();
 }
 
-bool CodeGeneratorManagerNotifyParameterChange(void* manager) {
+unsigned int CodeGeneratorManagerNotifyParameterChange(void* manager) {
   // parameter change notification is not supported yet
   assert(false);
-  return false;
+  return 0;
 }
 
 void CodeGeneratorManagerDestroy(void* manager) {
