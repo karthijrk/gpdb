@@ -24,6 +24,8 @@ using gpcodegen::SlotDeformTupleCodeGen;
 static void* ActiveCodeGeneratorManager = nullptr;
 static bool is_codegen_initalized = false;
 
+extern bool codegen;  //defined from guc
+
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
 unsigned int InitCodeGen() {
@@ -31,14 +33,23 @@ unsigned int InitCodeGen() {
 }
 
 void* CodeGeneratorManagerCreate(const char* module_name) {
+  if (!codegen) {
+    return nullptr;
+  }
   return new CodeGenManager(module_name);
 }
 
 unsigned int CodeGeneratorManagerGenerateCode(void* manager) {
+  if (!codegen) {
+    return 0;
+  }
   return static_cast<CodeGenManager*>(manager)->GenerateCode();
 }
 
 unsigned int CodeGeneratorManagerPrepareGeneratedFunctions(void* manager) {
+  if (!codegen) {
+    return 0;
+  }
   return static_cast<CodeGenManager*>(manager)->PrepareGeneratedFunctions();
 }
 
@@ -80,7 +91,8 @@ ClassType* CodeGenEnroll(FuncType regular_func_ptr,
                           Args&&... args) {  // NOLINT(build/c++11)
   CodeGenManager* manager = static_cast<CodeGenManager*>(
         GetActiveCodeGeneratorManager());
-  if (nullptr == manager) {
+  if (nullptr == manager ||
+      !codegen) {  // if codegen guc is false
       BaseCodeGen<FuncType>::SetToRegular(
           regular_func_ptr, ptr_to_chosen_func_ptr);
       return nullptr;
