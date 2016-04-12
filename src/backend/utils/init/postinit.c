@@ -58,6 +58,7 @@
 #include "utils/tqual.h"  		/* SharedSnapshot */
 #include "pgstat.h"
 #include "utils/session_state.h"
+#include "codegen/codegen_wrapper.h"
 
 static HeapTuple GetDatabaseTuple(const char *dbname);
 static HeapTuple GetDatabaseTupleByOid(Oid dboid);
@@ -578,6 +579,20 @@ BaseInit(void)
 	InitFileAccess();
 	smgrinit();
 	InitBufferPoolAccess();
+
+//#ifdef USE_BALERION
+	if (codegen) {
+		if (InitCodeGen() != 0) {
+			ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("failed to initialize Balerion library"),
+				errhint("Balerion code generation library failed "
+					"to initialize. You may wish to disable "
+					"code generation by turning off the "
+					"\"codegen\" GUC.")));
+		}
+	}
+//#endif
 }
 
 

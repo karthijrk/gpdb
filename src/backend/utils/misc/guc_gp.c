@@ -572,6 +572,11 @@ bool		optimizer_enable_derive_stats_all_groups;
 bool		optimizer_explain_show_status;
 bool		optimizer_prefer_scalar_dqa_multistage_agg;
 
+/**
+ * GUCs related to code generation with Balerion.
+ **/
+bool		codegen;
+
 /* Security */
 bool		gp_reject_internal_tcp_conn = true;
 
@@ -3397,6 +3402,16 @@ struct config_bool ConfigureNamesBool_gp[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&optimizer_prefer_scalar_dqa_multistage_agg,
+		true, NULL, NULL
+	},
+
+	{
+		{"codegen", PGC_POSTMASTER, DEVELOPER_OPTIONS,
+			gettext_noop("Enable just-in-time code generation with Balerion."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&codegen,
 		true, NULL, NULL
 	},
 

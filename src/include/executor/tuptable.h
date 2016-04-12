@@ -14,6 +14,7 @@
 #ifndef TUPTABLE_H
 #define TUPTABLE_H
 
+#include "codegen/codegen_wrapper.h"
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "access/heapam.h"
@@ -110,6 +111,13 @@
 #define         TTS_SHOULDFREE 	2
 #define         TTS_VIRTUAL     4
 
+// Interface to the code generation manager for the code generator of slot_deform_tuple
+typedef struct SlotDeformTupleCodeGenInfo
+{
+	void* code_generator;
+	SlotDeformTupleFn slot_deform_tuple_fn;
+} SlotDeformTupleCodeGenInfo;
+
 typedef struct TupleTableSlot
 {
 	NodeTag		type;		/* vestigial ... allows IsA tests */
@@ -140,6 +148,8 @@ typedef struct TupleTableSlot
 
     /* System attributes */
     Oid         tts_tableOid;
+
+    SlotDeformTupleCodeGenInfo slot_deform_tuple_gen_info;
 } TupleTableSlot;
 
 static inline bool TupIsNull(TupleTableSlot *slot)
