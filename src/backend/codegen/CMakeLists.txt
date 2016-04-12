@@ -151,13 +151,15 @@ set_target_properties(
 # with the gpcodegen shared library to create a binary SUBSYS.o as expected by
 # GPDB make system. We invoke the linker with -nostdlib since we don't really
 # want to create a full executable.
-add_executable(SUBSYS.o init_codegen.cc)
+add_executable(SUBSYS.o codegen_interface.cc codegen_manager.cc codegen_wrapper.cc slot_deform_tuple_codegen.cc)
 set_target_properties(SUBSYS.o
     PROPERTIES
     LINK_FLAGS "-Wl,-r -nostdlib")
 target_link_libraries(
     gpcodegen
 )
+add_library(SUBSYS SHARED codegen_interface.cc codegen_manager.cc codegen_wrapper.cc slot_deform_tuple_codegen.cc)
+target_link_libraries(SUBSYS gpcodegen)
 
 # Integrate with GPDB build system
 # GPDB unit tests use unittest-check instead of test, so we add an alias target
@@ -167,7 +169,8 @@ add_custom_target(unittest-check ${CMAKE_CTEST_COMMAND})
 SET(TEST_SOURCES
     tests/clang_compiler_unittest.cc
     tests/codegen_utils_unittest.cc
-    tests/instance_method_wrappers_unittest.cc)
+    tests/instance_method_wrappers_unittest.cc
+    tests/codegen_framework_unittest.cc)
 
 # Googletest framework for tests.
 SET(GTEST_DIR ../../../gpAux/extensions/gtest)
@@ -178,7 +181,7 @@ enable_testing()
 foreach(TEST_SRC ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_SRC})
-    target_link_libraries(${TEST_NAME} gpcodegen gtest)
+    target_link_libraries(${TEST_NAME} SUBSYS gpcodegen gtest)
     add_test(${TEST_NAME} ${TEST_NAME})
     add_dependencies(unittest-check ${TEST_NAME})
 endforeach()
