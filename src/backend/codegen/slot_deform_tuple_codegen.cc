@@ -62,7 +62,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
       ElogWrapper);
   assert(llvm_elog_wrapper != nullptr);
 
-  auto regular_func_pointer = GetRegularFuncPointer();
+  FuncPtrType regular_func_pointer = GetRegularFuncPointer();
   llvm::Function* llvm_regular_function =
       codegen_utils->RegisterExternalFunction(regular_func_pointer);
   assert(llvm_regular_function != nullptr);
