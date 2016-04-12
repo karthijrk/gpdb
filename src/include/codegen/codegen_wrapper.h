@@ -22,7 +22,7 @@ typedef void (*SlotDeformTupleFn) (struct TupleTableSlot *slot, int natts);
 
 #ifndef USE_CODEGEN
 
-#define InitCodeGen();
+#define InitCodegen();
 #define CodeGeneratorManagerCreate(module_name) NULL
 #define CodeGeneratorManagerGenerateCode(manager);
 #define CodeGeneratorManagerPrepareGeneratedFunctions(manager) 1
@@ -73,7 +73,7 @@ extern "C" {
  * on success, 0 on error.
  */
 unsigned int
-InitCodeGen();
+InitCodegen();
 
 /*
  * Creates a manager for an operator
@@ -155,7 +155,7 @@ SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
  */
 #define init_codegen() \
 	if (codegen) { \
-			if (InitCodeGen() == 0) { \
+			if (InitCodegen() == 0) { \
 				ereport(FATAL, \
 					(errcode(ERRCODE_INTERNAL_ERROR), \
 					errmsg("failed to initialize LLVM library"), \

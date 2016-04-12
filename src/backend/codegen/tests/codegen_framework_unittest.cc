@@ -157,14 +157,14 @@ constexpr char UncompilableCodeGenerator::kUncompilableFuncNamePrefix[];
 class CodeGenManagerTestEnvironment : public ::testing::Environment {
  public:
   virtual void SetUp() {
-    ASSERT_EQ(InitCodeGen(), 0);
+    ASSERT_EQ(InitCodegen(), 1);
   }
 };
 
 class CodeGenManagerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    manager_.reset(new CodeGenManager());
+    manager_.reset(new CodeGenManager("CodeGenManagerTest"));
   }
 
   template <typename ClassType, typename FuncType>
