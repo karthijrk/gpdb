@@ -29,7 +29,7 @@ extern bool codegen;  //defined from guc
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
 unsigned int InitCodeGen() {
-  return gpcodegen::CodeGenUtils::InitializeGlobal();
+  return gpcodegen::CodegenUtils::InitializeGlobal();
 }
 
 void* CodeGeneratorManagerCreate(const char* module_name) {

@@ -6,7 +6,7 @@
 //    codegen_manager.h
 //
 //  @doc:
-//    Object that manage all CodeGen and CodeGenUtils
+//    Object that manage all CodeGen and CodegenUtils
 //
 //---------------------------------------------------------------------------
 
@@ -25,8 +25,8 @@ namespace gpcodegen {
  *  @{
  */
 
-// Forward declaration of CodeGenUtils to manage llvm module
-class CodeGenUtils;
+// Forward declaration of CodegenUtils to manage llvm module
+class CodegenUtils;
 
 // Forward declaration of a CodeGenInterface that will be managed by manager
 class CodeGenInterface;
@@ -98,8 +98,8 @@ class CodeGenManager {
   }
 
  private:
-  // CodeGenUtils provides a facade to LLVM subsystem.
-  std::unique_ptr<gpcodegen::CodeGenUtils> codegen_utils_;
+  // CodegenUtils provides a facade to LLVM subsystem.
+  std::unique_ptr<gpcodegen::CodegenUtils> codegen_utils_;
 
   // List of all enrolled code generators.
   std::vector<std::unique_ptr<CodeGenInterface>> enrolled_code_generators_;
