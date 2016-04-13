@@ -42,7 +42,7 @@ class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
   virtual ~SlotDeformTupleCodeGen() = default;
 
  protected:
-  bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils) final;
+  bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final;
 
  private:
   TupleTableSlot* slot_;

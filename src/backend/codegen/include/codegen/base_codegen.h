@@ -42,7 +42,7 @@ class BaseCodeGen: public CodeGenInterface {
   }
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils) final {
-    is_generated_ = DoCodeGeneration(codegen_utils);
+    is_generated_ = GenerateCodeInternal(codegen_utils);
     return is_generated_;
   }
 
@@ -145,7 +145,7 @@ class BaseCodeGen: public CodeGenInterface {
    * @param codegen_utils Utility to ease the code generation process.
    * @return true on successful generation.
    **/
-  virtual bool DoCodeGeneration(gpcodegen::CodegenUtils* codegen_utils) = 0;
+  virtual bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) = 0;
 
  private:
   std::string orig_func_name_;

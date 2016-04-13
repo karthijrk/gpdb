@@ -94,7 +94,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   return true;
 }
 
-bool SlotDeformTupleCodeGen::DoCodeGeneration(CodegenUtils* codegen_utils) {
+bool SlotDeformTupleCodeGen::GenerateCodeInternal(CodegenUtils* codegen_utils) {
   GenerateSimpleSlotDeformTuple(codegen_utils);
   return true;
 }
