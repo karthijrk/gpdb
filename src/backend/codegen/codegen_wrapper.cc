@@ -24,7 +24,7 @@ using gpcodegen::SlotDeformTupleCodeGen;
 static void* ActiveCodeGeneratorManager = nullptr;
 static bool is_codegen_initalized = false;
 
-extern bool codegen;  //defined from guc
+extern bool codegen;  // defined from guc
 
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
