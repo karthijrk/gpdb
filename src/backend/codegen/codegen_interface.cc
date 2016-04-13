@@ -11,12 +11,12 @@
 //---------------------------------------------------------------------------
 #include "codegen/codegen_interface.h"
 
-using gpcodegen::CodeGenInterface;
+using gpcodegen::CodegenInterface;
 
 // Initalization of unique counter
-unsigned CodeGenInterface::unique_counter_ = 0;
+unsigned CodegenInterface::unique_counter_ = 0;
 
-std::string CodeGenInterface::GenerateUniqueName(
+std::string CodegenInterface::GenerateUniqueName(
     const std::string& orig_func_name) {
   return orig_func_name + std::to_string(unique_counter_++);
 }

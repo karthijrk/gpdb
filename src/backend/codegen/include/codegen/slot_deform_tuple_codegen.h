@@ -22,7 +22,7 @@ namespace gpcodegen {
  *  @{
  */
 
-class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
+class SlotDeformTupleCodegen: public BaseCodegen<SlotDeformTupleFn> {
  public:
   /**
    * @brief Constructor
@@ -35,11 +35,11 @@ class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
    * 			corresponding regular version.
    *
    **/
-  explicit SlotDeformTupleCodeGen(SlotDeformTupleFn regular_func_ptr,
+  explicit SlotDeformTupleCodegen(SlotDeformTupleFn regular_func_ptr,
                                   SlotDeformTupleFn* ptr_to_regular_func_ptr,
                                   TupleTableSlot* slot);
 
-  virtual ~SlotDeformTupleCodeGen() = default;
+  virtual ~SlotDeformTupleCodegen() = default;
 
  protected:
   bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final;

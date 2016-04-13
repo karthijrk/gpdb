@@ -223,8 +223,8 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 	MemoryAccount* curMemoryAccount = NULL;
 
-	void* codeGenManager = CodeGeneratorManagerCreate("execProcnode");
-	START_CODE_GENERATOR_MANAGER(codeGenManager);
+	void* CodegenManager = CodeGeneratorManagerCreate("execProcnode");
+	START_CODE_GENERATOR_MANAGER(CodegenManager);
 	{
 
 
@@ -752,9 +752,9 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	if (result != NULL)
 	{
 		SAVE_EXECUTOR_MEMORY_ACCOUNT(result, curMemoryAccount);
-		result->CodeGenManager = codeGenManager;
-		CodeGeneratorManagerGenerateCode(codeGenManager);
-		CodeGeneratorManagerPrepareGeneratedFunctions(codeGenManager);
+		result->CodegenManager = CodegenManager;
+		CodeGeneratorManagerGenerateCode(CodegenManager);
+		CodeGeneratorManagerPrepareGeneratedFunctions(CodegenManager);
 	}
 	}
 	END_CODE_GENERATOR_MANAGER();
@@ -815,7 +815,7 @@ ExecProcNode(PlanState *node)
 {
 	TupleTableSlot *result = NULL;
 
-	START_CODE_GENERATOR_MANAGER(node->CodeGenManager);
+	START_CODE_GENERATOR_MANAGER(node->CodegenManager);
 	{
 	START_MEMORY_ACCOUNT(node->plan->memoryAccount);
 	{
@@ -1756,9 +1756,9 @@ ExecEndNode(PlanState *node)
 			break;
 	}
 
-	Assert(NULL != node->CodeGenManager);
-	CodeGeneratorManagerDestroy(node->CodeGenManager);
-	node->CodeGenManager = NULL;
+	Assert(NULL != node->CodegenManager);
+	CodeGeneratorManagerDestroy(node->CodegenManager);
+	node->CodegenManager = NULL;
 
 	estate->currentSliceIdInPlan = origSliceIdInPlan;
 	estate->currentExecutingSliceId = origExecutingSliceId;

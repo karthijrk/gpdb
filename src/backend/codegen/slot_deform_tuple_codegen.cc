@@ -38,15 +38,15 @@ extern "C" {
 #include "utils/elog.h"
 }
 
-using gpcodegen::SlotDeformTupleCodeGen;
+using gpcodegen::SlotDeformTupleCodegen;
 
-constexpr char SlotDeformTupleCodeGen::kSlotDeformTupleNamePrefix[];
+constexpr char SlotDeformTupleCodegen::kSlotDeformTupleNamePrefix[];
 
-SlotDeformTupleCodeGen::SlotDeformTupleCodeGen(
+SlotDeformTupleCodegen::SlotDeformTupleCodegen(
     SlotDeformTupleFn regular_func_ptr,
     SlotDeformTupleFn* ptr_to_regular_func_ptr,
     TupleTableSlot* slot) :
-        BaseCodeGen(
+        BaseCodegen(
             kSlotDeformTupleNamePrefix,
             regular_func_ptr,
             ptr_to_regular_func_ptr), slot_(slot) {
@@ -56,7 +56,7 @@ static void ElogWrapper(const char* func_name) {
   elog(INFO, "Calling wrapped function: %s", func_name);
 }
 
-bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
+bool SlotDeformTupleCodegen::GenerateSimpleSlotDeformTuple(
     gpcodegen::CodegenUtils* codegen_utils) {
   llvm::Function* llvm_elog_wrapper = codegen_utils->RegisterExternalFunction(
       ElogWrapper);
@@ -94,7 +94,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   return true;
 }
 
-bool SlotDeformTupleCodeGen::GenerateCodeInternal(CodegenUtils* codegen_utils) {
+bool SlotDeformTupleCodegen::GenerateCodeInternal(CodegenUtils* codegen_utils) {
   GenerateSimpleSlotDeformTuple(codegen_utils);
   return true;
 }

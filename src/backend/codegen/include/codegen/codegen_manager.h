@@ -6,7 +6,7 @@
 //    codegen_manager.h
 //
 //  @doc:
-//    Object that manage all CodeGen and CodegenUtils
+//    Object that manage all CodegenInterface and CodegenUtils
 //
 //---------------------------------------------------------------------------
 
@@ -28,23 +28,23 @@ namespace gpcodegen {
 // Forward declaration of CodegenUtils to manage llvm module
 class CodegenUtils;
 
-// Forward declaration of a CodeGenInterface that will be managed by manager
-class CodeGenInterface;
+// Forward declaration of a CodegenInterface that will be managed by manager
+class CodegenInterface;
 
 /**
  * @brief Object that manages all code gen.
  **/
-class CodeGenManager {
+class CodegenManager {
  public:
   /**
    * @brief Constructor.
    *
    * @param module_name A human-readable name for the module that this
-   *        CodeGenManager will manage.
+   *        CodegenManager will manage.
    **/
-  explicit CodeGenManager(const std::string& module_name);
+  explicit CodegenManager(const std::string& module_name);
 
-  ~CodeGenManager() = default;
+  ~CodegenManager() = default;
 
   /**
    * @brief Enroll a code generator with manager
@@ -56,8 +56,8 @@ class CodeGenManager {
    * @param generator    Generator that needs to be enrolled with manager.
    * @return true on successful enrollment.
    **/
-  bool EnrollCodeGenerator(CodeGenFuncLifespan funcLifespan,
-                           CodeGenInterface* generator);
+  bool EnrollCodeGenerator(CodegenFuncLifespan funcLifespan,
+                           CodegenInterface* generator);
 
   /**
    * @brief Request all enrolled generators to generate code.
@@ -104,9 +104,9 @@ class CodeGenManager {
   std::unique_ptr<gpcodegen::CodegenUtils> codegen_utils_;
 
   // List of all enrolled code generators.
-  std::vector<std::unique_ptr<CodeGenInterface>> enrolled_code_generators_;
+  std::vector<std::unique_ptr<CodegenInterface>> enrolled_code_generators_;
 
-  DISALLOW_COPY_AND_ASSIGN(CodeGenManager);
+  DISALLOW_COPY_AND_ASSIGN(CodegenManager);
 };
 
 /** @} */

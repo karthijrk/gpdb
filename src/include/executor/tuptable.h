@@ -112,15 +112,15 @@
 #define         TTS_VIRTUAL     4
 
 /*
- * Interface to the CodeGenManager for slot_deform_tuple code generation
+ * Interface to the CodegenManager for slot_deform_tuple code generation
  */
-typedef struct SlotDeformTupleCodeGenInfo
+typedef struct SlotDeformTupleCodegenInfo
 {
-	/* Pointer to store SlotDeformTupleCodeGen from CodeGen */
+	/* Pointer to store SlotDeformTupleCodegen from Codegen */
 	void* code_generator;
 	/* Function pointer that points to either regular or generated slot_deform_tuple */
 	SlotDeformTupleFn slot_deform_tuple_fn;
-} SlotDeformTupleCodeGenInfo;
+} SlotDeformTupleCodegenInfo;
 
 typedef struct TupleTableSlot
 {
@@ -154,7 +154,7 @@ typedef struct TupleTableSlot
     Oid         tts_tableOid;
 
 #ifdef USE_CODEGEN
-    SlotDeformTupleCodeGenInfo slot_deform_tuple_gen_info;
+    SlotDeformTupleCodegenInfo slot_deform_tuple_gen_info;
 #endif
 } TupleTableSlot;
 
