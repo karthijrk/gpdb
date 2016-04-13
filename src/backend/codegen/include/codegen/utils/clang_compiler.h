@@ -31,7 +31,7 @@ namespace gpcodegen {
 
 struct AnnotatedType;
 
-/** \addtogroup codegen
+/** \addtogroup gpcodegen
  *  @{
  */
 

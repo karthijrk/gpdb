@@ -50,7 +50,7 @@ template <typename, typename> class ConstantMaker;
 template <typename> class FunctionTypeUnpacker;
 }  // namespace codegen_utils_detail
 
-/** \addtogroup codegen
+/** \addtogroup gpcodegen
  *  @{
  */
 

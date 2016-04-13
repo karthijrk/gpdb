@@ -21,7 +21,7 @@
 
 namespace gpcodegen {
 
-/** \addtogroup codegen
+/** \addtogroup gpcodegen
  *  @{
  */
 
