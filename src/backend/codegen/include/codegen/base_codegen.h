@@ -103,6 +103,8 @@ class BaseCodeGen: public CodeGenInterface {
    **/
   static bool SetToRegular(FuncPtrType regular_func_ptr,
                            FuncPtrType* ptr_to_chosen_func_ptr) {
+    assert(nullptr != ptr_to_chosen_func_ptr);
+    assert(nullptr != regular_func_ptr);
     *ptr_to_chosen_func_ptr = regular_func_ptr;
     return true;
   }
