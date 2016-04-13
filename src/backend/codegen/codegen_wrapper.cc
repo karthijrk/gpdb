@@ -79,7 +79,7 @@ void SetActiveCodeGeneratorManager(void* manager) {
  * @tparam FuncType Type of the regular function
  * @tparam Args Variable argument that ClassType will take in its constructor
  *
- * @param regular_func_ptr Regular version of the generated function.
+ * @param regular_func_ptr Regular version of the target function.
  * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
  * @param args Variable length argument for ClassType
  *

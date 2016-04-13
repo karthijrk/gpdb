@@ -27,7 +27,7 @@ class SlotDeformTupleCodeGen: public BaseCodeGen<SlotDeformTupleFn> {
   /**
    * @brief Constructor
    *
-   * @param regular_func_ptr       Regular version of the generated function.
+   * @param regular_func_ptr       Regular version of the target function.
    * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
    * @param slot         The slot to use for generating code.
    *
