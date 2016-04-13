@@ -28,14 +28,15 @@ namespace gpcodegen {
  * @brief Base code generator with common implementation that other
  * 		  code generators can use.
  *
- * @tparam FuncPtrType Function type for regular / generated functions.
+ * @tparam FuncPtrType Function type for regular version of target functions
+ *         or generated functions.
  **/
 template<class FuncPtrType>
 class BaseCodeGen: public CodeGenInterface {
  public:
   /**
    * @brief Destroys the code generator and reverts back to using regular
-   * 		version of the generated function.
+   * 		    version of the target function.
    **/
   virtual ~BaseCodeGen() {
     SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
@@ -85,7 +86,7 @@ class BaseCodeGen: public CodeGenInterface {
   }
 
   /**
-   * @return Regular version of the corresponding generated function.
+   * @return Regular version of the target function.
    *
    **/
   FuncPtrType GetRegularFuncPointer() {
@@ -94,9 +95,9 @@ class BaseCodeGen: public CodeGenInterface {
 
   /**
    * @brief Sets up the caller to use the corresponding regular version of the
-   *        generated function.
+   *        target function.
    *
-   * @param regular_func_ptr       Regular version of the generated function.
+   * @param regular_func_ptr       Regular version of the target function.
    * @param ptr_to_chosen_func_ptr Reference to caller.
    *
    * @return true on setting to regular version.
@@ -114,7 +115,7 @@ class BaseCodeGen: public CodeGenInterface {
    * @brief Constructor
    *
    * @param orig_func_name         Original function name.
-   * @param regular_func_ptr       Regular version of the generated function.
+   * @param regular_func_ptr       Regular version of the target function.
    * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
    *
    * @note 	The ptr_to_chosen_func_ptr can refer to either the generated function or the
@@ -129,7 +130,7 @@ class BaseCodeGen: public CodeGenInterface {
     regular_func_ptr_(regular_func_ptr),
     ptr_to_chosen_func_ptr_(ptr_to_chosen_func_ptr),
     is_generated_(false) {
-    // Initialize the caller to use regular version of generated function.
+    // Initialize the caller to use regular version of target function.
     SetToRegular(regular_func_ptr, ptr_to_chosen_func_ptr);
   }
 

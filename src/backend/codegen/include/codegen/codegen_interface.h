@@ -43,7 +43,7 @@ class CodeGenInterface {
 
   /**
    * @brief Sets up the caller to use the corresponding regular version of the
-   *        generated function.
+   *        target function.
    *
    *
    * @return true on setting to regular version.
