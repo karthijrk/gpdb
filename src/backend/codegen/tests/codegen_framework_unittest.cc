@@ -83,7 +83,7 @@ class SumCodeGenerator : public BaseCodeGen<SumFunc> {
  protected:
   bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final {
     llvm::Function* add2_func
-       = codegen_utils->CreateFunctionTypeDef<SumFunc>(GetUniqueFuncName());
+       = codegen_utils->CreateFunction<SumFunc>(GetUniqueFuncName());
     llvm::BasicBlock* add2_body = codegen_utils->CreateBasicBlock("body",
                                                                    add2_func);
     codegen_utils->ir_builder()->SetInsertPoint(add2_body);
@@ -134,7 +134,7 @@ class UncompilableCodeGenerator : public BaseCodeGen<UncompilableFunc> {
  protected:
   bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final {
     llvm::Function* dummy_func
-                = codegen_utils->CreateFunctionTypeDef<UncompilableFunc>(
+                = codegen_utils->CreateFunction<UncompilableFunc>(
                     GetUniqueFuncName());
     llvm::BasicBlock* dummy_func_body = codegen_utils->CreateBasicBlock("body",
                                                                   dummy_func);
