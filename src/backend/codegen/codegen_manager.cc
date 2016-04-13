@@ -36,31 +36,31 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 
-using gpcodegen::CodeGenManager;
+using gpcodegen::CodegenManager;
 
-CodeGenManager::CodeGenManager(const std::string& module_name) {
+CodegenManager::CodegenManager(const std::string& module_name) {
   codegen_utils_.reset(new gpcodegen::CodegenUtils(module_name));
 }
 
-bool CodeGenManager::EnrollCodeGenerator(
-    CodeGenFuncLifespan funcLifespan, CodeGenInterface* generator) {
-  // Only CodeGenFuncLifespan_Parameter_Invariant is supported as of now
-  assert(funcLifespan == CodeGenFuncLifespan_Parameter_Invariant);
+bool CodegenManager::EnrollCodeGenerator(
+    CodegenFuncLifespan funcLifespan, CodegenInterface* generator) {
+  // Only CodegenFuncLifespan_Parameter_Invariant is supported as of now
+  assert(funcLifespan == CodegenFuncLifespan_Parameter_Invariant);
   assert(nullptr != generator);
   enrolled_code_generators_.emplace_back(generator);
   return true;
 }
 
-unsigned int CodeGenManager::GenerateCode() {
+unsigned int CodegenManager::GenerateCode() {
   unsigned int success_count = 0;
-  for (std::unique_ptr<CodeGenInterface>& generator :
+  for (std::unique_ptr<CodegenInterface>& generator :
       enrolled_code_generators_) {
     success_count += generator->GenerateCode(codegen_utils_.get());
   }
   return success_count;
 }
 
-unsigned int CodeGenManager::PrepareGeneratedFunctions() {
+unsigned int CodegenManager::PrepareGeneratedFunctions() {
   // Call CodegenUtils to compile entire module
   bool compilation_status = codegen_utils_->PrepareForExecution(
       gpcodegen::CodegenUtils::OptimizationLevel::kNone, true);
@@ -74,19 +74,19 @@ unsigned int CodeGenManager::PrepareGeneratedFunctions() {
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
   gpcodegen::CodegenUtils* codegen_utils = codegen_utils_.get();
-  for (std::unique_ptr<CodeGenInterface>& generator :
+  for (std::unique_ptr<CodegenInterface>& generator :
       enrolled_code_generators_) {
     success_count += generator->SetToGenerated(codegen_utils);
   }
   return success_count;
 }
 
-void CodeGenManager::NotifyParameterChange() {
+void CodegenManager::NotifyParameterChange() {
   // no support for parameter change yet
   assert(false);
 }
 
-bool CodeGenManager::InvalidateGeneratedFunctions() {
+bool CodegenManager::InvalidateGeneratedFunctions() {
   // no support for invalidation of generated function
   assert(false);
   return false;

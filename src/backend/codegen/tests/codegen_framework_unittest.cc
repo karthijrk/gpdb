@@ -69,11 +69,11 @@ SumFunc sum_func_ptr = nullptr;
 SumFunc failed_func_ptr = nullptr;
 UncompilableFunc uncompilable_func_ptr = nullptr;
 
-class SumCodeGenerator : public BaseCodeGen<SumFunc> {
+class SumCodeGenerator : public BaseCodegen<SumFunc> {
  public:
   explicit SumCodeGenerator(SumFunc regular_func_ptr,
                              SumFunc* ptr_to_regular_func_ptr) :
-                             BaseCodeGen(kAddFuncNamePrefix,
+                             BaseCodegen(kAddFuncNamePrefix,
                                          regular_func_ptr,
                                          ptr_to_regular_func_ptr) {
   }
@@ -99,11 +99,11 @@ class SumCodeGenerator : public BaseCodeGen<SumFunc> {
   static constexpr char kAddFuncNamePrefix[] = "SumFunc";
 };
 
-class FailingCodeGenerator : public BaseCodeGen<SumFunc> {
+class FailingCodeGenerator : public BaseCodegen<SumFunc> {
  public:
   explicit FailingCodeGenerator(SumFunc regular_func_ptr,
                                 SumFunc* ptr_to_regular_func_ptr):
-                                BaseCodeGen(kFailingFuncNamePrefix,
+                                BaseCodegen(kFailingFuncNamePrefix,
                                             regular_func_ptr,
                                             ptr_to_regular_func_ptr) {
   }
@@ -119,12 +119,12 @@ class FailingCodeGenerator : public BaseCodeGen<SumFunc> {
   static constexpr char kFailingFuncNamePrefix[] = "SumFuncFailing";
 };
 
-class UncompilableCodeGenerator : public BaseCodeGen<UncompilableFunc> {
+class UncompilableCodeGenerator : public BaseCodegen<UncompilableFunc> {
  public:
   explicit UncompilableCodeGenerator(
       UncompilableFunc regular_func_ptr,
       UncompilableFunc* ptr_to_regular_func_ptr)
-  : BaseCodeGen(kUncompilableFuncNamePrefix,
+  : BaseCodegen(kUncompilableFuncNamePrefix,
                 regular_func_ptr,
                 ptr_to_regular_func_ptr) {
   }
@@ -154,32 +154,32 @@ constexpr char UncompilableCodeGenerator::kUncompilableFuncNamePrefix[];
 
 // Test environment to handle global per-process initialization tasks for all
 // tests.
-class CodeGenManagerTestEnvironment : public ::testing::Environment {
+class CodegenManagerTestEnvironment : public ::testing::Environment {
  public:
   virtual void SetUp() {
     ASSERT_EQ(InitCodegen(), 1);
   }
 };
 
-class CodeGenManagerTest : public ::testing::Test {
+class CodegenManagerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    manager_.reset(new CodeGenManager("CodeGenManagerTest"));
+    manager_.reset(new CodegenManager("CodegenManagerTest"));
   }
 
   template <typename ClassType, typename FuncType>
-  void EnrollCodeGen(FuncType reg_func, FuncType* ptr_to_chosen_func) {
+  void EnrollCodegen(FuncType reg_func, FuncType* ptr_to_chosen_func) {
     ClassType* code_gen = new ClassType(reg_func, ptr_to_chosen_func);
     ASSERT_TRUE(reg_func == *ptr_to_chosen_func);
     ASSERT_TRUE(manager_->EnrollCodeGenerator(
-        CodeGenFuncLifespan_Parameter_Invariant,
+        CodegenFuncLifespan_Parameter_Invariant,
         code_gen));
   }
 
-  std::unique_ptr<CodeGenManager> manager_;
+  std::unique_ptr<CodegenManager> manager_;
 };
 
-TEST_F(CodeGenManagerTest, TestGetters) {
+TEST_F(CodegenManagerTest, TestGetters) {
   sum_func_ptr = nullptr;
   SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular,
                                                     &sum_func_ptr);
@@ -191,49 +191,49 @@ TEST_F(CodeGenManagerTest, TestGetters) {
   EXPECT_EQ(SumCodeGenerator::kAddFuncNamePrefix + std::to_string(0),
             code_gen->GetUniqueFuncName());
   ASSERT_TRUE(manager_->EnrollCodeGenerator(
-      CodeGenFuncLifespan_Parameter_Invariant, code_gen));
+      CodegenFuncLifespan_Parameter_Invariant, code_gen));
   ASSERT_FALSE(code_gen->IsGenerated());
   EXPECT_EQ(1, manager_->GenerateCode());
   ASSERT_TRUE(code_gen->IsGenerated());
 }
 
-TEST_F(CodeGenManagerTest, EnrollCodeGeneratorTest) {
+TEST_F(CodegenManagerTest, EnrollCodeGeneratorTest) {
   sum_func_ptr = nullptr;
-  EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
+  EnrollCodegen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
   EXPECT_EQ(1, manager_->GetEnrollmentCount());
 }
 
-TEST_F(CodeGenManagerTest, GenerateCodeTest) {
+TEST_F(CodegenManagerTest, GenerateCodeTest) {
   // With no generator it should return false
   EXPECT_EQ(0, manager_->GenerateCode());
 
   // Test if generation happens successfully
   sum_func_ptr = nullptr;
-  EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
+  EnrollCodegen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Test if generation fails with FailingCodeGenerator
   failed_func_ptr = nullptr;
-  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
+  EnrollCodegen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
                                                &failed_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Test if generation pass with UncompiledCodeGenerator
   uncompilable_func_ptr = nullptr;
-  EnrollCodeGen<UncompilableCodeGenerator, UncompilableFunc>(
+  EnrollCodegen<UncompilableCodeGenerator, UncompilableFunc>(
       UncompilableFuncRegular, &uncompilable_func_ptr);
   EXPECT_EQ(2, manager_->GenerateCode());
 }
 
-TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
+TEST_F(CodegenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
   // Test if generation happens successfully
   sum_func_ptr = nullptr;
-  EnrollCodeGen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
+  EnrollCodegen<SumCodeGenerator, SumFunc>(SumFuncRegular, &sum_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Test if generation fails with FailingCodeGenerator
   failed_func_ptr = nullptr;
-  EnrollCodeGen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
+  EnrollCodegen<FailingCodeGenerator, SumFunc>(SumFuncRegular,
                                                &failed_func_ptr);
   EXPECT_EQ(1, manager_->GenerateCode());
 
@@ -265,13 +265,13 @@ TEST_F(CodeGenManagerTest, PrepareGeneratedFunctionsNoCompilationErrorTest) {
   ASSERT_TRUE(SumFuncRegular == failed_func_ptr);
 }
 
-TEST_F(CodeGenManagerTest, ResetTest) {
+TEST_F(CodegenManagerTest, ResetTest) {
   sum_func_ptr = nullptr;
   SumCodeGenerator* code_gen = new SumCodeGenerator(SumFuncRegular,
                                                     &sum_func_ptr);
 
   ASSERT_TRUE(manager_->EnrollCodeGenerator(
-      CodeGenFuncLifespan_Parameter_Invariant, code_gen));
+      CodegenFuncLifespan_Parameter_Invariant, code_gen));
   EXPECT_EQ(1, manager_->GenerateCode());
 
   // Make sure the function pointers refer to regular versions
@@ -295,6 +295,6 @@ TEST_F(CodeGenManagerTest, ResetTest) {
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
-  AddGlobalTestEnvironment(new gpcodegen::CodeGenManagerTestEnvironment);
+  AddGlobalTestEnvironment(new gpcodegen::CodegenManagerTestEnvironment);
   return RUN_ALL_TESTS();
 }

@@ -1358,7 +1358,7 @@ typedef struct PlanState
 	ProjectionInfo *ps_ProjInfo;	/* info for doing tuple projection */
 
 	/* The manager manages all the code generators and generation process */
-	void *CodeGenManager;
+	void *CodegenManager;
 
 	/*
 	 * EXPLAIN ANALYZE statistics collection

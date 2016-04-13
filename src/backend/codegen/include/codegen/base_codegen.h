@@ -32,13 +32,13 @@ namespace gpcodegen {
  *         or generated functions.
  **/
 template<class FuncPtrType>
-class BaseCodeGen: public CodeGenInterface {
+class BaseCodegen: public CodegenInterface {
  public:
   /**
    * @brief Destroys the code generator and reverts back to using regular
    * 		    version of the target function.
    **/
-  virtual ~BaseCodeGen() {
+  virtual ~BaseCodegen() {
     SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
   }
 
@@ -122,11 +122,11 @@ class BaseCodeGen: public CodeGenInterface {
    * 			corresponding regular version.
    *
    **/
-  explicit BaseCodeGen(const std::string& orig_func_name,
+  explicit BaseCodegen(const std::string& orig_func_name,
                        FuncPtrType regular_func_ptr,
                        FuncPtrType* ptr_to_chosen_func_ptr)
   : orig_func_name_(orig_func_name),
-    unique_func_name_(CodeGenInterface::GenerateUniqueName(orig_func_name)),
+    unique_func_name_(CodegenInterface::GenerateUniqueName(orig_func_name)),
     regular_func_ptr_(regular_func_ptr),
     ptr_to_chosen_func_ptr_(ptr_to_chosen_func_ptr),
     is_generated_(false) {

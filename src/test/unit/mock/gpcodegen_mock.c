@@ -19,7 +19,7 @@ CodeGeneratorManagerCreate()
 	return NULL;
 }
 
-// calls all the registered CodeGenFuncInfo to generate code
+// calls all the registered CodegenInterface to generate code
 unsigned int
 CodeGeneratorManagerGenerateCode(void* manager)
 {
@@ -65,14 +65,14 @@ SetActiveCodeGeneratorManager(void* manager)
 	elog(ERROR, "mock implementation of SetActiveCodeGeneratorManager called");
 }
 
-// returns the pointer to the CodeGenFuncInfo
+// returns the pointer to the SlotDeformTupleCodegen
 void*
-SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
+SlotDeformTupleCodegenEnroll(SlotDeformTupleFn regular_func_ptr,
         SlotDeformTupleFn* ptr_to_regular_func_ptr,
         struct TupleTableSlot* slot)
 {
   *ptr_to_regular_func_ptr = regular_func_ptr;
-	elog(ERROR, "mock implementation of SlotDeformTupleCodeGen_Enroll called");
+	elog(ERROR, "mock implementation of SlotDeformTupleCodegen_Enroll called");
 	return NULL;
 }
 

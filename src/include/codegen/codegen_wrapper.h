@@ -55,13 +55,13 @@ extern void slot_deform_tuple(struct TupleTableSlot *slot, int natts);
  *
  *
  */
-typedef enum CodeGenFuncLifespan
+typedef enum CodegenFuncLifespan
 {
 	// Does not depend on parameter changes
-	CodeGenFuncLifespan_Parameter_Invariant,
+	CodegenFuncLifespan_Parameter_Invariant,
 	// Has to be regenerated as the parameter changes
-	CodeGenFuncLifespan_Parameter_Variant
-} CodeGenFuncLifespan;
+	CodegenFuncLifespan_Parameter_Variant
+} CodegenFuncLifespan;
 
 
 #ifdef __cplusplus
@@ -82,13 +82,13 @@ void*
 CodeGeneratorManagerCreate(const char* module_name);
 
 /*
- * Calls all the registered CodeGenInterface to generate code
+ * Calls all the registered CodegenInterface to generate code
  */
 unsigned int
 CodeGeneratorManagerGenerateCode(void* manager);
 
 /*
- * Compiles and prepares all the CodeGen function pointers. Returns
+ * Compiles and prepares all the Codegen function pointers. Returns
  * number of successfully generated functions
  */
 unsigned int
@@ -119,10 +119,10 @@ void
 SetActiveCodeGeneratorManager(void* manager);
 
 /*
- * returns the pointer to the CodeGenFuncInfo
+ * returns the pointer to the SlotDeformTupleCodegen
  */
 void*
-SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
+SlotDeformTupleCodegenEnroll(SlotDeformTupleFn regular_func_ptr,
                               SlotDeformTupleFn* ptr_to_regular_func_ptr,
                               struct TupleTableSlot* slot);
 
@@ -179,7 +179,7 @@ SlotDeformTupleCodeGenEnroll(SlotDeformTupleFn regular_func_ptr,
  * is set to the regular version initially
  */
 #define enroll_slot_deform_tuple_codegen(regular_func, ptr_to_regular_func_ptr, slot) \
-		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodeGenEnroll( \
+		slot->slot_deform_tuple_gen_info.code_generator = SlotDeformTupleCodegenEnroll( \
 				regular_func, ptr_to_regular_func_ptr, slot); \
 		Assert(slot->slot_deform_tuple_gen_info.slot_deform_tuple_fn == regular_func); \
 

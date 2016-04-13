@@ -28,9 +28,9 @@ class CodegenUtils;
 /**
  * @brief Interface for all code generators.
  **/
-class CodeGenInterface {
+class CodegenInterface {
  public:
-  virtual ~CodeGenInterface() = default;
+  virtual ~CodegenInterface() = default;
 
   /**
    * @brief Generates specialized code at run time.
@@ -98,7 +98,7 @@ class CodeGenInterface {
   static std::string GenerateUniqueName(const std::string& orig_func_name);
 
  private:
-  // Unique counter for all instances of CodeGen Interface.
+  // Unique counter for all instances of Codegen Interface.
   static unsigned unique_counter_;
 };
 
