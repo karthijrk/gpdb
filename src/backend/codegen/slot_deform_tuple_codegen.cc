@@ -68,7 +68,7 @@ bool SlotDeformTupleCodeGen::GenerateSimpleSlotDeformTuple(
   assert(llvm_regular_function != nullptr);
 
   llvm::Function* llvm_function =
-      codegen_utils->CreateFunctionTypeDef<SlotDeformTupleFn>(
+      codegen_utils->CreateFunction<SlotDeformTupleFn>(
           GetUniqueFuncName());
 
   llvm::BasicBlock* function_body = codegen_utils->CreateBasicBlock(

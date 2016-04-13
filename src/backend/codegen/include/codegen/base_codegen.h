@@ -58,7 +58,7 @@ class BaseCodeGen: public CodeGenInterface {
       return false;
     }
 
-    FuncPtrType compiled_func_ptr = codegen_utils->GetFunctionPointerTypeDef<
+    FuncPtrType compiled_func_ptr = codegen_utils->GetFunctionPointer<
         FuncPtrType>(GetUniqueFuncName());
 
     if (nullptr != compiled_func_ptr) {
