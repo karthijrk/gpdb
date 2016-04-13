@@ -51,7 +51,8 @@ class CodeGenManager {
    *
    * @note Manager manages the memory of enrolled generator.
    *
-   * @param funcLifespan Based on life span corresponding CodeGen_Utils will be used to generate
+   * @param funcLifespan Life span of the enrolling generator. Based on life span,
+   *                     corresponding CodegenUtils will be used for code generation
    * @param generator    Generator that needs to be enrolled with manager.
    * @return true on successful enrollment.
    **/
@@ -59,17 +60,18 @@ class CodeGenManager {
                            CodeGenInterface* generator);
 
   /**
-   * @brief Make all enrolled generators to generate code.
+   * @brief Request all enrolled generators to generate code.
    *
    * @return The number of enrolled codegen that successfully generated code.
    **/
   unsigned int GenerateCode();
 
   /**
-   * @brief Compile all the generated functions. On success, caller gets
-   * 		to call the generated method.
+   * @brief Compile all the generated functions. On success,
+   *        a pointer to the generated method becomes available to the caller.
    *
-   * @return The number of enrolled codegen that successully generated code and 0 on failure
+   * @return The number of enrolled codegen that successully generated code
+   *         and 0 on failure
    **/
   unsigned int PrepareGeneratedFunctions();
 
