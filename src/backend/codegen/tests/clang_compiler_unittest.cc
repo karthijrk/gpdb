@@ -451,7 +451,8 @@ TEST_F(ClangCompilerTest, ExternalMethodTest) {
       false));
 
   double (*AddWithAccumulator)(const double, const double, const double)
-      = codegen_utils_->GetFunctionPointer<decltype(AddWithAccumulator)>("AddWithAccumulator");
+      = codegen_utils_->GetFunctionPointer<
+      decltype(AddWithAccumulator)>("AddWithAccumulator");
   ASSERT_NE(AddWithAccumulator, nullptr);
 
   EXPECT_EQ(1.2 + 2.3 + 3.4, (*AddWithAccumulator)(1.2, 2.3, 3.4));
