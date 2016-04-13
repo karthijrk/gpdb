@@ -973,10 +973,10 @@ namespace codegen_utils_detail {
 template <typename FunctionType>
 class FunctionTypeUnpacker;
 
- // Partial specialization of FunctionTypeUnpacker.
- // This class will unpack the function type to ReturnType and ArgumentTypes.
- // GetFunctionPointerImpl - Call CodegenUtils's GetFunctionPointerImpl
- // CreateFunctionImpl - Call CodegenUtils's CreateFunctionImpl.
+// Partial specialization of FunctionTypeUnpacker.
+// This class will unpack the function type to ReturnType and ArgumentTypes.
+// GetFunctionPointerImpl - Call CodegenUtils's GetFunctionPointerImpl
+// CreateFunctionImpl - Call CodegenUtils's CreateFunctionImpl.
 template<typename ReturnType, typename... ArgumentTypes>
 class FunctionTypeUnpacker<ReturnType(*)(ArgumentTypes...)> {
  public:
