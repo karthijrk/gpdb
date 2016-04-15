@@ -256,26 +256,27 @@ assignment, and has the illusion of unlimited registers.
   variadic code that is both type-safe and fast.
   
 ## Codegen GPDB Function
-In order to facilitate codegen GPDB function, we introduced few classes such as 
+In order to facilitate codegen GPDB function, we introduced the following classes:
 * `CodegenInterface` - Interface for all code generators.
-* `BaseCodegen`	   - Inherits CodegenInterface and provides common implementation for all
-					 generators that derive from it.
+* `BaseCodegen`	     - Inherits CodegenInterface and provides common implementation for all
+					   generators that derive from it.
 * `CodegenManager`   - Manages all CodegenInterface.
 
 More details for above classes are available in doxygen document or in respective source code.
 
-Given this, below are the necessary steps to codegen any function in GPDB.
+Below are the necessary steps to codegen a target function *F* (e.g. `slot_deform_tuple`) which is
+access through an operator.
 
-1. Store a pointer to its CodegenManager in each operator
-2. Create a new generator class (E.g. `SlotDeformTupleCodegen`) that derives from BaseCodegen. 
-   Implement a function that generartes IR instructions / C++ code for the target function. 
-3. In GPDB, store a pointer to an instance of the above generator class (E.g. `SlotDeformTupleCodegen`)
-   and function pointer for the target function (E.g. `slot_deform_tuple`) in the 
-   state of the target function.
-4. Enroll the new generator with the manager for current operator during `ExecInit`. Enrollment
-   process makes sure that the function pointer initally points to the regular version of the target
-   function (E.g. `slot_deform_tuple`).
+1. Create a CodegenManager instance in the corresponding operator.
+2. Create a new generator class *GC* (E.g. `SlotDeformTupleCodegen`) that derives from BaseCodegen and 
+   implements a function that generartes IR instructions / C++ code for *F*. 
+3. Store *GC* and a function pointer to *F* in an appropriate struct. For instance the proper struct
+   for `slot_deform_tuple` is `TupleTableSlot`.
+4. Enroll *GC* with the manager for current operator during `ExecInit`. Enrollment
+   process makes sure that the function pointer initally points to the regular version of *F*.
 5. Replace the actual function call in GPDB with a call to the above function pointer.
 
-After `ExecInit`, manager uses `CodegenInterface` to generate the runtime code and swap the function
-pointer to point to the generated version if the code generation is successful. 
+After `ExecInit`, manager uses `CodegenInterface` to generate the runtime code. On sucessful generation,
+manager swaps the function pointer (see Step 3) to point to the generated version of *F*. Note that, *GC*
+stores the target function *F* along with a reference to a function pointer to *F* (see Step 3). This
+mechanism allows manager to fallback on the regular version of *F* when code generation fails.  
