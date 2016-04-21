@@ -61,11 +61,17 @@ unsigned int CodegenManager::GenerateCode() {
 }
 
 unsigned int CodegenManager::PrepareGeneratedFunctions() {
+
+  unsigned int success_count = 0;
+
+  // If no generator registered, just return with success count as 0
+  if (enrolled_code_generators_.empty()) {
+    return success_count;
+  }
+
   // Call CodegenUtils to compile entire module
   bool compilation_status = codegen_utils_->PrepareForExecution(
       gpcodegen::CodegenUtils::OptimizationLevel::kNone, true);
-
-  unsigned int success_count = 0;
 
   if (!compilation_status) {
     return success_count;
