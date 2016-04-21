@@ -1756,7 +1756,10 @@ ExecEndNode(PlanState *node)
 			break;
 	}
 
-	Assert(NULL != node->CodegenManager);
+	/*
+	 * if codegen guc is true, then assert if CodegenManager is NULL
+	 */
+	AssertImply(codegen, NULL != node->CodegenManager);
 	CodeGeneratorManagerDestroy(node->CodegenManager);
 	node->CodegenManager = NULL;
 

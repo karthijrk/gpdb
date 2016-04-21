@@ -137,16 +137,20 @@ SlotDeformTupleCodegenEnroll(SlotDeformTupleFn regular_func_ptr,
  */
 #define START_CODE_GENERATOR_MANAGER(newManager)  \
 	do { \
-		void *oldManager = NULL; \
-		Assert(newManager != NULL); \
-		oldManager = GetActiveCodeGeneratorManager(); \
-		SetActiveCodeGeneratorManager(newManager);\
+	  void *oldManager = NULL; \
+	  if (codegen) { \
+	    Assert(newManager != NULL); \
+	    oldManager = GetActiveCodeGeneratorManager(); \
+	    SetActiveCodeGeneratorManager(newManager);\
+	  } \
 /*
  * END_CODE_GENERATOR_MANAGER would restore the previous code generator manager that was
  * active at the time of START_CODE_GENERATOR_MANAGER call
  */
 #define END_CODE_GENERATOR_MANAGER()  \
-		SetActiveCodeGeneratorManager(oldManager);\
+    if (codegen) { \
+		  SetActiveCodeGeneratorManager(oldManager);\
+    } \
 	} while (0);
 
 
