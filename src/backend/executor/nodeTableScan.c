@@ -31,6 +31,9 @@ ExecInitTableScan(TableScan *node, EState *estate, int eflags)
 TupleTableSlot *
 ExecTableScan(TableScanState *node)
 {
+	if (10 == memory_profiler_dataset_size) {
+		return GetSlotFromHeapScan(node);
+	}
 	ScanState *scanState = (ScanState *)node;
 
 	if (scanState->scan_state == SCAN_INIT ||
@@ -53,6 +56,29 @@ ExecTableScan(TableScanState *node)
 	}
 
 	return slot;
+}
+
+void
+ExecBeginTableHeapScan(ScanState *node) {
+	BeginScanHeapRelation(node);
+}
+
+TupleTableSlot*
+GetSlotFromHeapScan(ScanState* node) {
+	TupleTableSlot* slot = HeapScanNext(node);
+	if (!TupIsNull(slot)) {
+		Gpmon_M_Incr_Rows_Out(GpmonPktFromTableScanState((TableScanState *)node));
+		CheckSendPlanStateGpmonPkt(&node->ps);
+	}
+	else if (!node->ps.delayEagerFree) {
+		ExecEndTableHeapScan(node);
+	}
+	return slot;
+}
+
+void
+ExecEndTableHeapScan(ScanState *node) {
+	EndScanHeapRelation(node);
 }
 
 void

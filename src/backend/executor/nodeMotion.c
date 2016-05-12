@@ -348,7 +348,9 @@ execMotionSender(MotionState * node)
 			(motion->motionType == MOTIONTYPE_EXPLICIT && motion->segidColIdx > 0) || 
 			(motion->motionType == MOTIONTYPE_FIXED && motion->numOutputSegs <= 1));
 	Assert(node->ps.state->interconnect_context);
-
+	if (10 == memory_profiler_dataset_size) {
+		ExecBeginTableHeapScan(outerPlanState(node));
+	}
 	while (!done)
 	{
 		/* grab TupleTableSlot from our child. */
