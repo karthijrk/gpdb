@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "utils/debugbreak.h"
+#include "cdb/cdbvars.h"
 
 #include <unistd.h>
 
@@ -156,6 +157,28 @@ ExecScan(ScanState *node,
 		 * when the qual is nil ... saves only a few cycles, but they add up
 		 * ...
 		 */
+		if (memory_profiler_dataset_size == 10 && qual && GpIdentity.segindex > -1) {
+			HeapTuple	tuple = TupGetHeapTuple(slot);
+			HeapTupleHeader tup = tuple->t_data;
+			char	   *tp;				/* ptr to tuple data */
+			Datum	   *values = slot->PRIVATE_tts_values;
+			tp = (char *) tup + tup->t_hoff;
+			int32 b = *(int32 *)(tp + sizeof(int32));
+			int32 c = *(int32 *)(tp + 2 * sizeof(int32));
+			if (b < c) {
+				if (projInfo) {
+					return ExecProject(projInfo, NULL);
+				}
+				else {
+					return slot;
+				}
+			}
+			/*
+			 * Tuple fails qual, so free per-tuple memory and try again.
+			 */
+			ResetExprContext(econtext);
+			continue;
+		}
 		if (!qual || ExecQual(qual, econtext, false))
 		{
 			/*
