@@ -189,6 +189,8 @@ class BaseCodegen: public CodegenInterface {
   FuncPtrType regular_func_ptr_;
   FuncPtrType* ptr_to_chosen_func_ptr_;
   bool is_generated_;
+  // To track uncompiled llvm functions it creates and erase from
+  // llvm module on failed generations.
   std::vector<llvm::Function*> uncompiled_generated_functions_;
 };
 /** @} */
