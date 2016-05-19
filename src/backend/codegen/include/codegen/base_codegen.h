@@ -53,7 +53,7 @@ class BaseCodegen: public CodegenInterface {
         function->eraseFromParent();
       }
     }
-    // We don't need to keep these pointer any more
+    // We don't need to keep these pointers any more
     std::vector<llvm::Function*>().swap(uncompiled_generated_functions_);
     return is_generated_;
   }
@@ -163,7 +163,7 @@ class BaseCodegen: public CodegenInterface {
    * @brief Create llvm Function for given type and store the function pointer
    *        in vector
    *
-   * @note  If generation fails, this class takes responsible to clean up all
+   * @note  If generation fails, this class takes responsibility to clean up all
    *        the functions it created
    *
    * @tparam FunctionType Type of the function to create
