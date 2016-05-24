@@ -164,6 +164,18 @@ ExecPartitionSelector(PartitionSelectorState *node)
 	/* partition propagation */
 	if (NULL != ps->propagationExpression)
 	{
+	  if (10 == memory_profiler_dataset_size) {
+      ListCell *lcScanId = NULL;
+
+      foreach (lcScanId, selparts->scanIds)
+      {
+        int scanId = lfirst_int(lcScanId);
+        if ((dynamicTableScanInfo->pidIndexes)[scanId - 1] != NULL)
+        {
+          dynamicTableScanInfo->pidIndexes[scanId - 1] = NULL;
+        }
+      }
+	  }
 		partition_propagation(selparts->partOids, selparts->scanIds, ps->selectorId);
 	}
 
