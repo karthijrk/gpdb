@@ -1,0 +1,16 @@
+platform: linux
+image: docker:///shardikar/gpcodegen#latest
+inputs:
+  - name: bin_orca_centos7_release
+  - name: bin_gpos_centos7_release
+  - name: bin_xerces_centos7
+  - name: gpdb_src
+outputs:
+  - name: bin_gpdb_with_orca_and_codegen_centos7
+run:
+  path: gpdb_src/concourse/scripts/build_with_orca_and_codegen.py
+  args:
+    - --output_dir=bin_gpdb_with_orca_and_codegen_centos7/install
+    - bin_orca_centos7_release
+    - bin_gpos_centos7_release
+    - bin_xerces_centos7

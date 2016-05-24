@@ -3,12 +3,12 @@
 import optparse
 import subprocess
 import sys
-from builds import GporcaCommon
+from builds import GporcaCodegen
 
 def make():
-    ciCommon = GporcaCommon()
+    ciCodegen = GporcaCodegen()
     return subprocess.call(["make",
-                            "-j" + str(ciCommon.num_cpus())], cwd="gpdb_src")
+                            "-j" + str(ciCodegen.num_cpus())], cwd="gpdb_src")
 
 def install(output_dir):
     subprocess.call(["make", "install"], cwd="gpdb_src")
@@ -23,15 +23,15 @@ def main():
     parser.add_option("--cxxflags", dest="cxxflags")
     parser.add_option("--output_dir", dest="output_dir", default="install")
     (options, args) = parser.parse_args()
-    ciCommon = GporcaCommon()
-    status = ciCommon.install_system_deps()
+    ciCodegen = GporcaCodegen()
+    status = ciCodegen.install_system_deps()
     if status:
         return status
     for dependency in args:
-        status = ciCommon.install_dependency(dependency)
+        status = ciCodegen.install_dependency(dependency)
         if status:
             return status
-    status = ciCommon.configure()
+    status = ciCodegen.configure()
     if status:
         return status
     status = make()

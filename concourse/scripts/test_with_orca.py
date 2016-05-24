@@ -3,7 +3,7 @@
 import optparse
 import subprocess
 import sys
-from gporca import GporcaCommon
+from builds import GporcaCommon
 
 def install_gpdb(dependency_name):
     status = subprocess.call("mkdir -p /usr/local/gpdb", shell=True)
