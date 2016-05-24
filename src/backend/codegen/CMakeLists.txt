@@ -184,7 +184,7 @@ target_link_libraries(
 # GPDB unit tests use unittest-check instead of test, so we add an alias target
 # that calls the ctests we registered above.
 add_custom_target(check
-    COMMAND ${CMAKE_CTEST_COMMAND})
+    COMMAND ${CMAKE_CTEST_COMMAND} -V)
 add_custom_target(unittest-check 
     COMMAND ${CMAKE_COMMAND} .
     COMMAND ${CMAKE_MAKE_PROGRAM} check
