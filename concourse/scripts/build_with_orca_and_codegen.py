@@ -11,7 +11,7 @@ def make():
                             "-j" + str(ciCodegen.num_cpus())], cwd="gpdb_src")
 
 def unittest():
-    return subprocess.call(["make", "-C", "src/backend", "unittest-check"])
+    return subprocess.call(["make", "-C", "src/backend", "unittest-check"], cwd="gpdb_src")
 
 def install(output_dir):
     subprocess.call(["make", "install"], cwd="gpdb_src")
