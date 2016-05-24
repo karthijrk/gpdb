@@ -10,11 +10,13 @@ def make():
     return subprocess.call(["make",
                             "-j" + str(ciCodegen.num_cpus())], cwd="gpdb_src")
 
+def unittest():
+    return subprocess.call(["make", "-C", "src/backend", "unittest-check"])
+
 def install(output_dir):
     subprocess.call(["make", "install"], cwd="gpdb_src")
     subprocess.call("mkdir -p " + output_dir, shell=True)
     return subprocess.call("cp -r /usr/local/gpdb/* " + output_dir, shell=True)
-	
 
 def main():
     parser = optparse.OptionParser()
@@ -35,6 +37,9 @@ def main():
     if status:
         return status
     status = make()
+    if status:
+        return status
+    status = unittest()
     if status:
         return status
     status = install(options.output_dir)
