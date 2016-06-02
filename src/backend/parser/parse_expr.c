@@ -1450,8 +1450,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 				/*
 				 * Make a copy before we change warg.
 				 * In transformation we don't want to change source (CaseExpr* Node).
-				 * transformExpression can be called multiple time and don't want to change
-				 * the behavior.
+				 * Always create new node and do the transformation
 				 */
 				warg = copyObject(warg);
 				A_Expr *top  = (A_Expr *) warg;
