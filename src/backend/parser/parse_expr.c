@@ -1447,6 +1447,7 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 			 */
 			if (isWhenIsNotDistinctFromExpr(warg))
 			{
+				warg = copyObject(warg);
 				A_Expr *top  = (A_Expr *) warg;
 				A_Expr *expr = (A_Expr *) top->rexpr;
 				expr->lexpr = (Node *) placeholder;
