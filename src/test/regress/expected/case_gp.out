@@ -851,7 +851,6 @@ END;
 ERROR:  syntax error at or near "DISTINCT"
 LINE 3:        WHEN IS DISTINCT FROM 2 THEN '1<>2'
                        ^
-
 --
 -- Case expression in group by
 --
