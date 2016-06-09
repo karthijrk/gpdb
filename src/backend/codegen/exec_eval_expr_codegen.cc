@@ -38,6 +38,7 @@
 extern "C" {
 #include "postgres.h"
 #include "utils/elog.h"
+#include "nodes/execnodes.h"
 }
 
 using gpcodegen::ExecEvalExprCodegen;
@@ -109,8 +110,8 @@ class ElogWrapper {
 
 ExecEvalExprCodegen::ExecEvalExprCodegen
 (
-		ExecEvalExprFn regular_func_ptr,
-		ExecEvalExprFn* ptr_to_regular_func_ptr,
+    ExecEvalExprFn regular_func_ptr,
+    ExecEvalExprFn* ptr_to_regular_func_ptr,
     ExprState *exprstate) :
     BaseCodegen(kExecEvalExprPrefix, regular_func_ptr, ptr_to_regular_func_ptr),
     exprstate_(exprstate) {
@@ -124,23 +125,87 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
   ElogWrapper elogwrapper(codegen_utils);
 
-  llvm::Function* expr_state_func = codegen_utils->
-        CreateFunction<ExecEvalExprFn>(
-            GetUniqueFuncName());
+  llvm::Function* exec_eval_expr_func = codegen_utils->
+      CreateFunction<ExecEvalExprFn>(
+          GetUniqueFuncName());
+
+  // Function arguments to ExecVariableList
+  llvm::Value* llvm_expression_arg = ArgumentByPosition(exec_eval_expr_func, 0);
+  llvm::Value* llvm_econtext_arg = ArgumentByPosition(exec_eval_expr_func, 1);
+  llvm::Value* llvm_isnull_arg = ArgumentByPosition(exec_eval_expr_func, 2);
+  llvm::Value* llvm_isDone_arg = ArgumentByPosition(exec_eval_expr_func, 3);
 
   // BasicBlock of function entry.
   llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock(
-      "entry", expr_state_func);
+      "entry", exec_eval_expr_func);
 
   auto irb = codegen_utils->ir_builder();
 
   irb->SetInsertPoint(entry_block);
 
+  if (exprstate_ && exprstate_->expr) {
+    // Codegen Operation expression
+    Expr *expr_ = exprstate_->expr;
+    if (nodeTag(expr_) != T_OpExpr) {
+      elog(DEBUG1, "Unsupported expression. Support only T_OpExpr");
+      return false;
+    }
+
+    // In ExecEvalOper
+    OpExpr *op = (OpExpr *) expr_;
+    elog(DEBUG1, "Operator oid = %d", op->opno);
+
+    if (op->opno != 523 /* "<=" */) {
+      elog(DEBUG1, "Unsupported operator %d.", op->opno);
+      return false;
+    }
+
+    elog(DEBUG1, "Found supported operator (<=)");
+    // In ExecMakeFunctionResult
+    // retrieve operator's arguments
+    List *arguments = ((FuncExprState *)exprstate_)->args;
+    // In ExecEvalFuncArgs
+    if (list_length(arguments) != 2) {
+      elog(DEBUG1, "Wrong number of arguments (!= 2)");
+      return false;
+    }
+
+    llvm::Value* const_value;
+
+    ListCell   *arg;
+    foreach(arg, arguments)
+    {
+      // for each argument retrieve the ExprState
+      ExprState  *argstate = (ExprState *) lfirst(arg);
+
+      // Currently we support only variable and constant arguments
+      if (nodeTag(argstate->expr) == T_Var) {
+        // In ExecEvalVar
+        Var *variable = (Var *) argstate->expr;
+        int attnum = variable->varattno;
+        elog(DEBUG1, "Variable attnum = %d", attnum);
+      }
+      else if (nodeTag(argstate->expr) == T_Const) {
+        // In ExecEvalConst
+        Const *con = (Const *) argstate->expr;
+        int value = con->constvalue;
+        const_value = codegen_utils->GetConstant(con->constvalue);
+        elog(DEBUG1, "Constant value= %d", value);
+      }
+      else {
+        elog(DEBUG1, "Unsupported argument type.");
+        return false;
+      }
+    }
+    // after we have all these we are able to execute it and call **int4le**
+
+  }
+
   elogwrapper.CreateElog(DEBUG1, "Falling back to regular expression evaluation.");
 
   codegen_utils->CreateFallback<ExecEvalExprFn>(
       codegen_utils->RegisterExternalFunction(GetRegularFuncPointer()),
-	  expr_state_func);
+      exec_eval_expr_func);
 
   return true;
 }
