@@ -199,7 +199,6 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
         elog(DEBUG1, "Variable attnum = %d", attnum);
 
         // slot = econtext->ecxt_scantuple; {{{
-
         TupleTableSlot **ptr_to_slot_ptr = NULL;
         switch (variable->varno)
         {
@@ -215,11 +214,12 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
             ptr_to_slot_ptr = &econtext_->ecxt_scantuple;
         }
 
-        llvm::Value *llvm_ptr_to_slot_ptr = codegen_utils->GetConstant(ptr_to_slot_ptr);
-        llvm::Value *llvm_slot = irb->CreateLoad(llvm_ptr_to_slot_ptr);
+        llvm::Value *llvm_slot = irb->CreateLoad(
+            codegen_utils->GetConstant(ptr_to_slot_ptr));
         //}}}
 
-        llvm::Value *llvm_variable_varattno = codegen_utils->GetConstant<int4>(variable->varattno);
+        llvm::Value *llvm_variable_varattno = codegen_utils->
+            GetConstant<int4>(variable->varattno);
 
         llvm_arg_val[arg_num] = codegen_utils->ir_builder()->CreateCall(
             llvm_slot_getattr, {
@@ -227,8 +227,6 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
                 llvm_variable_varattno,
                 llvm_isnull_arg /* TODO: Fix isNull */
         });
-
-        elogwrapper.CreateElog(DEBUG1, "Retrieved slot %x", llvm_slot);
 
       }
       else if (nodeTag(argstate->expr) == T_Const) {
@@ -254,20 +252,14 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
     irb->SetInsertPoint(return_true_block);
     elogwrapper.CreateElog(DEBUG1, "Returning true");
-    irb->CreateRet(codegen_utils->GetConstant(1));
+    irb->CreateRet(codegen_utils->GetConstant<int64>(1));
 
     irb->SetInsertPoint(return_false_block);
     elogwrapper.CreateElog(DEBUG1, "Returning false");
-    irb->CreateRet(codegen_utils->GetConstant(0));
+    irb->CreateRet(codegen_utils->GetConstant<int64>(0));
 
     return true;
   }
-
-  //    elogwrapper.CreateElog(DEBUG1, "Falling back to regular expression evaluation.");
-  //
-  //    codegen_utils->CreateFallback<ExecEvalExprFn>(
-  //        codegen_utils->RegisterExternalFunction(GetRegularFuncPointer()),
-  //        exec_eval_expr_func);
 
   return false;
 }
