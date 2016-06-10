@@ -114,9 +114,10 @@ ExecEvalExprCodegen::ExecEvalExprCodegen
     ExecEvalExprFn* ptr_to_regular_func_ptr,
     ExprState *exprstate,
     ExprContext *econtext) :
-    BaseCodegen(kExecEvalExprPrefix, regular_func_ptr, ptr_to_regular_func_ptr),
-    exprstate_(exprstate),
-    econtext_(econtext){
+    BaseCodegen(kExecEvalExprPrefix,
+                regular_func_ptr, ptr_to_regular_func_ptr),
+                exprstate_(exprstate),
+                econtext_(econtext){
 }
 
 
@@ -132,7 +133,8 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
           GetUniqueFuncName());
 
   // Function arguments to ExecVariableList
-  llvm::Value* llvm_expression_arg = ArgumentByPosition(exec_eval_expr_func, 0);
+  llvm::Value* llvm_expression_arg =
+      ArgumentByPosition(exec_eval_expr_func, 0);
   llvm::Value* llvm_econtext_arg = ArgumentByPosition(exec_eval_expr_func, 1);
   llvm::Value* llvm_isnull_arg = ArgumentByPosition(exec_eval_expr_func, 2);
   llvm::Value* llvm_isDone_arg = ArgumentByPosition(exec_eval_expr_func, 3);
@@ -165,6 +167,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     OpExpr *op = (OpExpr *) expr_;
 
     if (op->opno != 523 /* "<=" */ && op->opno != 1096 /* date "<=" */) {
+      // Operators are stored in pg_proc table. See postgres.bki for more details.
       elog(DEBUG1, "Unsupported operator %d.", op->opno);
       return false;
     }
@@ -184,7 +187,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
     foreach(arg, arguments)
     {
-      // for each argument retrieve the ExprState
+      // retrieve argument's ExprState
       ExprState  *argstate = (ExprState *) lfirst(arg);
 
       // Currently we support only variable and constant arguments
@@ -194,19 +197,23 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
         int attnum = variable->varattno;
 
         // slot = econtext->ecxt_scantuple; {{{
+        // At code generation time, slot is NULL.
+        // For that reason, we keep a double pointer to slot and at execution time
+        // we load slot.
         TupleTableSlot **ptr_to_slot_ptr = NULL;
         switch (variable->varno)
         {
-          case INNER:       /* get the tuple from the inner node */
+          case INNER:  /* get the tuple from the inner node */
             ptr_to_slot_ptr = &econtext_->ecxt_innertuple;
             break;
 
-          case OUTER:       /* get the tuple from the outer node */
+          case OUTER:  /* get the tuple from the outer node */
             ptr_to_slot_ptr = &econtext_->ecxt_outertuple;
             break;
 
-          default:        /* get the tuple from the relation being scanned */
+          default:     /* get the tuple from the relation being scanned */
             ptr_to_slot_ptr = &econtext_->ecxt_scantuple;
+            break;
         }
 
         llvm::Value *llvm_slot = irb->CreateLoad(
@@ -216,6 +223,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
         llvm::Value *llvm_variable_varattno = codegen_utils->
             GetConstant<int4>(variable->varattno);
 
+        // retrieve variable
         llvm_arg_val[arg_num] = codegen_utils->ir_builder()->CreateCall(
             llvm_slot_getattr, {
                 llvm_slot,
@@ -255,11 +263,9 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     }
 
     irb->SetInsertPoint(return_true_block);
-    elogwrapper.CreateElog(DEBUG1, "Returning true");
     irb->CreateRet(codegen_utils->GetConstant<int64>(1));
 
     irb->SetInsertPoint(return_false_block);
-    elogwrapper.CreateElog(DEBUG1, "Returning false");
     irb->CreateRet(codegen_utils->GetConstant<int64>(0));
 
     return true;
