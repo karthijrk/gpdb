@@ -153,8 +153,6 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
   irb->SetInsertPoint(entry_block);
 
-  elogwrapper.CreateElog(DEBUG1, "Calling generated ExecEvalExpr!!!");
-
   if (exprstate_ && exprstate_->expr && econtext_) {
     // Codegen Operation expression
     Expr *expr_ = exprstate_->expr;
@@ -165,14 +163,12 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
     // In ExecEvalOper
     OpExpr *op = (OpExpr *) expr_;
-    elog(DEBUG1, "Operator oid = %d", op->opno);
 
-    if (op->opno != 523 /* "<=" */) {
+    if (op->opno != 523 /* "<=" */ && op->opno != 1096 /* date "<=" */) {
       elog(DEBUG1, "Unsupported operator %d.", op->opno);
       return false;
     }
 
-    elog(DEBUG1, "Found supported operator (<=)");
     // In ExecMakeFunctionResult
     // retrieve operator's arguments
     List *arguments = ((FuncExprState *)exprstate_)->args;
@@ -196,7 +192,6 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
         // In ExecEvalVar
         Var *variable = (Var *) argstate->expr;
         int attnum = variable->varattno;
-        elog(DEBUG1, "Variable attnum = %d", attnum);
 
         // slot = econtext->ecxt_scantuple; {{{
         TupleTableSlot **ptr_to_slot_ptr = NULL;
@@ -232,9 +227,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
       else if (nodeTag(argstate->expr) == T_Const) {
         // In ExecEvalConst
         Const *con = (Const *) argstate->expr;
-        int value = con->constvalue;
         llvm_arg_val[arg_num] = codegen_utils->GetConstant(con->constvalue);
-        elog(DEBUG1, "Constant value= %d", value);
       }
       else {
         elog(DEBUG1, "Unsupported argument type.");
@@ -244,11 +237,22 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
       arg_num++;
     }
 
-    // Execute **int4le**
-    irb->CreateCondBr(
-        irb->CreateICmpSLE(llvm_arg_val[0], llvm_arg_val[1]),
-        return_true_block /* true */,
-        return_false_block /* false */);
+    if (op->opno == 523) {
+      // Execute **int4le**
+      irb->CreateCondBr(
+          irb->CreateICmpSLE(llvm_arg_val[0], llvm_arg_val[1]),
+          return_true_block /* true */,
+          return_false_block /* false */);
+    }
+    else { // op->opno == 1096
+      // Execute **date_le**
+      // Similar to int4le but we trunc the values to i32 from i64
+      irb->CreateCondBr(irb->CreateICmpSLE(
+          irb->CreateTrunc(llvm_arg_val[0], codegen_utils->GetType<int32>()),
+          irb->CreateTrunc(llvm_arg_val[1], codegen_utils->GetType<int32>())),
+                        return_true_block /* true */,
+                        return_false_block /* false */);
+    }
 
     irb->SetInsertPoint(return_true_block);
     elogwrapper.CreateElog(DEBUG1, "Returning true");
