@@ -37,7 +37,8 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
    **/
   explicit ExecEvalExprCodegen(ExecEvalExprFn regular_func_ptr,
 		  ExecEvalExprFn* ptr_to_regular_func_ptr,
-		  ExprState *exprstate);
+		  ExprState *exprstate,
+		  ExprContext *econtext);
 
   virtual ~ExecEvalExprCodegen() = default;
 
@@ -55,6 +56,7 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
 
  private:
   ExprState *exprstate_;
+  ExprContext *econtext_;
 
   static constexpr char kExecEvalExprPrefix[] = "ExecEvalExpr";
 

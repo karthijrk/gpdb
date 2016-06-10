@@ -112,9 +112,11 @@ ExecEvalExprCodegen::ExecEvalExprCodegen
 (
     ExecEvalExprFn regular_func_ptr,
     ExecEvalExprFn* ptr_to_regular_func_ptr,
-    ExprState *exprstate) :
+    ExprState *exprstate,
+    ExprContext *econtext) :
     BaseCodegen(kExecEvalExprPrefix, regular_func_ptr, ptr_to_regular_func_ptr),
-    exprstate_(exprstate) {
+    exprstate_(exprstate),
+    econtext_(econtext){
 }
 
 
@@ -135,15 +137,25 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
   llvm::Value* llvm_isnull_arg = ArgumentByPosition(exec_eval_expr_func, 2);
   llvm::Value* llvm_isDone_arg = ArgumentByPosition(exec_eval_expr_func, 3);
 
+  // External functions
+  llvm::Function* llvm_slot_getattr =
+      codegen_utils->RegisterExternalFunction(slot_getattr);
+
   // BasicBlock of function entry.
   llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock(
       "entry", exec_eval_expr_func);
+  llvm::BasicBlock* return_true_block = codegen_utils->CreateBasicBlock(
+      "return_true", exec_eval_expr_func);
+  llvm::BasicBlock* return_false_block = codegen_utils->CreateBasicBlock(
+      "return_false", exec_eval_expr_func);
 
   auto irb = codegen_utils->ir_builder();
 
   irb->SetInsertPoint(entry_block);
 
-  if (exprstate_ && exprstate_->expr) {
+  elogwrapper.CreateElog(DEBUG1, "Calling generated ExecEvalExpr!!!");
+
+  if (exprstate_ && exprstate_->expr && econtext_) {
     // Codegen Operation expression
     Expr *expr_ = exprstate_->expr;
     if (nodeTag(expr_) != T_OpExpr) {
@@ -170,9 +182,10 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
       return false;
     }
 
-    llvm::Value* const_value;
-
     ListCell   *arg;
+    int arg_num = 0;
+    llvm::Value *llvm_arg_val[2];
+
     foreach(arg, arguments)
     {
       // for each argument retrieve the ExprState
@@ -184,30 +197,79 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
         Var *variable = (Var *) argstate->expr;
         int attnum = variable->varattno;
         elog(DEBUG1, "Variable attnum = %d", attnum);
+
+        // slot = econtext->ecxt_scantuple; {{{
+
+        TupleTableSlot **ptr_to_slot_ptr = NULL;
+        switch (variable->varno)
+        {
+          case INNER:       /* get the tuple from the inner node */
+            ptr_to_slot_ptr = &econtext_->ecxt_innertuple;
+            break;
+
+          case OUTER:       /* get the tuple from the outer node */
+            ptr_to_slot_ptr = &econtext_->ecxt_outertuple;
+            break;
+
+          default:        /* get the tuple from the relation being scanned */
+            ptr_to_slot_ptr = &econtext_->ecxt_scantuple;
+        }
+
+        llvm::Value *llvm_ptr_to_slot_ptr = codegen_utils->GetConstant(ptr_to_slot_ptr);
+        llvm::Value *llvm_slot = irb->CreateLoad(llvm_ptr_to_slot_ptr);
+        //}}}
+
+        llvm::Value *llvm_variable_varattno = codegen_utils->GetConstant<int4>(variable->varattno);
+
+        llvm_arg_val[arg_num] = codegen_utils->ir_builder()->CreateCall(
+            llvm_slot_getattr, {
+                llvm_slot,
+                llvm_variable_varattno,
+                llvm_isnull_arg /* TODO: Fix isNull */
+        });
+
+        elogwrapper.CreateElog(DEBUG1, "Retrieved slot %x", llvm_slot);
+
       }
       else if (nodeTag(argstate->expr) == T_Const) {
         // In ExecEvalConst
         Const *con = (Const *) argstate->expr;
         int value = con->constvalue;
-        const_value = codegen_utils->GetConstant(con->constvalue);
+        llvm_arg_val[arg_num] = codegen_utils->GetConstant(con->constvalue);
         elog(DEBUG1, "Constant value= %d", value);
       }
       else {
         elog(DEBUG1, "Unsupported argument type.");
         return false;
       }
-    }
-    // after we have all these we are able to execute it and call **int4le**
 
+      arg_num++;
+    }
+
+    // Execute **int4le**
+    irb->CreateCondBr(
+        irb->CreateICmpSLE(llvm_arg_val[0], llvm_arg_val[1]),
+        return_true_block /* true */,
+        return_false_block /* false */);
+
+    irb->SetInsertPoint(return_true_block);
+    elogwrapper.CreateElog(DEBUG1, "Returning true");
+    irb->CreateRet(codegen_utils->GetConstant(1));
+
+    irb->SetInsertPoint(return_false_block);
+    elogwrapper.CreateElog(DEBUG1, "Returning false");
+    irb->CreateRet(codegen_utils->GetConstant(0));
+
+    return true;
   }
 
-  elogwrapper.CreateElog(DEBUG1, "Falling back to regular expression evaluation.");
+  //    elogwrapper.CreateElog(DEBUG1, "Falling back to regular expression evaluation.");
+  //
+  //    codegen_utils->CreateFallback<ExecEvalExprFn>(
+  //        codegen_utils->RegisterExternalFunction(GetRegularFuncPointer()),
+  //        exec_eval_expr_func);
 
-  codegen_utils->CreateFallback<ExecEvalExprFn>(
-      codegen_utils->RegisterExternalFunction(GetRegularFuncPointer()),
-      exec_eval_expr_func);
-
-  return true;
+  return false;
 }
 
 
