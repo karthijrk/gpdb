@@ -148,7 +148,8 @@ ExecVariableListCodegenEnroll(ExecVariableListFn regular_func_ptr,
 void*
 ExecEvalExprCodegenEnroll(ExecEvalExprFn regular_func_ptr,
                           ExecEvalExprFn* ptr_to_regular_func_ptr,
-                          struct ExprState *exprstate);
+                          struct ExprState *exprstate,
+                          struct ExprContext *econtext);
 
 #ifdef __cplusplus
 }  // extern "C"
@@ -209,9 +210,9 @@ ExecEvalExprCodegenEnroll(ExecEvalExprFn regular_func_ptr,
 				regular_func, ptr_to_regular_func_ptr, proj_info, slot); \
 		Assert(proj_info->ExecVariableList_gen_info.ExecVariableList_fn == regular_func); \
 
-#define enroll_ExecEvalExpr_codegen(regular_func, ptr_to_regular_func_ptr, exprstate) \
+#define enroll_ExecEvalExpr_codegen(regular_func, ptr_to_regular_func_ptr, exprstate, econtext) \
 		exprstate->ExecEvalExpr_code_generator = ExecEvalExprCodegenEnroll( \
-        (ExecEvalExprFn)regular_func, (ExecEvalExprFn*)ptr_to_regular_func_ptr, exprstate); \
+        (ExecEvalExprFn)regular_func, (ExecEvalExprFn*)ptr_to_regular_func_ptr, exprstate, econtext); \
         Assert(exprstate->evalfunc == regular_func); \
 
 #endif //USE_CODEGEN

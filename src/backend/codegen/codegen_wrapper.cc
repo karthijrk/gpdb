@@ -122,9 +122,10 @@ void* ExecVariableListCodegenEnroll(
 void* ExecEvalExprCodegenEnroll(
     ExecEvalExprFn regular_func_ptr,
     ExecEvalExprFn* ptr_to_chosen_func_ptr,
-    ExprState *exprstate) {
+    ExprState *exprstate,
+    ExprContext *econtext) {
   ExecEvalExprCodegen* generator = CodegenEnroll<ExecEvalExprCodegen>(
-      regular_func_ptr, ptr_to_chosen_func_ptr, exprstate);
+      regular_func_ptr, ptr_to_chosen_func_ptr, exprstate, econtext);
   return generator;
 }
 
