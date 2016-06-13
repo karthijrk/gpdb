@@ -18,6 +18,9 @@ def install(output_dir):
     subprocess.call("mkdir -p " + output_dir, shell=True)
     return subprocess.call("cp -r /usr/local/gpdb/* " + output_dir, shell=True)
 
+def verifystyle():
+    return subprocess.call("./third_party/cpplint/lint_everything.py", cwd="gpdb_src/src/backend/codegen")
+    
 def main():
     parser = optparse.OptionParser()
     parser.add_option("--build_type", dest="build_type", default="RELEASE")
@@ -37,6 +40,10 @@ def main():
     if status:
         return status
     status = make()
+    if status:
+        return status
+    
+    status = verifystyle()
     if status:
         return status
     status = unittest()
