@@ -12,7 +12,6 @@
 #ifndef GPCODEGEN_BASE_CODEGEN_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_BASE_CODEGEN_H_
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include "codegen/utils/codegen_utils.h"
@@ -20,6 +19,8 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
+
+extern bool validate_codegen_functions;
 
 namespace gpcodegen {
 
@@ -48,7 +49,9 @@ class BaseCodegen: public CodegenInterface {
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils) final {
     bool valid_generated_functions = true;
     valid_generated_functions &= GenerateCodeInternal(codegen_utils);
-    if (valid_generated_functions) {
+
+    // Do this check only if it enabled by guc
+    if (validate_codegen_functions && valid_generated_functions) {
       for (llvm::Function* function : uncompiled_generated_functions_) {
         assert(nullptr != function);
         // Verify function returns true if there are errors.
