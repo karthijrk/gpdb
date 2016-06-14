@@ -134,9 +134,8 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
   ElogWrapper elogwrapper(codegen_utils);
 
-  llvm::Function* exec_eval_expr_func = codegen_utils->
-      CreateFunction<ExecEvalExprFn>(
-          GetUniqueFuncName());
+  llvm::Function* exec_eval_expr_func = CreateFunction<ExecEvalExprFn>(
+      codegen_utils, GetUniqueFuncName());
 
   // Function arguments to ExecVariableList
   llvm::Value* llvm_expression_arg =
