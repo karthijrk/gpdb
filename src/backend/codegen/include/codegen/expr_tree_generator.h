@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include "codegen/utils/codegen_utils.h"
 

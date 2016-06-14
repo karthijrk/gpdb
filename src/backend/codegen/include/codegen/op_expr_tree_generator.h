@@ -13,8 +13,11 @@
 #define GPCODEGEN_OP_EXPR_TREE_GENERATOR_H_
 
 #include "codegen/expr_tree_generator.h"
+#include "codegen/pg_func_generator_interface.h"
+#include "codegen/pg_func_generator.h"
 
 #include "llvm/IR/Value.h"
+
 
 namespace gpcodegen {
 
@@ -22,9 +25,12 @@ namespace gpcodegen {
  *  @{
  */
 
+using CodeGenFuncMap = std::unordered_map<unsigned int,
+    std::unique_ptr<gpcodegen::PGFuncGeneratorInterface>>;
 
 class OpExprTreeGenerator : public ExprTreeGenerator {
  public:
+  static void InitializeSupportedFunction();
   static bool VerifyAndCreateExprTree(
         ExprState* expr_state,
         ExprContext* econtext,
@@ -39,7 +45,7 @@ class OpExprTreeGenerator : public ExprTreeGenerator {
                       std::vector<std::unique_ptr<ExprTreeGenerator>>& arguments);
  private:
   std::vector<std::unique_ptr<ExprTreeGenerator>> arguments_;
-
+  static CodeGenFuncMap supported_function_;
 };
 
 
