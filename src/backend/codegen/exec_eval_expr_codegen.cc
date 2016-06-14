@@ -152,19 +152,19 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
   // BasicBlock of function entry.
   llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock(
       "entry", exec_eval_expr_func);
-  llvm::BasicBlock* return_true_block = codegen_utils->CreateBasicBlock(
-      "return_true", exec_eval_expr_func);
-  llvm::BasicBlock* return_false_block = codegen_utils->CreateBasicBlock(
-      "return_false", exec_eval_expr_func);
 
   auto irb = codegen_utils->ir_builder();
 
   irb->SetInsertPoint(entry_block);
 
+  elogwrapper.CreateElog(
+        DEBUG1,
+        "Calling codegen'ed expression evaluation");
+
   // Check if we can codegen. If so create ExprTreeGenerator
   std::unique_ptr<ExprTreeGenerator> expr_tree_generator(nullptr);
   bool can_generate = ExprTreeGenerator::VerifyAndCreateExprTree(
-      exprstate_->expr, econtext_, expr_tree_generator);
+      exprstate_, econtext_, expr_tree_generator);
   if (!can_generate ||
       expr_tree_generator.get() == nullptr) {
     return false;
@@ -181,15 +181,9 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     return false;
   }
 
-  irb->CreateCondBr(value,
-                    return_true_block /* true */,
-                    return_false_block /* false */);
-
-  irb->SetInsertPoint(return_true_block);
-  irb->CreateRet(codegen_utils->GetConstant<int64>(1));
-
-  irb->SetInsertPoint(return_false_block);
-  irb->CreateRet(codegen_utils->GetConstant<int64>(0));
+  llvm::Value* llvm_ret_value = irb->CreateZExt(value,
+                                                codegen_utils->GetType<int64_t>());
+  irb->CreateRet(llvm_ret_value);
 
   return true;
 }

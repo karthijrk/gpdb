@@ -26,19 +26,16 @@ using gpcodegen::ExprTreeGenerator;
 using gpcodegen::CodegenUtils;
 
 bool VarExprTreeGenerator::VerifyAndCreateExprTree(
-    Expr* expr,
+    ExprState* expr_state,
     ExprContext* econtext,
     std::unique_ptr<ExprTreeGenerator>& expr_tree) {
-  assert(nullptr != expr && T_Var == nodeTag(expr));
-  Var* var_expr = (Var*)expr;
-  expr_tree.reset(new VarExprTreeGenerator(var_expr));
+  assert(nullptr != expr_state && nullptr != expr_state->expr && T_Var == nodeTag(expr_state->expr));
+  expr_tree.reset(new VarExprTreeGenerator(expr_state));
   return true;
 }
 
-VarExprTreeGenerator::VarExprTreeGenerator(Var* var_expr) :
-    var_expr_(var_expr),
-    ExprTreeGenerator(ExprTreeNodeType::kVar) {
-
+VarExprTreeGenerator::VarExprTreeGenerator(ExprState* expr_state) :
+    ExprTreeGenerator(expr_state, ExprTreeNodeType::kVar) {
 }
 
 bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
@@ -46,7 +43,8 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                         llvm::Value* llvm_isnull_arg,
                                         llvm::Value* & value) {
   value = nullptr;
-  int attnum = var_expr_->varattno;
+  Var* var_expr = (Var *)expr_state()->expr;
+  int attnum = var_expr->varattno;
   auto irb = codegen_utils->ir_builder();
 
   // slot = econtext->ecxt_scantuple; {{{
@@ -54,7 +52,7 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
   // For that reason, we keep a double pointer to slot and at execution time
   // we load slot.
   TupleTableSlot **ptr_to_slot_ptr = NULL;
-  switch (var_expr_->varno)
+  switch (var_expr->varno)
   {
     case INNER:  /* get the tuple from the inner node */
       ptr_to_slot_ptr = &econtext->ecxt_innertuple;

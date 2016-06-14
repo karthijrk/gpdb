@@ -26,32 +26,34 @@ extern "C" {
 using gpcodegen::ExprTreeGenerator;
 
 bool ExprTreeGenerator::VerifyAndCreateExprTree(
-    Expr* expr,
+    ExprState* expr_state,
     ExprContext* econtext,
     std::unique_ptr<ExprTreeGenerator>& expr_tree) {
+  assert(nullptr != expr_state && nullptr != expr_state->expr);
   expr_tree.reset(nullptr);
   bool supported_expr_tree = false;
-  switch(nodeTag(expr)) {
+  switch(nodeTag(expr_state->expr)) {
     case T_OpExpr: {
-       supported_expr_tree = OpExprTreeGenerator::VerifyAndCreateExprTree(expr,
+       supported_expr_tree = OpExprTreeGenerator::VerifyAndCreateExprTree(expr_state,
                                                                          econtext,
                                                                          expr_tree);
        break;
     }
     case T_Var: {
-      supported_expr_tree = VarExprTreeGenerator::VerifyAndCreateExprTree(expr,
+      supported_expr_tree = VarExprTreeGenerator::VerifyAndCreateExprTree(expr_state,
                                                                           econtext,
                                                                           expr_tree);
       break;
     }
     case T_Const: {
-      supported_expr_tree = VarExprTreeGenerator::VerifyAndCreateExprTree(expr,
+      supported_expr_tree = ConstExprTreeGenerator::VerifyAndCreateExprTree(expr_state,
                                                                           econtext,
                                                                           expr_tree);
+      break;
     }
     default : {
       supported_expr_tree = false;
-      elog(DEBUG1, "Unsupported expression tree %d found", nodeTag(expr));
+      elog(DEBUG1, "Unsupported expression tree %d found", nodeTag(expr_state->expr));
     }
   }
   assert((!supported_expr_tree && nullptr == expr_tree.get()) ||
