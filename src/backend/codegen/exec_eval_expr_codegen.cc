@@ -15,6 +15,7 @@
 
 #include "codegen/exec_eval_expr_codegen.h"
 #include "codegen/expr_tree_generator.h"
+#include "codegen/op_expr_tree_generator.h"
 #include "codegen/utils/clang_compiler.h"
 #include "codegen/utils/utility.h"
 #include "codegen/utils/instance_method_wrappers.h"
@@ -133,6 +134,8 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
   }
 
   ElogWrapper elogwrapper(codegen_utils);
+  //TODO : krajaraman move to better place
+  OpExprTreeGenerator::InitializeSupportedFunction();
 
   llvm::Function* exec_eval_expr_func = CreateFunction<ExecEvalExprFn>(
       codegen_utils, GetUniqueFuncName());

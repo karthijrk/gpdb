@@ -24,6 +24,24 @@ extern "C" {
 using gpcodegen::OpExprTreeGenerator;
 using gpcodegen::ExprTreeGenerator;
 using gpcodegen::CodegenUtils;
+using gpcodegen::PGFuncGeneratorInterface;
+using gpcodegen::PGFuncGenerator;
+using gpcodegen::CodeGenFuncMap;
+using llvm::IRBuilder;
+
+CodeGenFuncMap
+OpExprTreeGenerator::supported_function_;
+
+void OpExprTreeGenerator::InitializeSupportedFunction() {
+  if (!supported_function_.empty()) { return; }
+
+  supported_function_[149] = std::unique_ptr<PGFuncGeneratorInterface>(
+      new PGFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE), int32_t, int32_t>(
+          149, "int4le", &IRBuilder<>::CreateICmpSLE));
+  supported_function_[1088] = std::unique_ptr<PGFuncGeneratorInterface>(
+      new PGFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE), int32_t, int32_t>(
+          1088, "date_le", &IRBuilder<>::CreateICmpSLE));
+}
 
 OpExprTreeGenerator::OpExprTreeGenerator(
     ExprState* expr_state,
@@ -40,7 +58,8 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
 
   OpExpr* op_expr = (OpExpr*)expr_state->expr;
   expr_tree.reset(nullptr);
-  if (op_expr->opno != 523 /* "<=" */ && op_expr->opno != 1096 /* date "<=" */) {
+  CodeGenFuncMap::iterator itr =  supported_function_.find(op_expr->opfuncid);
+  if (itr == supported_function_.end()) {
     // Operators are stored in pg_proc table. See postgres.bki for more details.
     elog(DEBUG1, "Unsupported operator %d.", op_expr->opno);
     return false;
@@ -52,8 +71,8 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
     return false;
   }
   // In ExecEvalFuncArgs
-  if (list_length(arguments) != 2) {
-    elog(DEBUG1, "Wrong number of arguments (!= 2)");
+  if (list_length(arguments) != itr->second->GetTotalArgCount()) {
+    elog(DEBUG1, "Wrong number of arguments (!= %d)", itr->second->GetTotalArgCount());
     return false;
   }
 
@@ -88,29 +107,27 @@ bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                        llvm::Value* & value) {
   value = nullptr;
   OpExpr* op_expr = (OpExpr*)expr_state()->expr;
-  if (op_expr->opno != 523 && op_expr->opno != 1096) {
-    return false;
-  }
-  if (arguments_.size() != 2) {
-    elog(WARNING, "Expected argument size to be 2\n");
-    return false;
+  CodeGenFuncMap::iterator itr =  supported_function_.find(op_expr->opfuncid);
+
+  if (itr == supported_function_.end()) {
+      // Operators are stored in pg_proc table. See postgres.bki for more details.
+      elog(WARNING, "Unsupported operator %d.", op_expr->opfuncid);
+      return false;
   }
 
-  llvm::Value* llvm_arg_val0 = nullptr;
-  llvm::Value* llvm_arg_val1 = nullptr;
-
-  if (!arguments_[0]->GenerateCode(codegen_utils, econtext, llvm_isnull_arg, llvm_arg_val0) ||
-      !arguments_[1]->GenerateCode(codegen_utils, econtext, llvm_isnull_arg, llvm_arg_val1)) {
+  if (arguments_.size() != itr->second->GetTotalArgCount()) {
+    elog(WARNING, "Expected argument size to be %d\n", itr->second->GetTotalArgCount());
     return false;
   }
-  auto irb = codegen_utils->ir_builder();
-  if (op_expr->opno == 523) {
-    value = irb->CreateICmpSLE(llvm_arg_val0, llvm_arg_val1);
+  bool arg_generated = true;
+  std::vector<llvm::Value*> llvm_arguments;
+  for(auto& arg : arguments_) {
+    llvm::Value* llvm_arg = nullptr;
+    arg_generated &= arg->GenerateCode(codegen_utils, econtext, llvm_isnull_arg, llvm_arg);
+    if (!arg_generated) {
+      return false;
+    }
+    llvm_arguments.push_back(llvm_arg);
   }
-  else {
-    value = irb->CreateICmpSLE(
-        irb->CreateTrunc(llvm_arg_val0, codegen_utils->GetType<int32_t>()),
-        irb->CreateTrunc(llvm_arg_val1, codegen_utils->GetType<int32_t>()));
-  }
-  return true;
+  return itr->second->GenerateCode(codegen_utils, llvm_arguments, value);
 }
