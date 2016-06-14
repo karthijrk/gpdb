@@ -26,20 +26,19 @@ using gpcodegen::ExprTreeGenerator;
 using gpcodegen::CodegenUtils;
 
 OpExprTreeGenerator::OpExprTreeGenerator(
-    OpExpr* op_expr,
+    ExprState* expr_state,
     std::vector<std::unique_ptr<ExprTreeGenerator>>& arguments) :
-        op_expr_(op_expr),
         arguments_(std::move(arguments)),
-        ExprTreeGenerator(ExprTreeNodeType::kOperator) {
+        ExprTreeGenerator(expr_state, ExprTreeNodeType::kOperator) {
 }
 
 bool OpExprTreeGenerator::VerifyAndCreateExprTree(
-    Expr* expr,
+    ExprState* expr_state,
     ExprContext* econtext,
     std::unique_ptr<ExprTreeGenerator>& expr_tree) {
-  assert(nullptr != expr && T_OpExpr == nodeTag(expr));
+  assert(nullptr != expr_state && nullptr != expr_state->expr && T_OpExpr == nodeTag(expr_state->expr));
 
-  OpExpr* op_expr = (OpExpr*)expr;
+  OpExpr* op_expr = (OpExpr*)expr_state->expr;
   expr_tree.reset(nullptr);
   if (op_expr->opno != 523 /* "<=" */ && op_expr->opno != 1096 /* date "<=" */) {
     // Operators are stored in pg_proc table. See postgres.bki for more details.
@@ -47,7 +46,11 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
     return false;
   }
 
-  List *arguments = op_expr->args;
+  List *arguments = ((FuncExprState *)expr_state)->args;
+  if (nullptr == arguments) {
+    elog(DEBUG1, "No argument for the function");
+    return false;
+  }
   // In ExecEvalFuncArgs
   if (list_length(arguments) != 2) {
     elog(DEBUG1, "Wrong number of arguments (!= 2)");
@@ -63,7 +66,7 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
     ExprState  *argstate = (ExprState *) lfirst(arg);
     assert(nullptr != argstate);
     std::unique_ptr<ExprTreeGenerator> arg(nullptr);
-    supported_tree &= ExprTreeGenerator::VerifyAndCreateExprTree(argstate->expr,
+    supported_tree &= ExprTreeGenerator::VerifyAndCreateExprTree(argstate,
                                                                 econtext,
                                                                 arg);
     if (!supported_tree) {
@@ -75,7 +78,8 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
   if (!supported_tree) {
     return supported_tree;
   }
-  expr_tree.reset(new OpExprTreeGenerator(op_expr, expr_tree_arguments));
+  expr_tree.reset(new OpExprTreeGenerator(expr_state, expr_tree_arguments));
+  return true;
 }
 
 bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
@@ -83,7 +87,8 @@ bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                        llvm::Value* llvm_isnull_arg,
                                        llvm::Value* & value) {
   value = nullptr;
-  if (op_expr_->opno != 523 && op_expr_->opno != 1096) {
+  OpExpr* op_expr = (OpExpr*)expr_state()->expr;
+  if (op_expr->opno != 523 && op_expr->opno != 1096) {
     return false;
   }
   if (arguments_.size() != 2) {
@@ -99,7 +104,7 @@ bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
     return false;
   }
   auto irb = codegen_utils->ir_builder();
-  if (op_expr_->opno == 523) {
+  if (op_expr->opno == 523) {
     value = irb->CreateICmpSLE(llvm_arg_val0, llvm_arg_val1);
   }
   else {

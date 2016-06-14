@@ -25,7 +25,7 @@ namespace gpcodegen {
 class VarExprTreeGenerator : public ExprTreeGenerator {
  public:
   static bool VerifyAndCreateExprTree(
-        Expr* expr,
+        ExprState* expr_state,
         ExprContext* econtext,
         std::unique_ptr<ExprTreeGenerator>& expr_tree);
 
@@ -34,9 +34,7 @@ class VarExprTreeGenerator : public ExprTreeGenerator {
                     llvm::Value* llvm_isnull_arg,
                     llvm::Value* & value) final;
  protected:
-  VarExprTreeGenerator(Var* var_expr);
- private:
-  Var* var_expr_;
+  VarExprTreeGenerator(ExprState* expr_state);
 };
 
 /** @} */

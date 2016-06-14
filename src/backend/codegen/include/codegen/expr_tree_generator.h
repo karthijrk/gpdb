@@ -42,7 +42,7 @@ enum class ExprTreeNodeType {
 class ExprTreeGenerator {
  public:
   static bool VerifyAndCreateExprTree(
-      Expr* expr,
+      ExprState* expr_state,
       ExprContext* econtext,
       std::unique_ptr<ExprTreeGenerator>& expr_tree);
 
@@ -50,12 +50,15 @@ class ExprTreeGenerator {
                             ExprContext* econtext,
                             llvm::Value* llvm_isnull_arg,
                             llvm::Value* & value) = 0;
-protected:
-  ExprTreeGenerator(ExprTreeNodeType node_type) :
-                      node_type_(node_type) {}
- private:
-  ExprTreeNodeType node_type_;
 
+  ExprState* expr_state() { return expr_state_; }
+protected:
+  ExprTreeGenerator(ExprState* expr_state,
+                    ExprTreeNodeType node_type) :
+                      expr_state_(expr_state), node_type_(node_type) {}
+ private:
+  ExprState* expr_state_;
+  ExprTreeNodeType node_type_;
   DISALLOW_COPY_AND_ASSIGN(ExprTreeGenerator);
 };
 
