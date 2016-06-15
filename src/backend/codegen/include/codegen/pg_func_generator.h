@@ -41,10 +41,8 @@ class PGFuncGenerator : public PGFuncGeneratorInterface {
       return false;
     }
     auto irb = codegen_utils->ir_builder();
-    llvm::Value* llvm_arg0 = irb->CreateTrunc(llvm_args[0],
-                                              codegen_utils->GetType<Arg1>());
-    llvm::Value* llvm_arg1 = irb->CreateTrunc(llvm_args[1],
-                                              codegen_utils->GetType<Arg2>());
+    llvm::Value* llvm_arg0 = codegen_utils->CreateCast<Arg1>(llvm_args[0]);
+    llvm::Value* llvm_arg1 = codegen_utils->CreateCast<Arg2>(llvm_args[1]);
     llvm_out_value = (irb->*mem_func_ptr_)(llvm_arg0, llvm_arg1, "");
     return true;
   }
