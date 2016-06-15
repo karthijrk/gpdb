@@ -268,6 +268,26 @@ class CodegenUtils {
     return llvm::BasicBlock::Create(context_, name, parent, nullptr);
   }
 
+  template <typename DestType>
+  llvm::Value* CreateCast(llvm::Value* value) {
+    assert(nullptr != value);
+    llvm::Type* llvm_dest_type = GetType<DestType>();
+    unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
+
+    llvm::Type* llvm_src_type = value->getType();
+    unsigned src_size = llvm_src_type->getScalarSizeInBits();
+    if (src_size < dest_size) {
+      return ir_builder()->CreateZExt(value, llvm_dest_type);
+    }
+    else if (src_size > dest_size) {
+      return ir_builder()->CreateTrunc(value, llvm_dest_type);
+    }
+    else if (llvm_src_type->getTypeID() != llvm_dest_type->getTypeID()) {
+      return ir_builder()->CreateBitCast(value, llvm_dest_type);
+    }
+    return value;
+  }
+
   /**
    * @brief Register an external function from the calling environment so that
    *        it can be called from generated code.

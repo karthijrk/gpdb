@@ -183,8 +183,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     return false;
   }
 
-  llvm::Value* llvm_ret_value = irb->CreateZExt(value,
-                                                codegen_utils->GetType<int64_t>());
+  llvm::Value* llvm_ret_value = codegen_utils->CreateCast<int64_t>(value);
   irb->CreateRet(llvm_ret_value);
 
   return true;
