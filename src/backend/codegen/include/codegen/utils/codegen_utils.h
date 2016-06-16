@@ -41,6 +41,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Value.h"
 
 namespace gpcodegen {
@@ -289,6 +290,39 @@ class CodegenUtils {
     return value;
   }
 
+  llvm::Value* CreateSMulOverflow(llvm::Value* arg0, llvm::Value* arg1) {
+    assert(nullptr != arg0 && nullptr != arg0->getType());
+    assert(nullptr != arg1 && nullptr != arg1->getType());
+    assert(arg0->getType()->isIntegerTy());
+    assert(arg1->getType()->isIntegerTy());
+    return CreateArithOp(llvm::Intrinsic::smul_with_overflow,
+                         arg0->getType(),
+                         arg0,
+                         arg1);
+  }
+
+  llvm::Value* CreateSAddOverflow(llvm::Value* arg0, llvm::Value* arg1) {
+    assert(nullptr != arg0 && nullptr != arg0->getType());
+    assert(nullptr != arg1 && nullptr != arg1->getType());
+    assert(arg0->getType()->isIntegerTy());
+    assert(arg1->getType()->isIntegerTy());
+    return CreateArithOp(llvm::Intrinsic::sadd_with_overflow,
+                         arg0->getType(),
+                         arg0,
+                         arg1);
+  }
+
+  llvm::Value* CreateSSubOverflow(llvm::Value* arg0, llvm::Value* arg1) {
+    assert(nullptr != arg0 && nullptr != arg0->getType());
+    assert(nullptr != arg1 && nullptr != arg1->getType());
+    assert(arg0->getType()->isIntegerTy());
+    assert(arg1->getType()->isIntegerTy());
+    return CreateArithOp(llvm::Intrinsic::ssub_with_overflow,
+                         arg0->getType(),
+                         arg0,
+                         arg1);
+  }
+
   /**
    * @brief Register an external function if previously unregistered. Otherwise
    *        return a pointer to the previously registered llvm::Function
@@ -501,6 +535,11 @@ class CodegenUtils {
   llvm::Value* GetPointerToMemberImpl(llvm::Value* base_ptr,
                                       llvm::Type* cast_type,
                                       const std::size_t cumulative_offset);
+
+  llvm::Value* CreateArithOp(llvm::Intrinsic::ID Id,
+                             llvm::ArrayRef<llvm::Type*> Tys,
+                             llvm::Value* arg0,
+                             llvm::Value* arg1);
 
   // Helper method for GetPointerToMember(). This variadic template recursively
   // consumes pointers-to-members, adding up 'cumulative_offset' and resolving
