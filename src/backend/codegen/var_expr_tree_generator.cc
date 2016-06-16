@@ -40,6 +40,8 @@ VarExprTreeGenerator::VarExprTreeGenerator(ExprState* expr_state) :
 
 bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                         ExprContext* econtext,
+                                        llvm::Function* llvm_main_func,
+                                        llvm::BasicBlock* llvm_error_block,
                                         llvm::Value* llvm_isnull_arg,
                                         llvm::Value* & value) {
   value = nullptr;

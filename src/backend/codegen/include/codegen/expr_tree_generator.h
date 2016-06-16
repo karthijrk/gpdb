@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 
 #include "codegen/utils/codegen_utils.h"
@@ -49,6 +50,8 @@ class ExprTreeGenerator {
 
   virtual bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                             ExprContext* econtext,
+                            llvm::Function* llvm_main_func,
+                            llvm::BasicBlock* llvm_error_block,
                             llvm::Value* llvm_isnull_arg,
                             llvm::Value* & value) = 0;
 

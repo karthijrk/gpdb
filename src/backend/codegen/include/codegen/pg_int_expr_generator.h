@@ -31,20 +31,24 @@ class PGIntExprGenerator {
  public:
   template <typename rtype, typename Arg0, typename Arg1>
   static bool MultWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
+                               llvm::Function* llvm_main_func,
+                               llvm::BasicBlock* llvm_error_block,
                                std::vector<llvm::Value*>& llvm_args,
                                llvm::Value* & llvm_out_value);
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
 bool PGIntExprGenerator::MultWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
+                                          llvm::Function* llvm_main_func,
+                                          llvm::BasicBlock* llvm_error_block,
                                           std::vector<llvm::Value*>& llvm_args,
                                           llvm::Value* & llvm_out_value) {
   // Assumed caller checked vector size and nullptr for codegen_utils
 
-  /*llvm::BasicBlock* result_result_block = codegen_utils->CreateBasicBlock(
-             "return_result", mul2_func);
-  llvm::BasicBlock* return_overflow_block = codegen_utils->CreateBasicBlock(
-             "return_overflow", mul2_func);*/
+  llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
+             "non_overflow_block", llvm_main_func);
+  llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
+             "overflow_block", llvm_main_func);
 
   llvm::Value* llvm_arg0 = codegen_utils->CreateCast<rtype>(llvm_args[0]);
   llvm::Value* llvm_arg1 = codegen_utils->CreateCast<rtype>(llvm_args[1]);
@@ -56,17 +60,17 @@ bool PGIntExprGenerator::MultWithOverflow(gpcodegen::CodegenUtils* codegen_utils
   llvm_out_value = irb->CreateExtractValue(llvm_mul_output, 0);
   llvm::Value* llvm_overflow_flag = irb->CreateExtractValue(llvm_mul_output, 1);
 
-  /*irb->CreateCondBr(
+  irb->CreateCondBr(
       irb->CreateICmpEQ(llvm_overflow_flag,
                         codegen_utils->GetConstant<bool>(true)),
-            return_overflow_block,
-            result_result_block );
+                        llvm_overflow_block,
+                        llvm_non_overflow_block );
 
-  irb->SetInsertPoint(return_overflow_block);
-  irb->CreateRet(codegen_utils->CreateCast<int64_t>(
-      llvm_overflow_flag));
+  irb->SetInsertPoint(llvm_overflow_block);
+  // TODO : krajaraman Elog::ERROR after ElogWrapper integrad.
+  irb->CreateBr(llvm_error_block);
 
-  irb->SetInsertPoint(result_result_block);*/
+  irb->SetInsertPoint(llvm_non_overflow_block);
 
   return true;
 }

@@ -31,6 +31,8 @@ class VarExprTreeGenerator : public ExprTreeGenerator {
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                     ExprContext* econtext,
+                    llvm::Function* llvm_main_func,
+                    llvm::BasicBlock* llvm_error_block,
                     llvm::Value* llvm_isnull_arg,
                     llvm::Value* & value) final;
  protected:

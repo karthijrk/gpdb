@@ -29,7 +29,10 @@ namespace gpcodegen {
  */
 
 typedef bool (*ExprCodeGenerator)(gpcodegen::CodegenUtils* codegen_utils,
-    std::vector<llvm::Value*>& llvm_args, llvm::Value* & llvm_out_value);
+    llvm::Function* llvm_main_func,
+    llvm::BasicBlock* llvm_error_block,
+    std::vector<llvm::Value*>& llvm_args,
+    llvm::Value* & llvm_out_value);
 
 
 
@@ -89,6 +92,8 @@ Arg0, Arg1> {
   }
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
+                    llvm::Function* llvm_main_func,
+                    llvm::BasicBlock* llvm_error_block,
                     std::vector<llvm::Value*>& llvm_args,
                     llvm::Value* & llvm_out_value) final {
     std::vector<llvm::Value*> llvm_preproc_args;
@@ -117,14 +122,19 @@ Arg0, Arg1> {
   }
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
+                    llvm::Function* llvm_main_func,
+                    llvm::BasicBlock* llvm_error_block,
                     std::vector<llvm::Value*>& llvm_args,
                     llvm::Value* & llvm_out_value) final {
-    std::vector<llvm::Value*> llvm_preproc_args;
     assert(nullptr != codegen_utils);
     if (llvm_args.size() != this->GetTotalArgCount()) {
       return false;
     }
-    this->func_ptr()(codegen_utils, llvm_preproc_args, llvm_out_value);
+    this->func_ptr()(codegen_utils,
+        llvm_main_func,
+        llvm_error_block,
+        llvm_args,
+        llvm_out_value);
     return true;
   }
 };
