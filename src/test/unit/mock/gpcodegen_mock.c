@@ -77,3 +77,14 @@ ExecVariableListCodegenEnroll(ExecVariableListFn regular_func_ptr,
 	return NULL;
 }
 
+void*
+ExecEvalExprCodegenEnroll(ExecEvalExprFn regular_func_ptr,
+                          ExecEvalExprFn* ptr_to_regular_func_ptr,
+                          struct ExprState *exprstate,
+                          struct ExprContext *econtext)
+{
+  *ptr_to_regular_func_ptr = regular_func_ptr;
+   elog(ERROR, "mock implementation of ExecEvalExprCodegenEnroll called");
+   return NULL;
+}
+

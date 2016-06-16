@@ -29,7 +29,7 @@ namespace gpcodegen {
 class PGFuncGeneratorInterface {
  public:
   virtual std::string GetName() = 0;
-  virtual int GetTotalArgCount() = 0;
+  virtual size_t GetTotalArgCount() = 0;
   virtual bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                             std::vector<llvm::Value*>& llvm_args,
                             llvm::Value* & llvm_out_value) = 0;

@@ -12,6 +12,7 @@
 
 #include "codegen/expr_tree_generator.h"
 #include "codegen/op_expr_tree_generator.h"
+#include "codegen/pg_int_expr_generator.h"
 
 #include "llvm/IR/Value.h"
 
@@ -36,11 +37,16 @@ void OpExprTreeGenerator::InitializeSupportedFunction() {
   if (!supported_function_.empty()) { return; }
 
   supported_function_[149] = std::unique_ptr<PGFuncGeneratorInterface>(
-      new PGFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE), int32_t, int32_t>(
-          149, "int4le", &IRBuilder<>::CreateICmpSLE));
+      new PGIRBuilderFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE),
+      int32_t, int32_t>(149, "int4le", &IRBuilder<>::CreateICmpSLE));
+
   supported_function_[1088] = std::unique_ptr<PGFuncGeneratorInterface>(
-      new PGFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE), int32_t, int32_t>(
-          1088, "date_le", &IRBuilder<>::CreateICmpSLE));
+      new PGIRBuilderFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE),
+      int32_t, int32_t>(1088, "date_le", &IRBuilder<>::CreateICmpSLE));
+
+  supported_function_[999] = std::unique_ptr<PGFuncGeneratorInterface>(
+        new PGGenericFuncGenerator<int32_t, int32_t>(
+            999, "mult", &PGIntExprGenerator::MultWithOverflow<int32_t, int32_t, int32_t>));
 }
 
 OpExprTreeGenerator::OpExprTreeGenerator(
