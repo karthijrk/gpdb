@@ -44,9 +44,9 @@ void OpExprTreeGenerator::InitializeSupportedFunction() {
       new PGIRBuilderFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE),
       int32_t, int32_t>(1088, "date_le", &IRBuilder<>::CreateICmpSLE));
 
-  supported_function_[999] = std::unique_ptr<PGFuncGeneratorInterface>(
+  supported_function_[141] = std::unique_ptr<PGFuncGeneratorInterface>(
         new PGGenericFuncGenerator<int32_t, int32_t>(
-            999, "mult", &PGIntExprGenerator::MultWithOverflow<int32_t, int32_t, int32_t>));
+            141, "int4mul", &PGIntExprGenerator::MultWithOverflow<int32_t, int32_t, int32_t>));
 }
 
 OpExprTreeGenerator::OpExprTreeGenerator(
@@ -67,7 +67,7 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
   CodeGenFuncMap::iterator itr =  supported_function_.find(op_expr->opfuncid);
   if (itr == supported_function_.end()) {
     // Operators are stored in pg_proc table. See postgres.bki for more details.
-    elog(DEBUG1, "Unsupported operator %d.", op_expr->opno);
+    elog(DEBUG1, "Unsupported operator %d.", op_expr->opfuncid);
     return false;
   }
 
@@ -109,6 +109,8 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
 
 bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                        ExprContext* econtext,
+                                       llvm::Function* llvm_main_func,
+                                       llvm::BasicBlock* llvm_error_block,
                                        llvm::Value* llvm_isnull_arg,
                                        llvm::Value* & value) {
   value = nullptr;
@@ -129,11 +131,20 @@ bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
   std::vector<llvm::Value*> llvm_arguments;
   for(auto& arg : arguments_) {
     llvm::Value* llvm_arg = nullptr;
-    arg_generated &= arg->GenerateCode(codegen_utils, econtext, llvm_isnull_arg, llvm_arg);
+    arg_generated &= arg->GenerateCode(codegen_utils,
+                                       econtext,
+                                       llvm_main_func,
+                                       llvm_error_block,
+                                       llvm_isnull_arg,
+                                       llvm_arg);
     if (!arg_generated) {
       return false;
     }
     llvm_arguments.push_back(llvm_arg);
   }
-  return itr->second->GenerateCode(codegen_utils, llvm_arguments, value);
+  return itr->second->GenerateCode(codegen_utils,
+                                   llvm_main_func,
+                                   llvm_error_block,
+                                   llvm_arguments,
+                                   value);
 }

@@ -31,6 +31,8 @@ class PGFuncGeneratorInterface {
   virtual std::string GetName() = 0;
   virtual size_t GetTotalArgCount() = 0;
   virtual bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
+                            llvm::Function* llvm_main_func,
+                            llvm::BasicBlock* llvm_error_block,
                             std::vector<llvm::Value*>& llvm_args,
                             llvm::Value* & llvm_out_value) = 0;
 };

@@ -152,12 +152,14 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
       codegen_utils->RegisterExternalFunction(slot_getattr);
 
   // BasicBlock of function entry.
-  llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock(
+  llvm::BasicBlock* llvm_entry_block = codegen_utils->CreateBasicBlock(
       "entry", exec_eval_expr_func);
+  llvm::BasicBlock* llvm_error_block = codegen_utils->CreateBasicBlock(
+        "error_block", exec_eval_expr_func);
 
   auto irb = codegen_utils->ir_builder();
 
-  irb->SetInsertPoint(entry_block);
+  irb->SetInsertPoint(llvm_entry_block);
 
   elogwrapper.CreateElog(
         DEBUG1,
@@ -176,6 +178,8 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
   llvm::Value* value = nullptr;
   bool is_generated = expr_tree_generator->GenerateCode(codegen_utils,
                                                         econtext_,
+                                                        exec_eval_expr_func,
+                                                        llvm_error_block,
                                                         llvm_isnull_arg,
                                                         value);
   if (!is_generated ||
@@ -186,6 +190,9 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
   llvm::Value* llvm_ret_value = codegen_utils->CreateCast<int64_t>(value);
   irb->CreateRet(llvm_ret_value);
 
+  irb->SetInsertPoint(llvm_error_block);
+  irb->CreateRet(codegen_utils->GetConstant<int64_t>(0));
+  exec_eval_expr_func->dump();
   return true;
 }
 
