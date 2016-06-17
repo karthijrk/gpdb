@@ -12,8 +12,8 @@
 
 #include "codegen/expr_tree_generator.h"
 #include "codegen/op_expr_tree_generator.h"
-#include "codegen/pg_int_expr_generator.h"
 
+#include "include/codegen/pg_arith_func_generator.h"
 #include "llvm/IR/Value.h"
 
 extern "C" {
@@ -46,7 +46,7 @@ void OpExprTreeGenerator::InitializeSupportedFunction() {
 
   supported_function_[141] = std::unique_ptr<PGFuncGeneratorInterface>(
         new PGGenericFuncGenerator<int32_t, int32_t>(
-            141, "int4mul", &PGIntExprGenerator<int32_t, int32_t, int32_t>::MulWithOverflow));
+            141, "int4mul", &PGArithFuncGenerator<int32_t, int32_t, int32_t>::MulWithOverflow));
 }
 
 OpExprTreeGenerator::OpExprTreeGenerator(
