@@ -46,7 +46,7 @@ void OpExprTreeGenerator::InitializeSupportedFunction() {
 
   supported_function_[141] = std::unique_ptr<PGFuncGeneratorInterface>(
         new PGGenericFuncGenerator<int32_t, int32_t>(
-            141, "int4mul", &PGIntExprGenerator::MultWithOverflow<int32_t, int32_t, int32_t>));
+            141, "int4mul", &PGIntExprGenerator<int32_t, int32_t, int32_t>::MulWithOverflow));
 }
 
 OpExprTreeGenerator::OpExprTreeGenerator(
