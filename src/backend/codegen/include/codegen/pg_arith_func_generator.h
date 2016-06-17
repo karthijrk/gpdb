@@ -9,8 +9,8 @@
 //    Base class for expression tree to generate code
 //
 //---------------------------------------------------------------------------
-#ifndef GPCODEGEN_PG_INT_EXPR_GENERATOR_H_  // NOLINT(build/header_guard)
-#define GPCODEGEN_PG_INT_EXPR_GENERATOR_H_
+#ifndef GPCODEGEN_PG_ARITH_FUNC_GENERATOR_H_  // NOLINT(build/header_guard)
+#define GPCODEGEN_PG_ARITH_FUNC_GENERATOR_H_
 
 #include <string>
 #include <vector>
@@ -27,7 +27,7 @@ namespace gpcodegen {
  *  @{
  */
 template <typename rtype, typename Arg0, typename Arg1>
-class PGIntExprGenerator {
+class PGArithFuncGenerator {
  public:
   static bool MulWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
                                llvm::Function* llvm_main_func,
@@ -49,7 +49,7 @@ class PGIntExprGenerator {
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
-bool PGIntExprGenerator<rtype, Arg0, Arg1>::MulWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
+bool PGArithFuncGenerator<rtype, Arg0, Arg1>::MulWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
                                           llvm::Function* llvm_main_func,
                                           llvm::BasicBlock* llvm_error_block,
                                           std::vector<llvm::Value*>& llvm_args,
@@ -84,7 +84,7 @@ bool PGIntExprGenerator<rtype, Arg0, Arg1>::MulWithOverflow(gpcodegen::CodegenUt
 }
 
 template <typename rtype, typename Arg0, typename Arg1>
-bool PGIntExprGenerator<rtype, Arg0, Arg1>::AddWithOverflow(
+bool PGArithFuncGenerator<rtype, Arg0, Arg1>::AddWithOverflow(
     gpcodegen::CodegenUtils* codegen_utils,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
@@ -121,7 +121,7 @@ bool PGIntExprGenerator<rtype, Arg0, Arg1>::AddWithOverflow(
 }
 
 template <typename rtype, typename Arg0, typename Arg1>
-bool PGIntExprGenerator<rtype, Arg0, Arg1>::SubWithOverflow(
+bool PGArithFuncGenerator<rtype, Arg0, Arg1>::SubWithOverflow(
     gpcodegen::CodegenUtils* codegen_utils,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
@@ -160,4 +160,4 @@ bool PGIntExprGenerator<rtype, Arg0, Arg1>::SubWithOverflow(
 /** @} */
 }  // namespace gpcodegen
 
-#endif  // GPCODEGEN_PG_INT_EXPR_GENERATOR_H_
+#endif  // GPCODEGEN_PG_ARITH_FUNC_GENERATOR_H_
