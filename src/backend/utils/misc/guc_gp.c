@@ -567,7 +567,7 @@ bool		optimizer_prefer_scalar_dqa_multistage_agg;
  **/
 bool		init_codegen;
 bool		codegen;
-bool		validate_codegen_functions;
+bool		codegen_validate_functions;
 
 /* Security */
 bool		gp_reject_internal_tcp_conn = true;
@@ -3399,12 +3399,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"validate_codegen_functions", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"codegen_validate_functions", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Perform verify for generated functions to catch any error before compiling"),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&validate_codegen_functions,
+		&codegen_validate_functions,
 #ifdef USE_ASSERT_CHECKING
 		true, NULL, NULL	/* true by default on debug builds. */
 #else

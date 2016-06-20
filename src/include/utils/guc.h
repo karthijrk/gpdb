@@ -465,7 +465,7 @@ extern bool optimizer_prefer_scalar_dqa_multistage_agg;
  **/
 extern bool init_codegen;
 extern bool codegen;
-extern bool validate_codegen_functions;
+extern bool codegen_validate_functions;
 
 /**
  * Enable logging of DPE match in optimizer.

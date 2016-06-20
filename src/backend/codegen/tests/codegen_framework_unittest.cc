@@ -51,7 +51,7 @@
 #include "codegen/codegen_interface.h"
 #include "codegen/base_codegen.h"
 
-extern bool validate_codegen_functions;
+extern bool codegen_validate_functions;
 namespace gpcodegen {
 
 typedef int (*SumFunc) (int x, int y);
@@ -168,7 +168,7 @@ class CodegenManagerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     manager_.reset(new CodegenManager("CodegenManagerTest"));
-    validate_codegen_functions = true;
+    codegen_validate_functions = true;
   }
 
   template <typename ClassType, typename FuncType>

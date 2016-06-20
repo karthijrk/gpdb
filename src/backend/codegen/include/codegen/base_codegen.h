@@ -20,7 +20,11 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
 
-extern bool validate_codegen_functions;
+extern "C" {
+#include <utils/elog.h>
+}
+
+extern bool codegen_validate_functions;
 
 namespace gpcodegen {
 
@@ -51,7 +55,7 @@ class BaseCodegen: public CodegenInterface {
     valid_generated_functions &= GenerateCodeInternal(codegen_utils);
 
     // Do this check only if it enabled by guc
-    if (validate_codegen_functions && valid_generated_functions) {
+    if (codegen_validate_functions && valid_generated_functions) {
       for (llvm::Function* function : uncompiled_generated_functions_) {
         assert(nullptr != function);
         // Verify function returns true if there are errors.
