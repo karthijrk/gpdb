@@ -51,7 +51,7 @@
 #include "codegen/codegen_interface.h"
 #include "codegen/base_codegen.h"
 
-bool validate_codegen_functions = true;
+extern bool validate_codegen_functions;
 namespace gpcodegen {
 
 typedef int (*SumFunc) (int x, int y);
