@@ -20,10 +20,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
 
-extern "C" {
-#include <utils/elog.h>
-}
-
 extern bool codegen_validate_functions;
 
 namespace gpcodegen {
