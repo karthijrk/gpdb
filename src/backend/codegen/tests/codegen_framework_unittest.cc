@@ -44,6 +44,12 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Casting.h"
 
+extern "C" {
+    #include "utils/elog.h"
+    #undef elog
+    #define elog
+}
+
 #include "codegen/utils/codegen_utils.h"
 #include "codegen/utils/utility.h"
 #include "codegen/codegen_manager.h"

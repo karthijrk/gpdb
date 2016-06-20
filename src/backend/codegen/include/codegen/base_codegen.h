@@ -20,6 +20,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
 
+extern "C" {
+#include <utils/elog.h>
+}
+
 extern bool codegen_validate_functions;
 
 namespace gpcodegen {
@@ -57,6 +61,8 @@ class BaseCodegen: public CodegenInterface {
         // Verify function returns true if there are errors.
         valid_generated_functions &= !llvm::verifyFunction(*function);
         if (!valid_generated_functions) {
+          std::string func_name = function->getName();
+          elog(WARNING, "Broken function found '%s'", func_name.c_str());
           break;
         }
       }
