@@ -12,6 +12,10 @@
 #ifndef GPCODEGEN_BASE_CODEGEN_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_BASE_CODEGEN_H_
 
+extern "C" {
+#include <utils/elog.h>
+}
+
 #include <string>
 #include <vector>
 #include "codegen/utils/codegen_utils.h"
@@ -19,10 +23,6 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
-
-extern "C" {
-#include <utils/elog.h>
-}
 
 extern bool codegen_validate_functions;
 
