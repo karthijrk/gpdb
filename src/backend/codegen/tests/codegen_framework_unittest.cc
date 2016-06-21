@@ -151,7 +151,7 @@ class MulOverflowCodeGenerator : public BaseCodegen<MulFunc> {
               result_result_block );
 
     codegen_utils->ir_builder()->SetInsertPoint(return_overflow_block);
-    codegen_utils->ir_builder()->CreateAdd(llvm_results, codegen_utils->GetConstant(1));
+    codegen_utils->ir_builder()->CreateRet(codegen_utils->GetConstant(1));
 
     codegen_utils->ir_builder()->SetInsertPoint(result_result_block);
     codegen_utils->ir_builder()->CreateRet(llvm_results);
