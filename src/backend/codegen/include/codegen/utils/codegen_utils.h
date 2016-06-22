@@ -271,10 +271,19 @@ class CodegenUtils {
     return llvm::BasicBlock::Create(context_, name, parent, nullptr);
   }
 
-  template <typename DestType>
+  /**
+   * @brief Create a Cast instruction to convert given llvm::Value to given Cpp
+   *        type
+   *
+   * @tparam CppType  Destination cpp type
+   * @param value LLVM Value on which casting has to be done.
+   *
+   * @return LLVM Value that casted to given Cpp type.
+   **/
+  template <typename CppType>
   llvm::Value* CreateCast(llvm::Value* value) {
     assert(nullptr != value);
-    llvm::Type* llvm_dest_type = GetType<DestType>();
+    llvm::Type* llvm_dest_type = GetType<CppType>();
     unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
 
     llvm::Type* llvm_src_type = value->getType();
@@ -289,12 +298,42 @@ class CodegenUtils {
     return value;
   }
 
+  /**
+   * @brief Use LLVM intrinsic to create Multiplication with overflow
+   *        instruction
+   *
+   * @tparam CppType  CppType for multiplication
+   * @param arg0  First argument
+   * @param arg1  Second argument
+   *
+   * @return LLVM Value as a pair of results and overflow flag.
+   **/
   template <typename CppType>
   llvm::Value* CreateMulOverflow(llvm::Value* arg0, llvm::Value* arg1);
 
+  /**
+   * @brief Use LLVM intrinsic to create Add with overflow
+   *        instruction
+   *
+   * @tparam CppType  CppType for add
+   * @param arg0  First argument
+   * @param arg1  Second argument
+   *
+   * @return LLVM Value as a pair of results and overflow flag.
+   **/
   template <typename CppType>
   llvm::Value* CreateAddOverflow(llvm::Value* arg0, llvm::Value* arg1);
 
+  /**
+   * @brief Use LLVM intrinsic to create Subtract with overflow
+   *        instruction
+   *
+   * @tparam CppType  CppType for subtract
+   * @param arg0  First argument
+   * @param arg1  Second argument
+   *
+   * @return LLVM Value as a pair of results and overflow flag.
+   **/
   template <typename CppType>
   llvm::Value* CreateSubOverflow(llvm::Value* arg0, llvm::Value* arg1);
 
@@ -514,10 +553,12 @@ class CodegenUtils {
                                       llvm::Type* cast_type,
                                       const std::size_t cumulative_offset);
 
-  llvm::Value* CreateArithOp(llvm::Intrinsic::ID Id,
-                             llvm::ArrayRef<llvm::Type*> Tys,
-                             llvm::Value* arg0,
-                             llvm::Value* arg1);
+  // Helper method to call any llvm intrinsic feature. E.g. CreateMulOverflow.
+  // TODO(krajaramn) : Support any number of arguments
+  llvm::Value* CreateIntrinsicInstrCall(llvm::Intrinsic::ID Id,
+                                        llvm::ArrayRef<llvm::Type*> Tys,
+                                        llvm::Value* arg0,
+                                        llvm::Value* arg1);
 
   // Helper method for GetPointerToMember(). This variadic template recursively
   // consumes pointers-to-members, adding up 'cumulative_offset' and resolving
@@ -1155,8 +1196,12 @@ void CodegenUtils::CreateFallback(llvm::Function* regular_function,
 // part of the public API.
 namespace codegen_utils_detail {
 
-// ArithOpMaker has various template specializations to handle
-// different C++ types.
+// ArithOpMaker has various template specializations to handle different
+// categories of C++ types. The specializations provide a static method
+// CreateMulOverflow(), CreateAddOverflow(), CreateSubOverflow() etc..
+// that takes an CodegenUtils and arguments and call respective llvm instruction
+// for given CppType.
+// The base version of this template is empty.
 template <typename CppType, typename Enable = void>
 class ArithOpMaker {
 };
@@ -1176,10 +1221,10 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateArithOp(llvm::Intrinsic::uadd_with_overflow,
-                                    generator->GetType<UnsignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::uadd_with_overflow,
+                                               generator->GetType<UnsignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
   static llvm::Value* CreateSubOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
@@ -1188,10 +1233,10 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateArithOp(llvm::Intrinsic::usub_with_overflow,
-                                    generator->GetType<UnsignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::usub_with_overflow,
+                                               generator->GetType<UnsignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
   static llvm::Value* CreateMulOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
@@ -1200,10 +1245,10 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateArithOp(llvm::Intrinsic::umul_with_overflow,
-                                    generator->GetType<UnsignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::umul_with_overflow,
+                                               generator->GetType<UnsignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
 
  private:
@@ -1230,10 +1275,10 @@ std::is_integral<SignedIntType>::value
     Checker(arg0, arg1);
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
-    return generator->CreateArithOp(llvm::Intrinsic::sadd_with_overflow,
-                                    generator->GetType<SignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::sadd_with_overflow,
+                                               generator->GetType<SignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
 
   static llvm::Value* CreateSubOverflow(CodegenUtils* generator,
@@ -1243,10 +1288,10 @@ std::is_integral<SignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
 
-    return generator->CreateArithOp(llvm::Intrinsic::ssub_with_overflow,
-                                    generator->GetType<SignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::ssub_with_overflow,
+                                               generator->GetType<SignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
 
   static llvm::Value* CreateMulOverflow(CodegenUtils* generator,
@@ -1256,10 +1301,10 @@ std::is_integral<SignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
 
-    return generator->CreateArithOp(llvm::Intrinsic::smul_with_overflow,
-                                    generator->GetType<SignedIntType>(),
-                                    casted_arg0,
-                                    casted_arg1);
+    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::smul_with_overflow,
+                                               generator->GetType<SignedIntType>(),
+                                               casted_arg0,
+                                               casted_arg1);
   }
  private:
   static void Checker(llvm::Value* arg0,
@@ -1277,33 +1322,18 @@ class ArithOpMaker<
 EnumType,
 typename std::enable_if<std::is_enum<EnumType>::value>::type> {
  public:
-  static llvm::Value* Get(CodegenUtils* generator,
-                          llvm::Value* arg0,
-                          llvm::Value* arg1) {
-    static_assert("Not support for enum");
-  }
 };
 
 // Explicit specialization for 32-bit float.
 template <>
 class ArithOpMaker<float> {
  public:
-  static llvm::Value* Get(CodegenUtils* generator,
-                          llvm::Value* arg0,
-                          llvm::Value* arg1) {
-    static_assert("Not support for float");
-  }
 };
 
 // Explicit specialization for 64-bit double.
 template <>
 class ArithOpMaker<double> {
  public:
-  static llvm::Value* Get(CodegenUtils* generator,
-                          llvm::Value* arg0,
-                          llvm::Value* arg1) {
-    static_assert("Not support for double");
-  }
 };
 
 }  // namespace codegen_utils_detail
