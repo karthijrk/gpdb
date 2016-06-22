@@ -3,10 +3,10 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    const_expr_tree_generator.h
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Object that generate code for const expression.
 //
 //---------------------------------------------------------------------------
 #ifndef GPCODEGEN_CONST_EXPR_TREE_GENERATOR_H_  // NOLINT(build/header_guard)
@@ -22,6 +22,9 @@ namespace gpcodegen {
  *  @{
  */
 
+/**
+ * @brief Object that generate code for const expression.
+ **/
 class ConstExprTreeGenerator : public ExprTreeGenerator {
  public:
   static bool VerifyAndCreateExprTree(
@@ -37,6 +40,11 @@ class ConstExprTreeGenerator : public ExprTreeGenerator {
                     llvm::Value** llvm_out_value) final;
 
  protected:
+  /**
+   * @brief Constructor.
+   *
+   * @param expr_state Expression state from epxression tree
+   **/
   explicit ConstExprTreeGenerator(ExprState* expr_state);
 };
 

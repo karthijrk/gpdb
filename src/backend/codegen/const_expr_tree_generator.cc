@@ -6,7 +6,7 @@
 //    base_codegen.h
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Object that generate code for const expression.
 //
 //---------------------------------------------------------------------------
 

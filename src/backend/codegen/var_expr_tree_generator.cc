@@ -3,10 +3,10 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    var_expr_tree_generator.cc
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Object that generator code for variable expression.
 //
 //---------------------------------------------------------------------------
 

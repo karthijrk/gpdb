@@ -3,10 +3,10 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    op_expr_tree_generator.h
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Object that generate code for operator expression.
 //
 //---------------------------------------------------------------------------
 

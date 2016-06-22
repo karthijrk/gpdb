@@ -29,7 +29,9 @@ struct ProjectionInfo;
 struct ExprContext;
 struct ExprState;
 
-/* Enum used to mimic ExprDoneCond in ExecEvalExpr function pointer. */
+/*
+ * Enum used to mimic ExprDoneCond in ExecEvalExpr function pointer.
+ */
 typedef enum tmp_enum{
 	TmpResult
 };
@@ -145,6 +147,9 @@ ExecVariableListCodegenEnroll(ExecVariableListFn regular_func_ptr,
                               struct ProjectionInfo* proj_info,
                               struct TupleTableSlot* slot);
 
+/*
+ * Enroll and returns the pointer to ExecEvalExprGenerator
+ */
 void*
 ExecEvalExprCodegenEnroll(ExecEvalExprFn regular_func_ptr,
                           ExecEvalExprFn* ptr_to_regular_func_ptr,

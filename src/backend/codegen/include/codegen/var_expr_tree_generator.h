@@ -3,10 +3,10 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    var_expr_tree_generator.h
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Object that generator code for variable expression.
 //
 //---------------------------------------------------------------------------
 #ifndef GPCODEGEN_VAR_EXPR_TREE_GENERATOR_H_  // NOLINT(build/header_guard)
@@ -22,6 +22,9 @@ namespace gpcodegen {
  *  @{
  */
 
+/**
+ * @brief Object that generator code for variable expression.
+ **/
 class VarExprTreeGenerator : public ExprTreeGenerator {
  public:
   static bool VerifyAndCreateExprTree(
@@ -36,6 +39,11 @@ class VarExprTreeGenerator : public ExprTreeGenerator {
                     llvm::Value* llvm_isnull_arg,
                     llvm::Value** llvm_out_value) final;
  protected:
+  /**
+   * @brief Constructor.
+   *
+   * @param expr_state Expression state
+   **/
   explicit VarExprTreeGenerator(ExprState* expr_state);
 };
 

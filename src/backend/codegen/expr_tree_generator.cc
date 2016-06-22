@@ -3,7 +3,7 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    expr_tree_generator.cc
 //
 //  @doc:
 //    Base class for expression tree to generate code
