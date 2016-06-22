@@ -36,7 +36,7 @@ using CodeGenFuncMap = std::unordered_map<unsigned int,
 class OpExprTreeGenerator : public ExprTreeGenerator {
  public:
   /**
-   * @brief Initialize PG operator function we support for code generation.
+   * @brief Initialize PG operator function that we support for code generation.
    **/
   static void InitializeSupportedFunction();
 

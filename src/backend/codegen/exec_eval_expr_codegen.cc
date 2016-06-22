@@ -187,7 +187,6 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
 
   irb->SetInsertPoint(llvm_error_block);
   irb->CreateRet(codegen_utils->GetConstant<int64_t>(0));
-  exec_eval_expr_func->dump();
   return true;
 }
 
