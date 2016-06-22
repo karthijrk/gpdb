@@ -43,6 +43,8 @@ enum class ExprTreeNodeType {
 
 class ExprTreeGenerator {
  public:
+  virtual ~ExprTreeGenerator() = default;
+
   /**
    * @brief Verify if we support the given expression tree and create an
    *        instance of this class.
