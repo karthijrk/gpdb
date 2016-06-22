@@ -279,6 +279,8 @@ class CodegenUtils {
    * @param value LLVM Value on which casting has to be done.
    *
    * @return LLVM Value that casted to given Cpp type.
+   *
+   * @note Depend on type's size, it will do extent or trunc or bit cast.
    **/
   template <typename CppType>
   llvm::Value* CreateCast(llvm::Value* value) {
