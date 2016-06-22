@@ -98,8 +98,8 @@ class PGFuncBaseGenerator : public PGFuncGeneratorInterface {
     }
 
  private:
-  std::string pg_func_name_;
   unsigned int pg_func_oid_;
+  std::string pg_func_name_;
   FuncPtrType func_ptr_;
 };
 

@@ -67,8 +67,8 @@ OpExprTreeGenerator::OpExprTreeGenerator(
     ExprState* expr_state,
     std::vector<
         std::unique_ptr<ExprTreeGenerator>>&& arguments)  // NOLINT(build/c++11)
-    :  arguments_(std::move(arguments)),
-       ExprTreeGenerator(expr_state, ExprTreeNodeType::kOperator) {
+    :  ExprTreeGenerator(expr_state, ExprTreeNodeType::kOperator),
+       arguments_(std::move(arguments)) {
 }
 
 bool OpExprTreeGenerator::VerifyAndCreateExprTree(
@@ -96,7 +96,7 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
   }
   // In ExecEvalFuncArgs
   if (list_length(arguments) != itr->second->GetTotalArgCount()) {
-    elog(DEBUG1, "Wrong number of arguments (!= %d)",
+    elog(DEBUG1, "Wrong number of arguments (!= %lu)",
          itr->second->GetTotalArgCount());
     return false;
   }
@@ -145,7 +145,7 @@ bool OpExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
   }
 
   if (arguments_.size() != itr->second->GetTotalArgCount()) {
-    elog(WARNING, "Expected argument size to be %d\n",
+    elog(WARNING, "Expected argument size to be %lu\n",
          itr->second->GetTotalArgCount());
     return false;
   }
