@@ -3,10 +3,10 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    pg_arith_func_generator.h
 //
 //  @doc:
-//    Base class for expression tree to generate code
+//    Class with Static member function to generate code for +, - and * operator
 //
 //---------------------------------------------------------------------------
 #ifndef GPCODEGEN_PG_ARITH_FUNC_GENERATOR_H_  // NOLINT(build/header_guard)
@@ -26,21 +26,71 @@ namespace gpcodegen {
 /** \addtogroup gpcodegen
  *  @{
  */
+
+/**
+ * @brief Class with Static member function to generate code for +, - and *
+ *        operator
+ *
+ * @tparam rtype  Return type of function
+ * @tparam Arg0   First argument's type
+ * @tparam Arg1   Second argument's type
+ **/
 template <typename rtype, typename Arg0, typename Arg1>
 class PGArithFuncGenerator {
  public:
+  /**
+   * @brief Create LLVM Mul instruction with check for overflow
+   *
+   * @param codegen_utils     Utility to easy code generation.
+   * @param llvm_main_func    Current function for which we are generating code
+   * @param llvm_error_block  Basic Block to jump when error happens
+   * @param llvm_args         Vector of llvm arguments for the function
+   * @param llvm_out_value    Store the results of function
+   *
+   * @return true if generation was successful otherwise return false
+   *
+   * @note  If there is overflow, it will do elog::ERROR and then jump to given
+   *        error block.
+   **/
   static bool MulWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
                                llvm::Function* llvm_main_func,
                                llvm::BasicBlock* llvm_error_block,
                                const std::vector<llvm::Value*>& llvm_args,
                                llvm::Value** llvm_out_value);
 
+  /**
+   * @brief Create LLVM Add instruction with check for overflow
+   *
+   * @param codegen_utils     Utility to easy code generation.
+   * @param llvm_main_func    Current function for which we are generating code
+   * @param llvm_error_block  Basic Block to jump when error happens
+   * @param llvm_args         Vector of llvm arguments for the function
+   * @param llvm_out_value    Store the results of function
+   *
+   * @return true if generation was successful otherwise return false
+   *
+   * @note  If there is overflow, it will do elog::ERROR and then jump to given
+   *        error block.
+   **/
   static bool AddWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
                               llvm::Function* llvm_main_func,
                               llvm::BasicBlock* llvm_error_block,
                               const std::vector<llvm::Value*>& llvm_args,
                               llvm::Value** llvm_out_value);
-
+  /**
+   * @brief Create LLVM Sub instruction with check for overflow
+   *
+   * @param codegen_utils     Utility to easy code generation.
+   * @param llvm_main_func    Current function for which we are generating code
+   * @param llvm_error_block  Basic Block to jump when error happens
+   * @param llvm_args         Vector of llvm arguments for the function
+   * @param llvm_out_value    Store the results of function
+   *
+   * @return true if generation was successful otherwise return false
+   *
+   * @note  If there is overflow, it will do elog::ERROR and then jump to given
+   *        error block.
+   **/
   static bool SubWithOverflow(gpcodegen::CodegenUtils* codegen_utils,
                                 llvm::Function* llvm_main_func,
                                 llvm::BasicBlock* llvm_error_block,
