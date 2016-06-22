@@ -28,7 +28,7 @@ namespace gpcodegen {
  *  @{
  */
 
-typedef bool (*ExprCodeGenerator)(gpcodegen::CodegenUtils* codegen_utils,
+typedef bool (*PGFuncGenerator)(gpcodegen::CodegenUtils* codegen_utils,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
     const std::vector<llvm::Value*>& llvm_args,
@@ -46,9 +46,9 @@ typedef bool (*ExprCodeGenerator)(gpcodegen::CodegenUtils* codegen_utils,
 // TODO(krajaraman) : Make Variadic template to take
 // variable length argument instead of two arguments
 template <typename FuncPtrType, typename Arg0, typename Arg1>
-class PGFuncGenerator : public PGFuncGeneratorInterface {
+class PGFuncBaseGenerator : public PGFuncGeneratorInterface {
  public:
-  virtual ~PGFuncGenerator() = default;
+  virtual ~PGFuncBaseGenerator() = default;
   std::string GetName() final { return pg_func_name_; };
   size_t GetTotalArgCount() final { return 2; }
 
@@ -90,7 +90,7 @@ class PGFuncGenerator : public PGFuncGeneratorInterface {
    * @param pg_func_name  Greenplum function name
    * @param func_ptr      Function pointer that generate code
    **/
-  PGFuncGenerator(int pg_func_oid,
+  PGFuncBaseGenerator(int pg_func_oid,
                   const std::string& pg_func_name,
                   FuncPtrType func_ptr) : pg_func_oid_(pg_func_oid),
                       pg_func_name_(pg_func_name),
@@ -113,7 +113,7 @@ class PGFuncGenerator : public PGFuncGeneratorInterface {
  *
  **/
 template <typename FuncPtrType, typename Arg0, typename Arg1>
-class PGIRBuilderFuncGenerator : public PGFuncGenerator<FuncPtrType,
+class PGIRBuilderFuncGenerator : public PGFuncBaseGenerator<FuncPtrType,
 Arg0, Arg1> {
  public:
   /**
@@ -126,7 +126,7 @@ Arg0, Arg1> {
   PGIRBuilderFuncGenerator(int pg_func_oid,
                            const std::string& pg_func_name,
                            FuncPtrType mem_func_ptr) :
-                             PGFuncGenerator<FuncPtrType,
+                             PGFuncBaseGenerator<FuncPtrType,
                              Arg0, Arg1>(pg_func_oid,
                                              pg_func_name,
                                              mem_func_ptr) {
@@ -159,7 +159,7 @@ Arg0, Arg1> {
  *
  **/
 template <typename Arg0, typename Arg1>
-class PGGenericFuncGenerator : public PGFuncGenerator<ExprCodeGenerator,
+class PGGenericFuncGenerator : public PGFuncBaseGenerator<PGFuncGenerator,
 Arg0, Arg1> {
  public:
   /**
@@ -171,8 +171,8 @@ Arg0, Arg1> {
    **/
   PGGenericFuncGenerator(int pg_func_oid,
                            const std::string& pg_func_name,
-                           ExprCodeGenerator func_ptr) :
-                             PGFuncGenerator<ExprCodeGenerator,
+                           PGFuncGenerator func_ptr) :
+                             PGFuncBaseGenerator<PGFuncGenerator,
                              Arg0, Arg1>(pg_func_oid,
                                              pg_func_name,
                                              func_ptr) {
