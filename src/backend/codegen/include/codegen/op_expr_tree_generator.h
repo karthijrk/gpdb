@@ -12,6 +12,8 @@
 #ifndef GPCODEGEN_OP_EXPR_TREE_GENERATOR_H_  // NOLINT(build/header_guard)
 #define GPCODEGEN_OP_EXPR_TREE_GENERATOR_H_
 
+#include <vector>
+
 #include "codegen/expr_tree_generator.h"
 #include "codegen/pg_func_generator_interface.h"
 #include "codegen/pg_func_generator.h"
@@ -34,17 +36,20 @@ class OpExprTreeGenerator : public ExprTreeGenerator {
   static bool VerifyAndCreateExprTree(
         ExprState* expr_state,
         ExprContext* econtext,
-        std::unique_ptr<ExprTreeGenerator>& expr_tree);
+        std::unique_ptr<ExprTreeGenerator>* expr_tree);
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                     ExprContext* econtext,
                     llvm::Function* llvm_main_func,
                     llvm::BasicBlock* llvm_error_block,
                     llvm::Value* llvm_isnull_arg,
-                    llvm::Value* & value) final;
+                    llvm::Value** llvm_out_value) final;
  protected:
-  OpExprTreeGenerator(ExprState* expr_state,
-                      std::vector<std::unique_ptr<ExprTreeGenerator>>& arguments);
+  OpExprTreeGenerator(
+      ExprState* expr_state,
+      std::vector<
+          std::unique_ptr<
+              ExprTreeGenerator>>&& arguments);  // NOLINT(build/c++11)
  private:
   std::vector<std::unique_ptr<ExprTreeGenerator>> arguments_;
   static CodeGenFuncMap supported_function_;

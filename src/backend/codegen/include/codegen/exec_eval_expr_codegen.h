@@ -36,9 +36,9 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
    *
    **/
   explicit ExecEvalExprCodegen(ExecEvalExprFn regular_func_ptr,
-		  ExecEvalExprFn* ptr_to_regular_func_ptr,
-		  ExprState *exprstate,
-		  ExprContext *econtext);
+                               ExecEvalExprFn* ptr_to_regular_func_ptr,
+                               ExprState *exprstate,
+                               ExprContext *econtext);
 
   virtual ~ExecEvalExprCodegen() = default;
 

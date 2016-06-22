@@ -25,19 +25,19 @@ namespace gpcodegen {
 class ConstExprTreeGenerator : public ExprTreeGenerator {
  public:
   static bool VerifyAndCreateExprTree(
-        ExprState* expr_state,
-        ExprContext* econtext,
-        std::unique_ptr<ExprTreeGenerator>& expr_tree);
+      ExprState* expr_state,
+      ExprContext* econtext,
+      std::unique_ptr<ExprTreeGenerator>* expr_tree);
 
   bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                     ExprContext* econtext,
                     llvm::Function* llvm_main_func,
                     llvm::BasicBlock* llvm_error_block,
                     llvm::Value* llvm_isnull_arg,
-                    llvm::Value* & value) final;
+                    llvm::Value** llvm_out_value) final;
 
  protected:
-  ConstExprTreeGenerator(ExprState* expr_state);
+  explicit ConstExprTreeGenerator(ExprState* expr_state);
 };
 
 /** @} */

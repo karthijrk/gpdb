@@ -46,17 +46,17 @@ class ExprTreeGenerator {
   static bool VerifyAndCreateExprTree(
       ExprState* expr_state,
       ExprContext* econtext,
-      std::unique_ptr<ExprTreeGenerator>& expr_tree);
+      std::unique_ptr<ExprTreeGenerator>* expr_tree);
 
   virtual bool GenerateCode(gpcodegen::CodegenUtils* codegen_utils,
                             ExprContext* econtext,
                             llvm::Function* llvm_main_func,
                             llvm::BasicBlock* llvm_error_block,
                             llvm::Value* llvm_isnull_arg,
-                            llvm::Value* & value) = 0;
+                            llvm::Value** value) = 0;
 
   ExprState* expr_state() { return expr_state_; }
-protected:
+ protected:
   ExprTreeGenerator(ExprState* expr_state,
                     ExprTreeNodeType node_type) :
                       expr_state_(expr_state), node_type_(node_type) {}

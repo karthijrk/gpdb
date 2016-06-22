@@ -281,11 +281,9 @@ class CodegenUtils {
     unsigned src_size = llvm_src_type->getScalarSizeInBits();
     if (src_size < dest_size) {
       return ir_builder()->CreateZExt(value, llvm_dest_type);
-    }
-    else if (src_size > dest_size) {
+    } else if (src_size > dest_size) {
       return ir_builder()->CreateTrunc(value, llvm_dest_type);
-    }
-    else if (llvm_src_type->getTypeID() != llvm_dest_type->getTypeID()) {
+    } else if (llvm_src_type->getTypeID() != llvm_dest_type->getTypeID()) {
       return ir_builder()->CreateBitCast(value, llvm_dest_type);
     }
     return value;
@@ -1207,8 +1205,8 @@ std::is_integral<UnsignedIntType>::value
                                     casted_arg0,
                                     casted_arg1);
   }
- private:
 
+ private:
   static void Checker(llvm::Value* arg0,
                       llvm::Value* arg1) {
     assert(nullptr != arg0 && nullptr != arg0->getType());
@@ -1226,7 +1224,6 @@ typename std::enable_if<
 std::is_integral<SignedIntType>::value
 && std::is_signed<SignedIntType>::value>::type> {
  public:
-
   static llvm::Value* CreateAddOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
                                         llvm::Value* arg1) {

@@ -16,7 +16,7 @@
 #include "llvm/IR/Value.h"
 
 extern "C" {
-#include "postgres.h"
+#include "postgres.h"  // NOLINT(build/include)
 #include "utils/elog.h"
 #include "nodes/execnodes.h"
 }
@@ -28,9 +28,12 @@ using gpcodegen::CodegenUtils;
 bool VarExprTreeGenerator::VerifyAndCreateExprTree(
     ExprState* expr_state,
     ExprContext* econtext,
-    std::unique_ptr<ExprTreeGenerator>& expr_tree) {
-  assert(nullptr != expr_state && nullptr != expr_state->expr && T_Var == nodeTag(expr_state->expr));
-  expr_tree.reset(new VarExprTreeGenerator(expr_state));
+    std::unique_ptr<ExprTreeGenerator>* expr_tree) {
+  assert(nullptr != expr_state &&
+         nullptr != expr_state->expr &&
+         T_Var == nodeTag(expr_state->expr) &&
+         nullptr != expr_tree);
+  expr_tree->reset(new VarExprTreeGenerator(expr_state));
   return true;
 }
 
@@ -43,9 +46,10 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
                                         llvm::Function* llvm_main_func,
                                         llvm::BasicBlock* llvm_error_block,
                                         llvm::Value* llvm_isnull_arg,
-                                        llvm::Value* & value) {
-  value = nullptr;
-  Var* var_expr = (Var *)expr_state()->expr;
+                                        llvm::Value** llvm_out_value) {
+  assert(nullptr != llvm_out_value);
+  *llvm_out_value = nullptr;
+  Var* var_expr = reinterpret_cast<Var*>(expr_state()->expr);
   int attnum = var_expr->varattno;
   auto irb = codegen_utils->ir_builder();
 
@@ -54,8 +58,7 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
   // For that reason, we keep a double pointer to slot and at execution time
   // we load slot.
   TupleTableSlot **ptr_to_slot_ptr = NULL;
-  switch (var_expr->varno)
-  {
+  switch (var_expr->varno) {
     case INNER:  /* get the tuple from the inner node */
       ptr_to_slot_ptr = &econtext->ecxt_innertuple;
       break;
@@ -81,7 +84,7 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
       codegen_utils->RegisterExternalFunction(slot_getattr);
 
   // retrieve variable
-  value = irb->CreateCall(
+  *llvm_out_value = irb->CreateCall(
       llvm_slot_getattr, {
           llvm_slot,
           llvm_variable_varattno,
