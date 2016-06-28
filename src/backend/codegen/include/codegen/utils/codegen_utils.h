@@ -1223,10 +1223,11 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::uadd_with_overflow,
-                                               generator->GetType<UnsignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::uadd_with_overflow,
+        generator->GetType<UnsignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
   static llvm::Value* CreateSubOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
@@ -1235,10 +1236,11 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::usub_with_overflow,
-                                               generator->GetType<UnsignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::usub_with_overflow,
+        generator->GetType<UnsignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
   static llvm::Value* CreateMulOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
@@ -1247,10 +1249,11 @@ std::is_integral<UnsignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<UnsignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<UnsignedIntType>(arg1);
 
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::umul_with_overflow,
-                                               generator->GetType<UnsignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::umul_with_overflow,
+        generator->GetType<UnsignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
 
  private:
@@ -1277,10 +1280,11 @@ std::is_integral<SignedIntType>::value
     Checker(arg0, arg1);
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::sadd_with_overflow,
-                                               generator->GetType<SignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::sadd_with_overflow,
+        generator->GetType<SignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
 
   static llvm::Value* CreateSubOverflow(CodegenUtils* generator,
@@ -1290,10 +1294,11 @@ std::is_integral<SignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
 
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::ssub_with_overflow,
-                                               generator->GetType<SignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::ssub_with_overflow,
+        generator->GetType<SignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
 
   static llvm::Value* CreateMulOverflow(CodegenUtils* generator,
@@ -1303,10 +1308,11 @@ std::is_integral<SignedIntType>::value
     llvm::Value* casted_arg0 = generator->CreateCast<SignedIntType>(arg0);
     llvm::Value* casted_arg1 = generator->CreateCast<SignedIntType>(arg1);
 
-    return generator->CreateIntrinsicInstrCall(llvm::Intrinsic::smul_with_overflow,
-                                               generator->GetType<SignedIntType>(),
-                                               casted_arg0,
-                                               casted_arg1);
+    return generator->CreateIntrinsicInstrCall(
+        llvm::Intrinsic::smul_with_overflow,
+        generator->GetType<SignedIntType>(),
+        casted_arg0,
+        casted_arg1);
   }
  private:
   static void Checker(llvm::Value* arg0,

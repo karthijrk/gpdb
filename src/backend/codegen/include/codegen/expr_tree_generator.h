@@ -46,8 +46,8 @@ class ExprTreeGenerator {
   virtual ~ExprTreeGenerator() = default;
 
   /**
-   * @brief Verify if we support the given expression tree and create an
-   *        instance of this class.
+   * @brief Verify if we support the given expression tree, and create an
+   * 		instance of ExprTreeGenerator if supported.
    *
    * @param expr_state  Expression state from expression tree.
    * @param econtext    Respective expression context.

@@ -3,7 +3,7 @@
 //  Copyright (C) 2016 Pivotal Software, Inc.
 //
 //  @filename:
-//    base_codegen.h
+//    const_expr_tree_generator.cc
 //
 //  @doc:
 //    Object that generate code for const expression.

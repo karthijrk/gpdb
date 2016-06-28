@@ -90,16 +90,9 @@ bool OpExprTreeGenerator::VerifyAndCreateExprTree(
   }
 
   List *arguments = reinterpret_cast<FuncExprState*>(expr_state)->args;
-  if (nullptr == arguments) {
-    elog(DEBUG1, "No argument for the function");
-    return false;
-  }
+  assert(nullptr != arguments);
   // In ExecEvalFuncArgs
-  if (list_length(arguments) != itr->second->GetTotalArgCount()) {
-    elog(DEBUG1, "Wrong number of arguments (!= %lu)",
-         itr->second->GetTotalArgCount());
-    return false;
-  }
+  assert(list_length(arguments) == itr->second->GetTotalArgCount());
 
   ListCell   *arg = nullptr;
   bool supported_tree = true;

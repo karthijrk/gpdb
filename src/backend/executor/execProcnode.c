@@ -772,7 +772,7 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 /* ----------------------------------------------------------------
  *    EnrollQualList
  *
- *    Enroll Qual List from PlanState to Codegen
+ *    Enroll Qual List's expr state from PlanState for codegen.
  * ----------------------------------------------------------------
  */
 void
