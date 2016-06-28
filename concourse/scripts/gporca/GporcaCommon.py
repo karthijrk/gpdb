@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-class GpdbBuildBase:
+class GporcaCommon:
     def __init__(self):
         pass
 
@@ -70,10 +70,16 @@ class GpdbBuildBase:
         return status
     
     def install_dependency(self, dependency_name):
-        return subprocess.call("tar -xzf " + dependency_name + "/*.tar.gz -C /usr/local", shell=True)
+        return subprocess.call(
+            ["tar",
+             "-xzf",
+             dependency_name + "/" + dependency_name + ".tar.gz",
+             "-C",
+             "/usr/local"])
     
     def configure(self):
         return subprocess.call(["./configure",
+                                "--enable-orca",
                                 "--enable-mapreduce",
                                 "--with-perl",
                                 "--with-libxml",
