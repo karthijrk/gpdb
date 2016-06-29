@@ -81,7 +81,7 @@ bool VarExprTreeGenerator::GenerateCode(CodegenUtils* codegen_utils,
 
   // External functions
   llvm::Function* llvm_slot_getattr =
-      codegen_utils->RegisterExternalFunction(slot_getattr);
+      codegen_utils->GetOrRegisterExternalFunction(slot_getattr);
 
   // retrieve variable
   *llvm_out_value = irb->CreateCall(

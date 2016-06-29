@@ -124,7 +124,7 @@ class MulOverflowCodeGenerator : public BaseCodegen<MulFunc> {
   virtual ~MulOverflowCodeGenerator() = default;
 
  protected:
-  bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final {
+  bool GenerateCodeInternal(gpcodegen::GpCodegenUtils* codegen_utils) final {
     llvm::Function* mul2_func
        = CreateFunction<MulFunc>(codegen_utils, GetUniqueFuncName());
     llvm::BasicBlock* mul2_body = codegen_utils->CreateBasicBlock("body",

@@ -62,7 +62,7 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
    * we fall backs to the regular function.
    *
    */
-  bool GenerateCodeInternal(gpcodegen::CodegenUtils* codegen_utils) final;
+  bool GenerateCodeInternal(gpcodegen::GpCodegenUtils* codegen_utils) final;
 
  private:
   ExprState *exprstate_;
@@ -76,7 +76,7 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
    * @param codegen_utils Utility to ease the code generation process.
    * @return true on successful generation.
    **/
-  bool GenerateExecEvalExpr(gpcodegen::CodegenUtils* codegen_utils);
+  bool GenerateExecEvalExpr(gpcodegen::GpCodegenUtils* codegen_utils);
 };
 
 /** @} */
