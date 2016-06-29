@@ -369,7 +369,6 @@ class CodegenUtils {
       ReturnType (*external_function)(ArgumentTypes...),
       const std::string& name = "",
       const bool is_var_arg = false) {
-
     std::unordered_map<std::uint64_t, std::string>::iterator it;
     bool key_absent;
 
@@ -381,7 +380,6 @@ class CodegenUtils {
     if (!key_absent) {
       return module()->getFunction(it->second);
     } else {
-
       if (!name.empty()) {
         RecordNamedExternalFunction<ReturnType, ArgumentTypes...>(name);
       }
