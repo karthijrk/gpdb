@@ -53,10 +53,10 @@ class PGArithFuncGenerator {
    *        error block.
    **/
   static bool MulWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
-                               llvm::Function* llvm_main_func,
-                               llvm::BasicBlock* llvm_error_block,
-                               const std::vector<llvm::Value*>& llvm_args,
-                               llvm::Value** llvm_out_value);
+                              llvm::Function* llvm_main_func,
+                              llvm::BasicBlock* llvm_error_block,
+                              const std::vector<llvm::Value*>& llvm_args,
+                              llvm::Value** llvm_out_value);
 
   /**
    * @brief Create LLVM Add instruction with check for overflow
@@ -92,10 +92,10 @@ class PGArithFuncGenerator {
    *        error block.
    **/
   static bool SubWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
-                                llvm::Function* llvm_main_func,
-                                llvm::BasicBlock* llvm_error_block,
-                                const std::vector<llvm::Value*>& llvm_args,
-                                llvm::Value** llvm_out_value);
+                              llvm::Function* llvm_main_func,
+                              llvm::BasicBlock* llvm_error_block,
+                              const std::vector<llvm::Value*>& llvm_args,
+                              llvm::Value** llvm_out_value);
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
@@ -108,8 +108,11 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::MulWithOverflow(
   assert(nullptr != llvm_out_value);
   // Assumed caller checked vector size and nullptr for codegen_utils
 
+  llvm::Value* casted_arg0 = codegen_utils->CreateDatumCast<rtype>(llvm_args[0]);
+  llvm::Value* casted_arg1 = codegen_utils->CreateDatumCast<rtype>(llvm_args[1]);
+
   llvm::Value* llvm_mul_output = codegen_utils->CreateMulOverflow<rtype>(
-      llvm_args[0], llvm_args[1]);
+      casted_arg0, casted_arg1);
 
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 

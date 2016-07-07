@@ -148,7 +148,7 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     return false;
   }
 
-  llvm::Value* llvm_ret_value = codegen_utils->CreateCast<int64_t>(value);
+  llvm::Value* llvm_ret_value = codegen_utils->CreateDatumCast<int64_t>(value);
   irb->CreateRet(llvm_ret_value);
 
   irb->SetInsertPoint(llvm_error_block);
