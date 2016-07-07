@@ -101,6 +101,51 @@ class GpCodegenUtils : public CodegenUtils {
         const V ... args ) {
     CreateElog(GetConstant(elevel), GetConstant(fmt), args...);
   }
+
+
+
+  /**
+   * @brief Create a Cast instruction to convert given llvm::Value to given Cpp
+   *        type
+   *
+   * @note Depend on type's size, it will do extent or trunc or bit cast. This
+   *       is same as converting gpdb's Datum to cpptype and viceversa.
+   *
+   * @tparam CppType  Destination cpp type
+   * @param value LLVM Value on which casting has to be done.
+   *
+   * @return LLVM Value that casted to given Cpp type.
+   **/
+  template <typename CppType>
+  llvm::Value* CreateDatumCast(llvm::Value* value) {
+    assert(nullptr != value);
+    llvm::Type* llvm_src_type = value->getType();
+    unsigned src_size = llvm_src_type->getScalarSizeInBits();
+
+    llvm::Type* llvm_dest_type = GetType<CppType>();
+    unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
+
+    llvm::Type* llvm_dest_size_type = llvm::IntegerType::get(*context(),
+                                                             dest_size);
+
+    // Convert given value to int type to do ext / trunc
+    llvm::Value* llvm_int_value = value;
+    if (!llvm_src_type->isIntegerTy()) {
+      llvm_int_value = ir_builder()->CreateBitCast(
+          value, llvm::IntegerType::get(*context(), src_size));
+    }
+    llvm::Value* llvm_size_value = llvm_int_value;
+    if (src_size < dest_size) {
+      llvm_size_value = ir_builder()->CreateZExt(llvm_int_value, llvm_dest_size_type);
+    } else if (src_size > dest_size) {
+      llvm_size_value = ir_builder()->CreateTrunc(llvm_int_value, llvm_dest_size_type);
+    }
+
+    if (llvm_src_type->getTypeID() != llvm_dest_type->getTypeID()) {
+      return ir_builder()->CreateBitCast(llvm_size_value, llvm_dest_type);
+    }
+    return llvm_size_value;
+  }
 };
 
 }  // namespace gpcodegen

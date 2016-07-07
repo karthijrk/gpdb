@@ -28,6 +28,14 @@
 
 #include "gtest/gtest.h"
 
+extern "C" {
+#include "postgres.h" // NOLINT(build/include)
+#undef newNode  // undef newNode so it doesn't have name collision with llvm
+#include "utils/elog.h"
+#undef elog
+#define elog(...)
+}
+
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/Argument.h"
@@ -45,13 +53,9 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Casting.h"
 
-extern "C" {
-    #include "utils/elog.h"
-    #undef elog
-    #define elog(...)
-}
 
 #include "codegen/utils/codegen_utils.h"
+#include "codegen/utils/gp_codegen_utils.h"
 #include "codegen/utils/utility.h"
 #include "codegen/codegen_manager.h"
 #include "codegen/codegen_wrapper.h"
@@ -59,11 +63,15 @@ extern "C" {
 #include "codegen/base_codegen.h"
 
 extern bool codegen_validate_functions;
+using gpcodegen::GpCodegenUtils;
 namespace gpcodegen {
 
 typedef int (*SumFunc) (int x, int y);
 typedef void (*UncompilableFunc)(int x);
 typedef int (*MulFunc) (int x, int y);
+
+template <typename dest_type, typename src_type>
+using DatumCastFn = dest_type (*)(src_type);
 
 int SumFuncRegular(int x, int y) {
   return x + y;
@@ -218,9 +226,46 @@ class UncompilableCodeGenerator : public BaseCodegen<UncompilableFunc> {
   static constexpr char kUncompilableFuncNamePrefix[] = "UncompilableFunc";
 };
 
+template <typename dest_type, typename src_type>
+class DatumCastGenerator : public BaseCodegen<DatumCastFn<dest_type, src_type>> {
+ using DatumCastTemplateFn = DatumCastFn<dest_type, src_type>;
+ public:
+  explicit DatumCastGenerator(
+      DatumCastTemplateFn regular_func_ptr,
+      DatumCastTemplateFn* ptr_to_regular_func_ptr):
+      BaseCodegen<DatumCastTemplateFn>(kDatumCastFuncNamePrefix,
+                  regular_func_ptr,
+                  ptr_to_regular_func_ptr) {
+  }
+
+  virtual ~DatumCastGenerator() = default;
+
+ protected:
+  bool GenerateCodeInternal(gpcodegen::GpCodegenUtils* codegen_utils) final {
+    llvm::Function* cast_func
+                = this->template CreateFunction<DatumCastTemplateFn>(
+                    codegen_utils, this->GetUniqueFuncName());
+    llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock("entry",
+                                                                  cast_func);
+    codegen_utils->ir_builder()->SetInsertPoint(entry_block);
+    llvm::Value* llvm_arg0 = ArgumentByPosition(cast_func, 0);
+    llvm::Value* llvm_return = codegen_utils->CreateDatumCast<dest_type>(
+        llvm_arg0);
+    codegen_utils->ir_builder()->CreateRet(llvm_return);
+    cast_func->dump();
+    return true;
+  }
+
+ private:
+  static constexpr char kDatumCastFuncNamePrefix[] = "DatumCastFunc";
+};
+
 constexpr char SumCodeGenerator::kAddFuncNamePrefix[];
 constexpr char FailingCodeGenerator::kFailingFuncNamePrefix[];
 constexpr char MulOverflowCodeGenerator::kMulFuncNamePrefix[];
+template <typename dest_type, typename src_type>
+constexpr char DatumCastGenerator<dest_type, src_type>::kDatumCastFuncNamePrefix[];
+
 template <bool GEN_SUCCESS>
 constexpr char
 UncompilableCodeGenerator<GEN_SUCCESS>::kUncompilableFuncNamePrefix[];
@@ -248,6 +293,45 @@ class CodegenManagerTest : public ::testing::Test {
     ASSERT_TRUE(manager_->EnrollCodeGenerator(
         CodegenFuncLifespan_Parameter_Invariant,
         code_gen));
+  }
+
+  template <typename CppType>
+  void CheckDatumCast(DatumCastFn<Datum, CppType> CppToDatumReg,
+                      DatumCastFn<CppType, Datum> DatumToCppReg,
+                      const std::vector<CppType>& values) {
+    DatumCastFn<Datum, float> FloatToDatumFn = &Float4GetDatum;
+    DatumCastGenerator<Datum, float>* float_datum_gen =
+        new DatumCastGenerator<Datum, float>(FloatToDatumFn, &FloatToDatumFn);
+
+
+    DatumCastFn<float, Datum> DatumToFloatFn = &DatumGetFloat4;
+    DatumCastGenerator<float, Datum>* datum_float_gen =
+        new DatumCastGenerator<float, Datum>(DatumToFloatFn, &DatumToFloatFn);
+
+    ASSERT_TRUE(manager_->EnrollCodeGenerator(
+        CodegenFuncLifespan_Parameter_Invariant, float_datum_gen));
+
+    ASSERT_TRUE(manager_->EnrollCodeGenerator(
+        CodegenFuncLifespan_Parameter_Invariant, datum_float_gen));
+
+    EXPECT_EQ(2, manager_->GenerateCode());
+
+    ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
+
+    ASSERT_TRUE(FloatToDatumFn != &Float4GetDatum);
+    ASSERT_TRUE(DatumToFloatFn != &DatumGetFloat4);
+
+    float f_pos = 23.54;
+    Datum d_gpdb = Float4GetDatum(f_pos);
+    Datum d_codegen = FloatToDatumFn(f_pos);
+    EXPECT_EQ(d_gpdb, d_codegen);
+    EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
+
+    float f_neg = -23.54;
+    d_gpdb = Float4GetDatum(f_neg);
+    d_codegen = FloatToDatumFn(f_neg);
+    EXPECT_EQ(d_gpdb, d_codegen);
+    EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
   }
 
   std::unique_ptr<CodegenManager> manager_;
@@ -479,6 +563,42 @@ TEST_F(CodegenManagerTest, ResetTest) {
 
   // Make sure Reset set the function pointer back to regular version.
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
+}
+
+TEST_F(CodegenManagerTest, TestDatumFloatCast) {
+  DatumCastFn<Datum, float> FloatToDatumFn = &Float4GetDatum;
+  DatumCastGenerator<Datum, float>* float_datum_gen =
+        new DatumCastGenerator<Datum, float>(FloatToDatumFn, &FloatToDatumFn);
+
+
+  DatumCastFn<float, Datum> DatumToFloatFn = &DatumGetFloat4;
+  DatumCastGenerator<float, Datum>* datum_float_gen =
+      new DatumCastGenerator<float, Datum>(DatumToFloatFn, &DatumToFloatFn);
+
+  ASSERT_TRUE(manager_->EnrollCodeGenerator(
+          CodegenFuncLifespan_Parameter_Invariant, float_datum_gen));
+
+  ASSERT_TRUE(manager_->EnrollCodeGenerator(
+        CodegenFuncLifespan_Parameter_Invariant, datum_float_gen));
+
+  EXPECT_EQ(2, manager_->GenerateCode());
+
+  ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
+
+  ASSERT_TRUE(FloatToDatumFn != &Float4GetDatum);
+  ASSERT_TRUE(DatumToFloatFn != &DatumGetFloat4);
+
+  float f_pos = 23.54;
+  Datum d_gpdb = Float4GetDatum(f_pos);
+  Datum d_codegen = FloatToDatumFn(f_pos);
+  EXPECT_EQ(d_gpdb, d_codegen);
+  EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
+
+  float f_neg = -23.54;
+  d_gpdb = Float4GetDatum(f_neg);
+  d_codegen = FloatToDatumFn(f_neg);
+  EXPECT_EQ(d_gpdb, d_codegen);
+  EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
 }
 
 }  // namespace gpcodegen

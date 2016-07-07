@@ -71,8 +71,8 @@ class PGFuncBaseGenerator : public PGFuncGeneratorInterface {
     if (llvm_in_args.size() != GetTotalArgCount()) {
       return false;
     }
-    llvm_out_args->push_back(codegen_utils->CreateCast<Arg0>(llvm_in_args[0]));
-    llvm_out_args->push_back(codegen_utils->CreateCast<Arg1>(llvm_in_args[1]));
+    llvm_out_args->push_back(codegen_utils->CreateDatumCast<Arg0>(llvm_in_args[0]));
+    llvm_out_args->push_back(codegen_utils->CreateDatumCast<Arg1>(llvm_in_args[1]));
     return true;
   }
 
