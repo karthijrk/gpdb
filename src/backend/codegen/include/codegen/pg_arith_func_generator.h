@@ -27,6 +27,30 @@ namespace gpcodegen {
  *  @{
  */
 
+template <typename T, typename Enable = void>
+struct to_string {};
+
+template <typename IntType>
+struct to_string<
+IntType,
+typename std::enable_if<std::is_integral<IntType>::value>::type> {
+  static char const* value() { return "integer"; }
+};
+
+template <>
+struct to_string<
+float> {
+  static char const* value() { return "float"; }
+};
+
+template <>
+struct to_string<
+double> {
+  static char const* value() { return "double"; }
+};
+
+
+
 /**
  * @brief Class with Static member function to generate code for +, - and *
  *        operator
@@ -65,6 +89,7 @@ class PGArithFuncGenerator {
     return ArithOpWithOverflow(
         codegen_utils,
         &gpcodegen::GpCodegenUtils::CreateMulOverflow<rtype>,
+        (std::string)to_string<rtype>::value() + " out of range",
         llvm_main_func,
         llvm_error_block,
         llvm_args,
@@ -93,6 +118,7 @@ class PGArithFuncGenerator {
     return ArithOpWithOverflow(
             codegen_utils,
             &gpcodegen::GpCodegenUtils::CreateAddOverflow<rtype>,
+            (std::string)to_string<rtype>::value() + " out of range",
             llvm_main_func,
             llvm_error_block,
             llvm_args,
@@ -120,14 +146,16 @@ class PGArithFuncGenerator {
     return ArithOpWithOverflow(
             codegen_utils,
             &gpcodegen::GpCodegenUtils::CreateSubOverflow<rtype>,
+            (std::string)to_string<rtype>::value() + " out of range",
             llvm_main_func,
             llvm_error_block,
             llvm_args,
             llvm_out_value);
   }
- private:
+
   static bool ArithOpWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
                                   CGArithOpOverFlowFunc codegen_mem_funcptr,
+                                  const std::string& error_msg_for_overflow,
                                   llvm::Function* llvm_main_func,
                                   llvm::BasicBlock* llvm_error_block,
                                   const std::vector<llvm::Value*>& llvm_args,
@@ -138,6 +166,7 @@ template <typename rtype, typename Arg0, typename Arg1>
 bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
     gpcodegen::GpCodegenUtils* codegen_utils,
     CGArithOpOverFlowFunc codegen_mem_funcptr,
+    const std::string& error_msg_for_overflow,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
     const std::vector<llvm::Value*>& llvm_args,
@@ -156,7 +185,8 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
 
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
-  if (llvm_arith_output->getType()->isIntegerTy()) {
+  // Check if it is a Integer type
+  if (std::is_integral<rtype>::value) {
     llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
         "arith_non_overflow_block", llvm_main_func);
     llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
@@ -171,7 +201,7 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
                       llvm_non_overflow_block);
 
     irb->SetInsertPoint(llvm_overflow_block);
-    // TODO(krajaraman): Elog::ERROR after ElogWrapper integrated.
+    codegen_utils->CreateElog(WARNING, "overflow input %ld * %ld = %ld", casted_arg0, casted_arg1, *llvm_out_value);
     irb->CreateBr(llvm_error_block);
 
     irb->SetInsertPoint(llvm_non_overflow_block);

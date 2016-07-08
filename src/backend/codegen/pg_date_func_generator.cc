@@ -13,6 +13,7 @@
 
 #include "codegen/pg_date_func_generator.h"
 #include "codegen/utils/gp_codegen_utils.h"
+#include "codegen/pg_arith_func_generator.h"
 
 extern "C" {
 #include "postgres.h"  // NOLINT(build/include)
@@ -33,11 +34,11 @@ bool PGDateFuncGenerator::DateLETimestamp(
 
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
-  llvm::Value* llvm_arg1_Timestamp = codegen_utils->
-      CreateDatumToCppTypeCast<Timestamp>(llvm_args[1]);
-
   llvm::Value* llvm_arg0_Timestamp = GenerateDate2Timestamp(
       codegen_utils, llvm_main_func, llvm_args[0], llvm_error_block);
+
+  llvm::Value* llvm_arg1_Timestamp = codegen_utils->
+      CreateDatumToCppTypeCast<Timestamp>(llvm_args[1]);
 
   // timestamp_cmp_internal {{{
 #ifdef HAVE_INT64_TIMESTAMP
@@ -62,37 +63,22 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
   assert(nullptr != llvm_arg && nullptr != llvm_arg->getType());
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
-  llvm::Value* llvm_arg_64 = codegen_utils->CreateDatumToCppTypeCast<int64_t>(
-      llvm_arg);
-
 #ifdef HAVE_INT64_TIMESTAMP
 
-  llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
-      "date_non_overflow_block", llvm_main_func);
-  llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
-      "date_overflow_block", llvm_main_func);
-
   llvm::Value *llvm_USECS_PER_DAY = codegen_utils->
-      GetConstant<int64_t>(USECS_PER_DAY);
+          GetConstant<int64_t>(USECS_PER_DAY);
 
+  llvm::Value* llvm_out_value = nullptr;
+  PGArithFuncGenerator<int64_t, int64_t, int64_t>::ArithOpWithOverflow(
+      codegen_utils,
+      &gpcodegen::GpCodegenUtils::CreateMulOverflow<int64_t>,
+      "date out of range for timestamp",
+      llvm_main_func,
+      llvm_error_block,
+      {llvm_USECS_PER_DAY, llvm_arg},
+      &llvm_out_value);
 
-
-  llvm::Value* llvm_mul_output = codegen_utils->CreateMulOverflow<int64_t>(
-      llvm_USECS_PER_DAY, llvm_arg_64);
-
-  llvm::Value* llvm_overflow_flag = irb->CreateExtractValue(llvm_mul_output, 1);
-
-  irb->CreateCondBr(llvm_overflow_flag,
-                    llvm_overflow_block,
-                    llvm_non_overflow_block);
-
-  irb->SetInsertPoint(llvm_overflow_block);
-  codegen_utils->CreateElog(ERROR, "date out of range for timestamp");
-  irb->CreateBr(llvm_error_block);
-
-  irb->SetInsertPoint(llvm_non_overflow_block);
-
-  return irb->CreateExtractValue(llvm_mul_output, 0);
+  return llvm_out_value;
 #else
   llvm::Value *llvm_SECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(SECS_PER_DAY);
