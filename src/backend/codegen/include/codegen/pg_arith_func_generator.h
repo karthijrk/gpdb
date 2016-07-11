@@ -108,8 +108,10 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::MulWithOverflow(
   assert(nullptr != llvm_out_value);
   // Assumed caller checked vector size and nullptr for codegen_utils
 
-  llvm::Value* casted_arg0 = codegen_utils->CreateDatumCast<rtype>(llvm_args[0]);
-  llvm::Value* casted_arg1 = codegen_utils->CreateDatumCast<rtype>(llvm_args[1]);
+  llvm::Value* casted_arg0 = codegen_utils->CreateDatumToCppTypeCast<rtype>(
+      llvm_args[0]);
+  llvm::Value* casted_arg1 = codegen_utils->CreateDatumToCppTypeCast<rtype>(
+      llvm_args[1]);
 
   llvm::Value* llvm_mul_output = codegen_utils->CreateMulOverflow<rtype>(
       casted_arg0, casted_arg1);
