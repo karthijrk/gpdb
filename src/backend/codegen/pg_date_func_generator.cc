@@ -47,7 +47,7 @@ bool PGDateFuncGenerator::DateLETimestamp(
   *llvm_out_value =
       irb->CreateICmpSLE(llvm_arg0_Timestamp, llvm_arg1_Timestamp);
 #else
-  // We do not support NaNs.
+  // TODO(nikos): We do not support NaNs.
   elog(DEBUG1, "Timestamp != int_64: NaNs are not supported.");
   return false;
 #endif
@@ -75,7 +75,7 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
   llvm::Value *llvm_USECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(USECS_PER_DAY);
 
-  /* TODO: Use CreateCast*/
+  /* TODO(nikos): Use CreateCast*/
   llvm::Value* llvm_arg_64 = irb->CreateSExt(
       llvm_arg, codegen_utils->GetType<int64_t>());
 
@@ -98,7 +98,7 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
 #else
   llvm::Value *llvm_SECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(SECS_PER_DAY);
-  /*TODO: Use CreateCast*/
+  /*TODO(nikos): Use CreateCast*/
   llvm::Value *llvm_arg_64 = irb->CreateSExt(llvm_arg,
                                              codegen_utils->GetType<int64_t>());
   return irb->CreateMul(llvm_arg_64, llvm_SECS_PER_DAY);
