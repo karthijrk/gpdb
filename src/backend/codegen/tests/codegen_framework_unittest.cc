@@ -29,7 +29,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "postgres.h" // NOLINT(build/include)
+#include "postgres.h"  // NOLINT(build/include)
 #undef newNode  // undef newNode so it doesn't have name collision with llvm
 #include "utils/elog.h"
 #undef elog
@@ -227,8 +227,10 @@ class UncompilableCodeGenerator : public BaseCodegen<UncompilableFunc> {
 };
 
 template <typename dest_type>
-class DatumToCppCastGenerator : public BaseCodegen<DatumCastFn<dest_type, Datum>> {
- using DatumCastTemplateFn = DatumCastFn<dest_type, Datum>;
+class DatumToCppCastGenerator :
+    public BaseCodegen<DatumCastFn<dest_type, Datum>> {
+  using DatumCastTemplateFn = DatumCastFn<dest_type, Datum>;
+
  public:
   explicit DatumToCppCastGenerator(
       DatumCastTemplateFn regular_func_ptr,
@@ -261,8 +263,9 @@ class DatumToCppCastGenerator : public BaseCodegen<DatumCastFn<dest_type, Datum>
 };
 
 template <typename src_type>
-class CppToDatumCastGenerator : public BaseCodegen<DatumCastFn<Datum, src_type>> {
- using DatumCastTemplateFn = DatumCastFn<Datum, src_type>;
+class CppToDatumCastGenerator :
+    public BaseCodegen<DatumCastFn<Datum, src_type>> {
+  using DatumCastTemplateFn = DatumCastFn<Datum, src_type>;
  public:
   explicit CppToDatumCastGenerator(
       DatumCastTemplateFn regular_func_ptr,
@@ -360,10 +363,11 @@ class CodegenManagerTest : public ::testing::Test {
     ASSERT_TRUE(CppToDatumCgFn != CppToDatumReg);
     ASSERT_TRUE(DatumToCppCgFn != DatumToCppReg);
 
-    for(const CppType& v : values) {
+    for (const CppType& v : values) {
       Datum d_gpdb = CppToDatumReg(v);
       Datum d_codegen = CppToDatumCgFn(v);
-      std::cout << "d_gpdb " << d_gpdb << " d_codegen " << d_codegen << std::endl;
+      std::cout << "d_gpdb " << d_gpdb
+          << " d_codegen " << d_codegen << std::endl;
       EXPECT_EQ(d_gpdb, d_codegen);
       EXPECT_EQ(DatumToCppReg(d_gpdb), DatumToCppCgFn(d_codegen));
     }
@@ -651,13 +655,13 @@ TEST_F(CodegenManagerTest, TestDatumUInt32Cast) {
 TEST_F(CodegenManagerTest, TestDatumInt64Cast) {
   CheckDatumCast<int64>(Int64GetDatum,
                          DatumGetInt64,
-                        {(int64)23, (int64)-23});
+                        {static_cast<int64>(23), static_cast<int64>(-23)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumUInt64Cast) {
   CheckDatumCast<uint64>(UInt64GetDatum,
                          DatumGetUInt64,
-                        {(uint64)23, (uint64)-23});
+                        {static_cast<uint64>(23), static_cast<uint64>(-23)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumOidCast) {
@@ -694,13 +698,15 @@ TEST_F(CodegenManagerTest, TestDatumPtrCast) {
 
 TEST_F(CodegenManagerTest, TestDatumCStringCast) {
   struct DatumVoidPtr {
-      static Datum PointerGetDatumNoConst(char *p) {
-        return PointerGetDatum((const char*)p);
-      }
-    };
+    static Datum PointerGetDatumNoConst(char *p) {
+      return PointerGetDatum((const char*)p);
+    }
+  };
   CheckDatumCast<char*>(DatumVoidPtr::PointerGetDatumNoConst,
                         DatumGetCString,
-                            {(char*)"dfdFD", (char*)"", (char*)NULL});
+                            {static_cast<char*>("dfdFD",
+                                static_cast<char*>(""),
+                                static_cast<char*>(NULL)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumNameCast) {
@@ -718,13 +724,15 @@ TEST_F(CodegenManagerTest, TestDatumNameCast) {
 TEST_F(CodegenManagerTest, TestDatumFloatCast) {
   CheckDatumCast<float>(Float4GetDatum,
                         DatumGetFloat4,
-                        {(float)23.54, (float)-23.54});
+                        {static_cast<float>(23.54),
+                            static_cast<float>(-23.54)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumDoubleCast) {
   CheckDatumCast<double>(Float8GetDatum,
                         DatumGetFloat8,
-                        {(double)23.54, (double)-23.54});
+                        {static_cast<double>(23.54),
+                            static_cast<double>(-23.54)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumItemPtrCast) {

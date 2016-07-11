@@ -57,8 +57,7 @@ llvm::Value* GpCodegenUtils::CreateCppTypeToDatumCast(
         !is_src_unsigned) {
       llvm_casted_value = ir_builder()->CreateSExt(llvm_int_value,
                                                    llvm_dest_type);
-    }
-    else {
+    } else {
       llvm_casted_value = ir_builder()->CreateZExt(llvm_int_value,
                                                    llvm_dest_type);
     }

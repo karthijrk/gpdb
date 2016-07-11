@@ -53,10 +53,10 @@ class PGArithFuncGenerator {
    *        error block.
    **/
   static bool MulWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
-                              llvm::Function* llvm_main_func,
-                              llvm::BasicBlock* llvm_error_block,
-                              const std::vector<llvm::Value*>& llvm_args,
-                              llvm::Value** llvm_out_value);
+                               llvm::Function* llvm_main_func,
+                               llvm::BasicBlock* llvm_error_block,
+                               const std::vector<llvm::Value*>& llvm_args,
+                               llvm::Value** llvm_out_value);
 
   /**
    * @brief Create LLVM Add instruction with check for overflow
@@ -92,10 +92,10 @@ class PGArithFuncGenerator {
    *        error block.
    **/
   static bool SubWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
-                              llvm::Function* llvm_main_func,
-                              llvm::BasicBlock* llvm_error_block,
-                              const std::vector<llvm::Value*>& llvm_args,
-                              llvm::Value** llvm_out_value);
+                                llvm::Function* llvm_main_func,
+                                llvm::BasicBlock* llvm_error_block,
+                                const std::vector<llvm::Value*>& llvm_args,
+                                llvm::Value** llvm_out_value);
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
