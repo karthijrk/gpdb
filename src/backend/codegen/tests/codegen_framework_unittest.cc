@@ -226,19 +226,19 @@ class UncompilableCodeGenerator : public BaseCodegen<UncompilableFunc> {
   static constexpr char kUncompilableFuncNamePrefix[] = "UncompilableFunc";
 };
 
-template <typename dest_type, typename src_type>
-class DatumCastGenerator : public BaseCodegen<DatumCastFn<dest_type, src_type>> {
- using DatumCastTemplateFn = DatumCastFn<dest_type, src_type>;
+template <typename dest_type>
+class DatumToCppCastGenerator : public BaseCodegen<DatumCastFn<dest_type, Datum>> {
+ using DatumCastTemplateFn = DatumCastFn<dest_type, Datum>;
  public:
-  explicit DatumCastGenerator(
+  explicit DatumToCppCastGenerator(
       DatumCastTemplateFn regular_func_ptr,
       DatumCastTemplateFn* ptr_to_regular_func_ptr):
-      BaseCodegen<DatumCastTemplateFn>(kDatumCastFuncNamePrefix,
+      BaseCodegen<DatumCastTemplateFn>(kDatumToCppCastFuncNamePrefix,
                   regular_func_ptr,
                   ptr_to_regular_func_ptr) {
   }
 
-  virtual ~DatumCastGenerator() = default;
+  virtual ~DatumToCppCastGenerator() = default;
 
  protected:
   bool GenerateCodeInternal(gpcodegen::GpCodegenUtils* codegen_utils) final {
@@ -249,27 +249,61 @@ class DatumCastGenerator : public BaseCodegen<DatumCastFn<dest_type, src_type>> 
                                                                   cast_func);
     codegen_utils->ir_builder()->SetInsertPoint(entry_block);
     llvm::Value* llvm_arg0 = ArgumentByPosition(cast_func, 0);
-    if (std::is_unsigned<src_type>::value) {
-      codegen_utils->ir_builder()->CreateRet(
-                codegen_utils->CreateDatumCast<dest_type>(llvm_arg0, true));
-    }
-    else {
-      codegen_utils->ir_builder()->CreateRet(
-          codegen_utils->CreateDatumCast<dest_type>(llvm_arg0));
-    }
+    codegen_utils->ir_builder()->CreateRet(
+                    codegen_utils->CreateDatumToCppTypeCast<dest_type>(
+                        llvm_arg0));
     cast_func->dump();
     return true;
   }
 
  private:
-  static constexpr char kDatumCastFuncNamePrefix[] = "DatumCastFunc";
+  static constexpr char kDatumToCppCastFuncNamePrefix[] = "DatumToCppCastFunc";
+};
+
+template <typename src_type>
+class CppToDatumCastGenerator : public BaseCodegen<DatumCastFn<Datum, src_type>> {
+ using DatumCastTemplateFn = DatumCastFn<Datum, src_type>;
+ public:
+  explicit CppToDatumCastGenerator(
+      DatumCastTemplateFn regular_func_ptr,
+      DatumCastTemplateFn* ptr_to_regular_func_ptr):
+      BaseCodegen<DatumCastTemplateFn>(kCppToDatumCastFuncNamePrefix,
+                  regular_func_ptr,
+                  ptr_to_regular_func_ptr) {
+  }
+
+  virtual ~CppToDatumCastGenerator() = default;
+
+ protected:
+  bool GenerateCodeInternal(gpcodegen::GpCodegenUtils* codegen_utils) final {
+    llvm::Function* cast_func
+                = this->template CreateFunction<DatumCastTemplateFn>(
+                    codegen_utils, this->GetUniqueFuncName());
+    llvm::BasicBlock* entry_block = codegen_utils->CreateBasicBlock("entry",
+                                                                  cast_func);
+    codegen_utils->ir_builder()->SetInsertPoint(entry_block);
+    llvm::Value* llvm_arg0 = ArgumentByPosition(cast_func, 0);
+    codegen_utils->ir_builder()->CreateRet(
+                    codegen_utils->CreateCppTypeToDatumCast(
+                        llvm_arg0, std::is_unsigned<src_type>::value));
+    cast_func->dump();
+    return true;
+  }
+
+ private:
+  static constexpr char kCppToDatumCastFuncNamePrefix[] = "CppToDatumCastFunc";
 };
 
 constexpr char SumCodeGenerator::kAddFuncNamePrefix[];
 constexpr char FailingCodeGenerator::kFailingFuncNamePrefix[];
 constexpr char MulOverflowCodeGenerator::kMulFuncNamePrefix[];
-template <typename dest_type, typename src_type>
-constexpr char DatumCastGenerator<dest_type, src_type>::kDatumCastFuncNamePrefix[];
+template <typename dest_type>
+constexpr char
+DatumToCppCastGenerator<dest_type>::kDatumToCppCastFuncNamePrefix[];
+
+template <typename src_type>
+constexpr char
+CppToDatumCastGenerator<src_type>::kCppToDatumCastFuncNamePrefix[];
 
 template <bool GEN_SUCCESS>
 constexpr char
@@ -305,13 +339,13 @@ class CodegenManagerTest : public ::testing::Test {
                       DatumCastFn<CppType, Datum> DatumToCppReg,
                       const std::vector<CppType>& values) {
     DatumCastFn<Datum, CppType> CppToDatumCgFn = CppToDatumReg;
-    DatumCastGenerator<Datum, CppType>* cpp_datum_gen =
-        new DatumCastGenerator<Datum, CppType>(CppToDatumReg, &CppToDatumCgFn);
+    CppToDatumCastGenerator<CppType>* cpp_datum_gen =
+        new CppToDatumCastGenerator<CppType>(CppToDatumReg, &CppToDatumCgFn);
 
 
     DatumCastFn<CppType, Datum> DatumToCppCgFn = DatumToCppReg;
-    DatumCastGenerator<CppType, Datum>* datum_cpp_gen =
-        new DatumCastGenerator<CppType, Datum>(DatumToCppReg, &DatumToCppCgFn);
+    DatumToCppCastGenerator<CppType>* datum_cpp_gen =
+        new DatumToCppCastGenerator<CppType>(DatumToCppReg, &DatumToCppCgFn);
 
     ASSERT_TRUE(manager_->EnrollCodeGenerator(
         CodegenFuncLifespan_Parameter_Invariant, cpp_datum_gen));
@@ -331,7 +365,7 @@ class CodegenManagerTest : public ::testing::Test {
       Datum d_codegen = CppToDatumCgFn(v);
       std::cout << "d_gpdb " << d_gpdb << " d_codegen " << d_codegen << std::endl;
       EXPECT_EQ(d_gpdb, d_codegen);
-      EXPECT_EQ(DatumToCppReg(d_gpdb), DatumToCppReg(d_codegen));
+      EXPECT_EQ(DatumToCppReg(d_gpdb), DatumToCppCgFn(d_codegen));
     }
   }
 
