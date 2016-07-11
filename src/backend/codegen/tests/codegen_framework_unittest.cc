@@ -249,9 +249,14 @@ class DatumCastGenerator : public BaseCodegen<DatumCastFn<dest_type, src_type>> 
                                                                   cast_func);
     codegen_utils->ir_builder()->SetInsertPoint(entry_block);
     llvm::Value* llvm_arg0 = ArgumentByPosition(cast_func, 0);
-    llvm::Value* llvm_return = codegen_utils->CreateDatumCast<dest_type>(
-        llvm_arg0);
-    codegen_utils->ir_builder()->CreateRet(llvm_return);
+    if (std::is_unsigned<src_type>::value) {
+      codegen_utils->ir_builder()->CreateRet(
+                codegen_utils->CreateDatumCast<dest_type>(llvm_arg0, true));
+    }
+    else {
+      codegen_utils->ir_builder()->CreateRet(
+          codegen_utils->CreateDatumCast<dest_type>(llvm_arg0));
+    }
     cast_func->dump();
     return true;
   }
@@ -299,39 +304,35 @@ class CodegenManagerTest : public ::testing::Test {
   void CheckDatumCast(DatumCastFn<Datum, CppType> CppToDatumReg,
                       DatumCastFn<CppType, Datum> DatumToCppReg,
                       const std::vector<CppType>& values) {
-    DatumCastFn<Datum, float> FloatToDatumFn = &Float4GetDatum;
-    DatumCastGenerator<Datum, float>* float_datum_gen =
-        new DatumCastGenerator<Datum, float>(FloatToDatumFn, &FloatToDatumFn);
+    DatumCastFn<Datum, CppType> CppToDatumCgFn = CppToDatumReg;
+    DatumCastGenerator<Datum, CppType>* cpp_datum_gen =
+        new DatumCastGenerator<Datum, CppType>(CppToDatumReg, &CppToDatumCgFn);
 
 
-    DatumCastFn<float, Datum> DatumToFloatFn = &DatumGetFloat4;
-    DatumCastGenerator<float, Datum>* datum_float_gen =
-        new DatumCastGenerator<float, Datum>(DatumToFloatFn, &DatumToFloatFn);
-
-    ASSERT_TRUE(manager_->EnrollCodeGenerator(
-        CodegenFuncLifespan_Parameter_Invariant, float_datum_gen));
+    DatumCastFn<CppType, Datum> DatumToCppCgFn = DatumToCppReg;
+    DatumCastGenerator<CppType, Datum>* datum_cpp_gen =
+        new DatumCastGenerator<CppType, Datum>(DatumToCppReg, &DatumToCppCgFn);
 
     ASSERT_TRUE(manager_->EnrollCodeGenerator(
-        CodegenFuncLifespan_Parameter_Invariant, datum_float_gen));
+        CodegenFuncLifespan_Parameter_Invariant, cpp_datum_gen));
+
+    ASSERT_TRUE(manager_->EnrollCodeGenerator(
+        CodegenFuncLifespan_Parameter_Invariant, datum_cpp_gen));
 
     EXPECT_EQ(2, manager_->GenerateCode());
 
     ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
 
-    ASSERT_TRUE(FloatToDatumFn != &Float4GetDatum);
-    ASSERT_TRUE(DatumToFloatFn != &DatumGetFloat4);
+    ASSERT_TRUE(CppToDatumCgFn != CppToDatumReg);
+    ASSERT_TRUE(DatumToCppCgFn != DatumToCppReg);
 
-    float f_pos = 23.54;
-    Datum d_gpdb = Float4GetDatum(f_pos);
-    Datum d_codegen = FloatToDatumFn(f_pos);
-    EXPECT_EQ(d_gpdb, d_codegen);
-    EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
-
-    float f_neg = -23.54;
-    d_gpdb = Float4GetDatum(f_neg);
-    d_codegen = FloatToDatumFn(f_neg);
-    EXPECT_EQ(d_gpdb, d_codegen);
-    EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
+    for(const CppType& v : values) {
+      Datum d_gpdb = CppToDatumReg(v);
+      Datum d_codegen = CppToDatumCgFn(v);
+      std::cout << "d_gpdb " << d_gpdb << " d_codegen " << d_codegen << std::endl;
+      EXPECT_EQ(d_gpdb, d_codegen);
+      EXPECT_EQ(DatumToCppReg(d_gpdb), DatumToCppReg(d_codegen));
+    }
   }
 
   std::unique_ptr<CodegenManager> manager_;
@@ -565,40 +566,139 @@ TEST_F(CodegenManagerTest, ResetTest) {
   ASSERT_TRUE(SumFuncRegular == sum_func_ptr);
 }
 
+TEST_F(CodegenManagerTest, TestDatumBoolCast) {
+  CheckDatumCast<bool>(BoolGetDatum,
+                       DatumGetBool,
+                        {true, false});
+}
+
+TEST_F(CodegenManagerTest, TestDatumCharCast) {
+  CheckDatumCast<char>(CharGetDatum,
+                       DatumGetChar,
+                        {'a', 'A'});
+}
+
+TEST_F(CodegenManagerTest, TestDatumInt8Cast) {
+  CheckDatumCast<int8_t>(Int8GetDatum,
+                         DatumGetInt8,
+                        {(int8_t)23, (int8_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumUInt8Cast) {
+  CheckDatumCast<uint8_t>(UInt8GetDatum,
+                         DatumGetUInt8,
+                        {(uint8_t)23, (uint8_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumInt16Cast) {
+  CheckDatumCast<int16_t>(Int16GetDatum,
+                         DatumGetInt16,
+                        {(int16_t)23, (int16_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumUInt16Cast) {
+  CheckDatumCast<uint16_t>(UInt16GetDatum,
+                         DatumGetUInt16,
+                        {(uint16_t)23, (uint16_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumInt32Cast) {
+  CheckDatumCast<int32_t>(Int32GetDatum,
+                         DatumGetInt32,
+                        {(int32_t)23, (int32_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumUInt32Cast) {
+  CheckDatumCast<uint32_t>(UInt32GetDatum,
+                         DatumGetUInt32,
+                        {(uint32_t)23, (uint32_t)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumInt64Cast) {
+  CheckDatumCast<int64>(Int64GetDatum,
+                         DatumGetInt64,
+                        {(int64)23, (int64)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumUInt64Cast) {
+  CheckDatumCast<uint64>(UInt64GetDatum,
+                         DatumGetUInt64,
+                        {(uint64)23, (uint64)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumOidCast) {
+  CheckDatumCast<Oid>(ObjectIdGetDatum,
+                      DatumGetObjectId,
+                      {(Oid)23, (Oid)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumTxIdCast) {
+  CheckDatumCast<TransactionId>(TransactionIdGetDatum,
+                                DatumGetTransactionId,
+                                {(TransactionId)23, (TransactionId)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumCmdIdCast) {
+  CheckDatumCast<CommandId>(CommandIdGetDatum,
+                            DatumGetCommandId,
+                            {(CommandId)23, (CommandId)-23});
+}
+
+TEST_F(CodegenManagerTest, TestDatumPtrCast) {
+  struct DatumVoidPtr {
+    static Datum PointerGetDatumNoConst(void *p) {
+      return PointerGetDatum((const void*)p);
+    }
+  };
+  std::vector<void*> values_to_check;
+  CheckDatumCast<void*>(DatumVoidPtr::PointerGetDatumNoConst,
+                        DatumGetPointer,
+                        {reinterpret_cast<void*>(23),
+                            reinterpret_cast<void*>(-23),
+                            reinterpret_cast<void*>(NULL)});
+}
+
+TEST_F(CodegenManagerTest, TestDatumCStringCast) {
+  struct DatumVoidPtr {
+      static Datum PointerGetDatumNoConst(char *p) {
+        return PointerGetDatum((const char*)p);
+      }
+    };
+  CheckDatumCast<char*>(DatumVoidPtr::PointerGetDatumNoConst,
+                        DatumGetCString,
+                            {(char*)"dfdFD", (char*)"", (char*)NULL});
+}
+
+TEST_F(CodegenManagerTest, TestDatumNameCast) {
+  Name n1 = new nameData();
+  Name n2 = new nameData();
+  strncpy(n1->data, "iqbal", sizeof(n1->data) - 1);
+  strncpy(n2->data, "", sizeof(n2->data) - 1);
+  CheckDatumCast<Name>(NameGetDatum,
+                            DatumGetName,
+                            {n1, n2});
+  delete n1;
+  delete n2;
+}
+
 TEST_F(CodegenManagerTest, TestDatumFloatCast) {
-  DatumCastFn<Datum, float> FloatToDatumFn = &Float4GetDatum;
-  DatumCastGenerator<Datum, float>* float_datum_gen =
-        new DatumCastGenerator<Datum, float>(FloatToDatumFn, &FloatToDatumFn);
+  CheckDatumCast<float>(Float4GetDatum,
+                        DatumGetFloat4,
+                        {(float)23.54, (float)-23.54});
+}
 
+TEST_F(CodegenManagerTest, TestDatumDoubleCast) {
+  CheckDatumCast<double>(Float8GetDatum,
+                        DatumGetFloat8,
+                        {(double)23.54, (double)-23.54});
+}
 
-  DatumCastFn<float, Datum> DatumToFloatFn = &DatumGetFloat4;
-  DatumCastGenerator<float, Datum>* datum_float_gen =
-      new DatumCastGenerator<float, Datum>(DatumToFloatFn, &DatumToFloatFn);
-
-  ASSERT_TRUE(manager_->EnrollCodeGenerator(
-          CodegenFuncLifespan_Parameter_Invariant, float_datum_gen));
-
-  ASSERT_TRUE(manager_->EnrollCodeGenerator(
-        CodegenFuncLifespan_Parameter_Invariant, datum_float_gen));
-
-  EXPECT_EQ(2, manager_->GenerateCode());
-
-  ASSERT_TRUE(manager_->PrepareGeneratedFunctions());
-
-  ASSERT_TRUE(FloatToDatumFn != &Float4GetDatum);
-  ASSERT_TRUE(DatumToFloatFn != &DatumGetFloat4);
-
-  float f_pos = 23.54;
-  Datum d_gpdb = Float4GetDatum(f_pos);
-  Datum d_codegen = FloatToDatumFn(f_pos);
-  EXPECT_EQ(d_gpdb, d_codegen);
-  EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
-
-  float f_neg = -23.54;
-  d_gpdb = Float4GetDatum(f_neg);
-  d_codegen = FloatToDatumFn(f_neg);
-  EXPECT_EQ(d_gpdb, d_codegen);
-  EXPECT_EQ(DatumGetFloat4(d_gpdb), DatumToFloatFn(d_codegen));
+TEST_F(CodegenManagerTest, TestDatumItemPtrCast) {
+  ItemPointer p1 = reinterpret_cast<ItemPointer>(23);
+  ItemPointer p2 = reinterpret_cast<ItemPointer>(42);
+  CheckDatumCast<ItemPointer>(ItemPointerGetDatum,
+                        DatumGetItemPointer,
+                        {p1, p2});
 }
 
 }  // namespace gpcodegen
