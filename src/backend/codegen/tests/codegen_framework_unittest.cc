@@ -702,11 +702,12 @@ TEST_F(CodegenManagerTest, TestDatumCStringCast) {
       return PointerGetDatum((const char*)p);
     }
   };
+
   CheckDatumCast<char*>(DatumVoidPtr::PointerGetDatumNoConst,
                         DatumGetCString,
-                            {static_cast<char*>("dfdFD",
-                                static_cast<char*>(""),
-                                static_cast<char*>(NULL)});
+                            {const_cast<char*>("dfdFD"),
+                                const_cast<char*>(""),
+                                static_cast<char*>(nullptr)});
 }
 
 TEST_F(CodegenManagerTest, TestDatumNameCast) {

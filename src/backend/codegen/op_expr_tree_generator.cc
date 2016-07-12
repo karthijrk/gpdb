@@ -65,19 +65,19 @@ void OpExprTreeGenerator::InitializeSupportedFunction() {
       new PGGenericFuncGenerator<float8, float8>(
           216,
           "float8mul",
-          &PGArithFuncGenerator<float8, float8, int64_t>::MulWithOverflow));
+          &PGArithFuncGenerator<float8, float8, float8>::MulWithOverflow));
 
   supported_function_[218] = std::unique_ptr<PGFuncGeneratorInterface>(
       new PGGenericFuncGenerator<float8, float8>(
           218,
           "float8pl",
-          &PGArithFuncGenerator<float8, float8, int64_t>::AddWithOverflow));
+          &PGArithFuncGenerator<float8, float8, float8>::AddWithOverflow));
 
   supported_function_[219] = std::unique_ptr<PGFuncGeneratorInterface>(
       new PGGenericFuncGenerator<float8, float8>(
           219,
           "float8mi",
-          &PGArithFuncGenerator<float8, float8, int64_t>::SubWithOverflow));
+          &PGArithFuncGenerator<float8, float8, float8>::SubWithOverflow));
 
   supported_function_[1088] = std::unique_ptr<PGFuncGeneratorInterface>(
       new PGIRBuilderFuncGenerator<decltype(&IRBuilder<>::CreateICmpSLE),
@@ -181,9 +181,13 @@ bool OpExprTreeGenerator::GenerateCode(GpCodegenUtils* codegen_utils,
     }
     llvm_arguments.push_back(llvm_arg);
   }
-  return itr->second->GenerateCode(codegen_utils,
+  llvm::Value* llvm_op_value = nullptr;
+  bool retval = itr->second->GenerateCode(codegen_utils,
                                    gen_info.llvm_main_func,
                                    gen_info.llvm_error_block,
                                    llvm_arguments,
-                                   llvm_out_value);
+                                   &llvm_op_value);
+  // convert return type to Datum
+  *llvm_out_value = codegen_utils->CreateCppTypeToDatumCast(llvm_op_value);
+  return retval;
 }

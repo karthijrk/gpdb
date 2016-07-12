@@ -71,6 +71,7 @@ class PGFuncBaseGenerator : public PGFuncGeneratorInterface {
     if (llvm_in_args.size() != GetTotalArgCount()) {
       return false;
     }
+    // Convert Datum to given cpp type.
     llvm_out_args->push_back(codegen_utils->CreateDatumToCppTypeCast
                              <Arg0>(llvm_in_args[0]));
     llvm_out_args->push_back(codegen_utils->CreateDatumToCppTypeCast

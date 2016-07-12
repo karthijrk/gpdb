@@ -1376,8 +1376,8 @@ class ArithOpMaker<double> {
                       llvm::Value* arg1) {
     assert(nullptr != arg0 && nullptr != arg0->getType());
     assert(nullptr != arg1 && nullptr != arg1->getType());
-    assert(arg0->getType()->isIntegerTy());
-    assert(arg1->getType()->isIntegerTy());
+    assert(arg0->getType()->isDoubleTy());
+    assert(arg1->getType()->isDoubleTy());
   }
 };
 

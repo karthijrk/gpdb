@@ -33,14 +33,11 @@ bool PGDateFuncGenerator::DateLETimestamp(
 
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
-  llvm::Value* llvm_arg0_DateADT = codegen_utils->
-      CreateCast<DateADT>(llvm_args[0]);
-  /* TODO: Use CreateCast*/
-  llvm::Value* llvm_arg1_Timestamp = irb->CreateSExt(
-      llvm_args[1], codegen_utils->GetType<Timestamp>());
+  llvm::Value* llvm_arg1_Timestamp = codegen_utils->
+      CreateDatumToCppTypeCast<Timestamp>(llvm_args[1]);
 
   llvm::Value* llvm_arg0_Timestamp = GenerateDate2Timestamp(
-      codegen_utils, llvm_main_func, llvm_arg0_DateADT, llvm_error_block);
+      codegen_utils, llvm_main_func, llvm_args[0], llvm_error_block);
 
   // timestamp_cmp_internal {{{
 #ifdef HAVE_INT64_TIMESTAMP
@@ -65,6 +62,9 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
   assert(nullptr != llvm_arg && nullptr != llvm_arg->getType());
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
+  llvm::Value* llvm_arg_64 = codegen_utils->CreateDatumToCppTypeCast<int64_t>(
+      llvm_arg);
+
 #ifdef HAVE_INT64_TIMESTAMP
 
   llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
@@ -75,9 +75,7 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
   llvm::Value *llvm_USECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(USECS_PER_DAY);
 
-  /* TODO(nikos): Use CreateCast*/
-  llvm::Value* llvm_arg_64 = irb->CreateSExt(
-      llvm_arg, codegen_utils->GetType<int64_t>());
+
 
   llvm::Value* llvm_mul_output = codegen_utils->CreateMulOverflow<int64_t>(
       llvm_USECS_PER_DAY, llvm_arg_64);
@@ -98,9 +96,6 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
 #else
   llvm::Value *llvm_SECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(SECS_PER_DAY);
-  /*TODO(nikos): Use CreateCast*/
-  llvm::Value *llvm_arg_64 = irb->CreateSExt(llvm_arg,
-                                             codegen_utils->GetType<int64_t>());
   return irb->CreateMul(llvm_arg_64, llvm_SECS_PER_DAY);
 #endif
 }
