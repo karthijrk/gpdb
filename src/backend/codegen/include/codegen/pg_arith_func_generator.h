@@ -37,6 +37,11 @@ namespace gpcodegen {
  **/
 template <typename rtype, typename Arg0, typename Arg1>
 class PGArithFuncGenerator {
+
+  template <typename CppType>
+  using CGArithOpOverFlowTemplateFunc = llvm::Value* (GpCodegenUtils::*)(
+      llvm::Value* arg0, llvm::Value* arg1);
+  using CGArithOpOverFlowFunc = CGArithOpOverFlowTemplateFunc<rtype>;
  public:
   /**
    * @brief Create LLVM Mul instruction with check for overflow
@@ -56,7 +61,15 @@ class PGArithFuncGenerator {
                                llvm::Function* llvm_main_func,
                                llvm::BasicBlock* llvm_error_block,
                                const std::vector<llvm::Value*>& llvm_args,
-                               llvm::Value** llvm_out_value);
+                               llvm::Value** llvm_out_value) {
+    return ArithOpWithOverflow(
+        codegen_utils,
+        &gpcodegen::GpCodegenUtils::CreateMulOverflow<rtype>,
+        llvm_main_func,
+        llvm_error_block,
+        llvm_args,
+        llvm_out_value);
+  }
 
   /**
    * @brief Create LLVM Add instruction with check for overflow
@@ -76,7 +89,15 @@ class PGArithFuncGenerator {
                               llvm::Function* llvm_main_func,
                               llvm::BasicBlock* llvm_error_block,
                               const std::vector<llvm::Value*>& llvm_args,
-                              llvm::Value** llvm_out_value);
+                              llvm::Value** llvm_out_value) {
+    return ArithOpWithOverflow(
+            codegen_utils,
+            &gpcodegen::GpCodegenUtils::CreateAddOverflow<rtype>,
+            llvm_main_func,
+            llvm_error_block,
+            llvm_args,
+            llvm_out_value);
+  }
   /**
    * @brief Create LLVM Sub instruction with check for overflow
    *
@@ -95,38 +116,55 @@ class PGArithFuncGenerator {
                                 llvm::Function* llvm_main_func,
                                 llvm::BasicBlock* llvm_error_block,
                                 const std::vector<llvm::Value*>& llvm_args,
-                                llvm::Value** llvm_out_value);
+                                llvm::Value** llvm_out_value) {
+    return ArithOpWithOverflow(
+            codegen_utils,
+            &gpcodegen::GpCodegenUtils::CreateSubOverflow<rtype>,
+            llvm_main_func,
+            llvm_error_block,
+            llvm_args,
+            llvm_out_value);
+  }
+ private:
+  static bool ArithOpWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
+                                  CGArithOpOverFlowFunc codegen_mem_funcptr,
+                                  llvm::Function* llvm_main_func,
+                                  llvm::BasicBlock* llvm_error_block,
+                                  const std::vector<llvm::Value*>& llvm_args,
+                                  llvm::Value** llvm_out_value);
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
-bool PGArithFuncGenerator<rtype, Arg0, Arg1>::MulWithOverflow(
+bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
     gpcodegen::GpCodegenUtils* codegen_utils,
+    CGArithOpOverFlowFunc codegen_mem_funcptr,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
     const std::vector<llvm::Value*>& llvm_args,
     llvm::Value** llvm_out_value) {
-  assert(nullptr != llvm_out_value);
-  // Assumed caller checked vector size and nullptr for codegen_utils
 
+  assert(nullptr != llvm_out_value);
+  assert(nullptr != codegen_mem_funcptr);
+  // Assumed caller checked vector size and nullptr for codegen_utils
   llvm::Value* casted_arg0 = codegen_utils->CreateDatumToCppTypeCast<rtype>(
       llvm_args[0]);
   llvm::Value* casted_arg1 = codegen_utils->CreateDatumToCppTypeCast<rtype>(
       llvm_args[1]);
 
-  llvm::Value* llvm_mul_output = codegen_utils->CreateMulOverflow<rtype>(
+  llvm::Value* llvm_arith_output = (codegen_utils->*codegen_mem_funcptr)(
       casted_arg0, casted_arg1);
 
   llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
-  if (llvm_mul_output->getType()->isIntegerTy()) {
+  if (llvm_arith_output->getType()->isIntegerTy()) {
     llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
-        "mul_non_overflow_block", llvm_main_func);
+        "arith_non_overflow_block", llvm_main_func);
     llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
-        "mul_overflow_block", llvm_main_func);
+        "arith_overflow_block", llvm_main_func);
 
-    *llvm_out_value = irb->CreateExtractValue(llvm_mul_output, 0);
+    *llvm_out_value = irb->CreateExtractValue(llvm_arith_output, 0);
     llvm::Value* llvm_overflow_flag =
-        irb->CreateExtractValue(llvm_mul_output, 1);
+        irb->CreateExtractValue(llvm_arith_output, 1);
 
     irb->CreateCondBr(llvm_overflow_flag,
                       llvm_overflow_block,
@@ -138,92 +176,11 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::MulWithOverflow(
 
     irb->SetInsertPoint(llvm_non_overflow_block);
   } else {
-    *llvm_out_value = llvm_mul_output;
-  }
-
-  return true;
-}
-
-template <typename rtype, typename Arg0, typename Arg1>
-bool PGArithFuncGenerator<rtype, Arg0, Arg1>::AddWithOverflow(
-    gpcodegen::GpCodegenUtils* codegen_utils,
-    llvm::Function* llvm_main_func,
-    llvm::BasicBlock* llvm_error_block,
-    const std::vector<llvm::Value*>& llvm_args,
-    llvm::Value** llvm_out_value) {
-  assert(nullptr != llvm_out_value);
-  // Assumed caller checked vector size and nullptr for codegen_utils
-
-  llvm::Value* llvm_add_output = codegen_utils->CreateAddOverflow<rtype>(
-      llvm_args[0], llvm_args[1]);
-
-  llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
-
-  if (llvm_add_output->getType()->isIntegerTy()) {
-    llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
-        "add_non_overflow_block", llvm_main_func);
-    llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
-        "add_overflow_block", llvm_main_func);
-
-    *llvm_out_value = irb->CreateExtractValue(llvm_add_output, 0);
-    llvm::Value* llvm_overflow_flag =
-        irb->CreateExtractValue(llvm_add_output, 1);
-
-    irb->CreateCondBr(llvm_overflow_flag,
-                      llvm_overflow_block,
-                      llvm_non_overflow_block);
-
-    irb->SetInsertPoint(llvm_overflow_block);
-    // TODO(krajaraman) Elog::ERROR after ElogWrapper integrated.
-    irb->CreateBr(llvm_error_block);
-    irb->SetInsertPoint(llvm_non_overflow_block);
-  } else {
-    *llvm_out_value = llvm_add_output;
-  }
-
-  return true;
-}
-
-template <typename rtype, typename Arg0, typename Arg1>
-bool PGArithFuncGenerator<rtype, Arg0, Arg1>::SubWithOverflow(
-    gpcodegen::GpCodegenUtils* codegen_utils,
-    llvm::Function* llvm_main_func,
-    llvm::BasicBlock* llvm_error_block,
-    const std::vector<llvm::Value*>& llvm_args,
-    llvm::Value** llvm_out_value) {
-  assert(nullptr != llvm_out_value);
-  // Assumed caller checked vector size and nullptr for codegen_utils
-
-  llvm::Value* llvm_sub_output = codegen_utils->CreateSubOverflow<rtype>(
-      llvm_args[0], llvm_args[1]);
-
-  llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
-
-  // We only support overflow checks for integers for now
-  if (llvm_sub_output->getType()->isIntegerTy()) {
-    llvm::BasicBlock* llvm_non_overflow_block = codegen_utils->CreateBasicBlock(
-        "sub_non_overflow_block", llvm_main_func);
-    llvm::BasicBlock* llvm_overflow_block = codegen_utils->CreateBasicBlock(
-        "sub_overflow_block", llvm_main_func);
-
-    *llvm_out_value = irb->CreateExtractValue(llvm_sub_output, 0);
-    llvm::Value* llvm_overflow_flag =
-        irb->CreateExtractValue(llvm_sub_output, 1);
-
-    irb->CreateCondBr(llvm_overflow_flag,
-                      llvm_overflow_block,
-                      llvm_non_overflow_block);
-
-    irb->SetInsertPoint(llvm_overflow_block);
-    // TODO(krajaraman): Elog::ERROR after ElogWrapper integrated.
-    irb->CreateBr(llvm_error_block);
-
-    irb->SetInsertPoint(llvm_non_overflow_block);
-  } else {
-    *llvm_out_value = llvm_sub_output;
+    *llvm_out_value = llvm_arith_output;
   }
   return true;
 }
+
 
 /** @} */
 }  // namespace gpcodegen
