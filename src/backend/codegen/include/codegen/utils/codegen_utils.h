@@ -320,12 +320,12 @@ class CodegenUtils {
   llvm::Value* CreateSubOverflow(llvm::Value* arg0, llvm::Value* arg1);
 
   /**
-   * @brief Extent or trunc given llvm::Value based on CppType
+   * @brief Cast given llvm::value to DestType.
    *
    * @tparam DestType  Destination type
    * @tparam SrcType   Source type
    * @param value  Value that needs to be casted. Expected to be of same type as
-   *               Source
+   *               SrcType
    *
    * @return LLVM Value of DestType
    **/
@@ -1427,7 +1427,7 @@ template <typename DestType,
 class CastMaker {
 };
 
-// Partial specialization for unsigned integer types (including bool).
+// Partial specialization for unsigned int to signed / unsigned integer.
 template <typename IntegerType, typename UnsignedIntType>
 class CastMaker<
     IntegerType,
@@ -1463,6 +1463,7 @@ class CastMaker<
   }
 };
 
+// Partial specialization for signed int to signed / unsigned integer.
 template <typename IntegerType, typename SignedIntType>
 class CastMaker<
     IntegerType,
@@ -1498,7 +1499,7 @@ class CastMaker<
   }
 };
 
-// Explicit specialization for 32-bit float.
+// Partial specialization for any floating point to 32-bit float
 template <typename FloatingPoint>
 class CastMaker<
     float,
@@ -1526,7 +1527,7 @@ class CastMaker<
     }
 };
 
-// Explicit specialization for 64-bit double.
+// Partial specialization for any floating point to 64-bit float
 template <typename FloatingPoint>
 class CastMaker<
     double,

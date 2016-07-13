@@ -158,11 +158,10 @@ class GpCodegenUtils : public CodegenUtils {
    * @brief Create a Cast instruction to convert given llvm::Value of any type
    *        to Datum
    *
-   * @note Depend on given value's type size, it will do extent or bit cast or
-   *       ptr2int cast. This is same as converting any cpptype to Datum in gpdb.
+   * @note This is same as converting any cpptype to Datum in gpdb.
    *
    * @param value     LLVM Value on which casting has to be done.
-   * @param is_src_unsigned true if given value is of unsigned type
+   * @param is_src_unsigned true if given value is of unsigned type.
    *
    *
    * @return LLVM Value that casted to Datum type.

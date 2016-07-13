@@ -30,7 +30,7 @@ namespace gpcodegen {
 // ArithOpOverFlowErrorMsg has various template specializations to
 // handle error message for different C++ types. The specialized versions
 // have a static method OverFlowErrMsg() that returns an overflow error message
-// based on CppType as constexpr char*
+// based on CppType as const char*
 template <typename CppType, typename Enable = void>
 class ArithOpOverFlowErrorMsg {};
 

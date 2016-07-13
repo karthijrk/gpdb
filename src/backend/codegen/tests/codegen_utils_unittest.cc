@@ -704,7 +704,7 @@ class CodegenUtilsTest : public ::testing::Test {
     }
   }
 
-  // Helper method for CreateScalarExtOrTruncTest. Test CreateCast
+  // Helper method for CreateCastTest. Test CreateCast
   // for Integer types
   template <typename IntegerDestType, typename IntegerSrcType>
   void CheckIntegerCast(const IntegerDestType integer_constant) {
@@ -717,7 +717,7 @@ class CodegenUtilsTest : public ::testing::Test {
     CheckGetSingleIntegerConstant(integer_constant, casted_constant);
   }
 
-  // Helper method for CreateScalarExtOrTruncTest. Tests
+  // Helper method for CreateCastTest. Tests
   // CodegenUtils::CreateCast() for an 'IntegerType' with several values
   // of the specified integer type (0, 1, 123, the maximum, and if signed,
   // -1, -123, and the minimum).
@@ -800,7 +800,7 @@ class CodegenUtilsTest : public ::testing::Test {
         std::numeric_limits<FloatingPointType>::infinity());
   }
 
-  // Helper method for CreateScalarExtOrTruncTest. Test CreateCast
+  // Helper method for CreateCastTest. Test CreateCast
   // for Floating Point types
   template <typename FloatDestType, typename FloatSrcType>
   void CheckFloatingPointCast(const FloatDestType fp_constant) {
@@ -812,7 +812,7 @@ class CodegenUtilsTest : public ::testing::Test {
     CheckGetSingleFloatingPointConstant(fp_constant, casted_constant);
   }
 
-  // Helper method for CreateScalarExtOrTruncTest. Tests
+  // Helper method for CreateCastTest. Tests
   // CodegenUtils::CreateCast() for a 'FloatSrcType' with several values
   // of the specified floating point type (positive and negative zero, positive
   // and negative 12.34, the minimum and maximum possible normalized values,

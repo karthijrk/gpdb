@@ -37,8 +37,6 @@ llvm::Value* GpCodegenUtils::CreateCppTypeToDatumCast(
   assert(0 != src_size);
   assert(dest_size >= src_size);
 
-
-
   llvm::Value* llvm_int_value = value;
   // Convert given value to int type to do ext / trunc
   if (!llvm_src_type->isIntegerTy()) {
