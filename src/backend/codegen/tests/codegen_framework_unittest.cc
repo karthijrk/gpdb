@@ -617,69 +617,126 @@ TEST_F(CodegenManagerTest, TestDatumCharCast) {
 }
 
 TEST_F(CodegenManagerTest, TestDatumInt8Cast) {
+  std::vector<int8_t> values = {0, -0, 23, -23,
+      std::numeric_limits<int8_t>::max(),
+      std::numeric_limits<int8_t>::min(),
+      std::numeric_limits<int8_t>::lowest()
+  };
   CheckDatumCast<int8_t>(Int8GetDatum,
                          DatumGetInt8,
-                        {(int8_t)23, (int8_t)-23});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumUInt8Cast) {
+  std::vector<uint8_t> values = {0, -0, 23, static_cast<uint8_t>(-23),
+        std::numeric_limits<uint8_t>::max(),
+        std::numeric_limits<uint8_t>::min(),
+        std::numeric_limits<uint8_t>::lowest()
+    };
   CheckDatumCast<uint8_t>(UInt8GetDatum,
                          DatumGetUInt8,
-                        {(uint8_t)23, (uint8_t)-23});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumInt16Cast) {
+  std::vector<int16_t> values = {0, -0, 23, -23,
+        std::numeric_limits<int16_t>::max(),
+        std::numeric_limits<int16_t>::min(),
+        std::numeric_limits<int16_t>::lowest()
+    };
   CheckDatumCast<int16_t>(Int16GetDatum,
                          DatumGetInt16,
-                        {(int16_t)23, (int16_t)-23});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumUInt16Cast) {
+  std::vector<uint16_t> values = {0, -0, 23, static_cast<uint16_t>(-23),
+          std::numeric_limits<uint16_t>::max(),
+          std::numeric_limits<uint16_t>::min(),
+          std::numeric_limits<uint16_t>::lowest()
+      };
   CheckDatumCast<uint16_t>(UInt16GetDatum,
                          DatumGetUInt16,
-                        {(uint16_t)23, (uint16_t)-23});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumInt32Cast) {
+  std::vector<int32_t> values = {0, -0, 23, -23,
+          std::numeric_limits<int32_t>::max(),
+          std::numeric_limits<int32_t>::min(),
+          std::numeric_limits<int32_t>::lowest()
+      };
   CheckDatumCast<int32_t>(Int32GetDatum,
                          DatumGetInt32,
-                        {(int32_t)23, (int32_t)-23});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumUInt32Cast) {
+  std::vector<uint32_t> values = {0, -0, 23, static_cast<uint32_t>(-23),
+            std::numeric_limits<uint32_t>::max(),
+            std::numeric_limits<uint32_t>::min(),
+            std::numeric_limits<uint32_t>::lowest()
+        };
   CheckDatumCast<uint32_t>(UInt32GetDatum,
                          DatumGetUInt32,
-                        {(uint32_t)23, (uint32_t)-23});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumInt64Cast) {
+  std::vector<int64> values = {0, -0, 23, -23,
+            std::numeric_limits<int64>::max(),
+            std::numeric_limits<int64>::min(),
+            std::numeric_limits<int64>::lowest()
+        };
   CheckDatumCast<int64>(Int64GetDatum,
                          DatumGetInt64,
-                        {static_cast<int64>(23), static_cast<int64>(-23)});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumUInt64Cast) {
+  std::vector<uint64> values = {0, -0, 23, static_cast<uint64>(-23),
+              std::numeric_limits<uint64>::max(),
+              std::numeric_limits<uint64>::min(),
+              std::numeric_limits<uint64>::lowest()
+          };
   CheckDatumCast<uint64>(UInt64GetDatum,
                          DatumGetUInt64,
-                        {static_cast<uint64>(23), static_cast<uint64>(-23)});
+                         values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumOidCast) {
+  std::vector<Oid> values = {0, -0, 23, static_cast<Oid>(-23),
+              std::numeric_limits<Oid>::max(),
+              std::numeric_limits<Oid>::min(),
+              std::numeric_limits<Oid>::lowest()
+          };
   CheckDatumCast<Oid>(ObjectIdGetDatum,
                       DatumGetObjectId,
-                      {(Oid)23, (Oid)-23});
+                      values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumTxIdCast) {
+  std::vector<TransactionId> values = {0, -0, 23,
+                static_cast<TransactionId>(-23),
+                std::numeric_limits<TransactionId>::max(),
+                std::numeric_limits<TransactionId>::min(),
+                std::numeric_limits<TransactionId>::lowest()
+            };
   CheckDatumCast<TransactionId>(TransactionIdGetDatum,
                                 DatumGetTransactionId,
-                                {(TransactionId)23, (TransactionId)-23});
+                                values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumCmdIdCast) {
+  std::vector<CommandId> values = {0, -0, 23,
+                  static_cast<CommandId>(-23),
+                  std::numeric_limits<CommandId>::max(),
+                  std::numeric_limits<CommandId>::min(),
+                  std::numeric_limits<CommandId>::lowest()
+              };
   CheckDatumCast<CommandId>(CommandIdGetDatum,
                             DatumGetCommandId,
-                            {(CommandId)23, (CommandId)-23});
+                            values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumPtrCast) {
@@ -688,12 +745,12 @@ TEST_F(CodegenManagerTest, TestDatumPtrCast) {
       return PointerGetDatum((const void*)p);
     }
   };
-  std::vector<void*> values_to_check;
+  std::vector<void*> values = {reinterpret_cast<void*>(23),
+      reinterpret_cast<void*>(-23),
+      reinterpret_cast<void*>(NULL)};
   CheckDatumCast<void*>(DatumVoidPtr::PointerGetDatumNoConst,
                         DatumGetPointer,
-                        {reinterpret_cast<void*>(23),
-                            reinterpret_cast<void*>(-23),
-                            reinterpret_cast<void*>(NULL)});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumCStringCast) {
@@ -702,12 +759,12 @@ TEST_F(CodegenManagerTest, TestDatumCStringCast) {
       return PointerGetDatum((const char*)p);
     }
   };
-
+  std::vector<char*> values = {const_cast<char*>("dfdFD"),
+      const_cast<char*>(""),
+      static_cast<char*>(nullptr)};
   CheckDatumCast<char*>(DatumVoidPtr::PointerGetDatumNoConst,
                         DatumGetCString,
-                            {const_cast<char*>("dfdFD"),
-                                const_cast<char*>(""),
-                                static_cast<char*>(nullptr)});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumNameCast) {
@@ -723,17 +780,27 @@ TEST_F(CodegenManagerTest, TestDatumNameCast) {
 }
 
 TEST_F(CodegenManagerTest, TestDatumFloatCast) {
+  std::vector<float> values = {0.0, -0.0, 12.34, -12.34,
+      std::numeric_limits<float>::min(),
+      std::numeric_limits<float>::max(),
+      std::numeric_limits<float>::lowest(),
+      std::numeric_limits<float>::denorm_min(),
+      std::numeric_limits<float>::infinity()};
   CheckDatumCast<float>(Float4GetDatum,
                         DatumGetFloat4,
-                        {static_cast<float>(23.54),
-                            static_cast<float>(-23.54)});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumDoubleCast) {
+  std::vector<double> values = {0.0, -0.0, 12.34, -12.34,
+        std::numeric_limits<double>::min(),
+        std::numeric_limits<double>::max(),
+        std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::denorm_min(),
+        std::numeric_limits<double>::infinity()};
   CheckDatumCast<double>(Float8GetDatum,
                         DatumGetFloat8,
-                        {static_cast<double>(23.54),
-                            static_cast<double>(-23.54)});
+                        values);
 }
 
 TEST_F(CodegenManagerTest, TestDatumItemPtrCast) {
