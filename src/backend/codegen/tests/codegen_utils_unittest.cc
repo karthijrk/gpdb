@@ -660,7 +660,6 @@ class CodegenUtilsTest : public ::testing::Test {
   void CheckGetSingleIntegerConstant(const IntegerType integer_constant) {
     llvm::Constant* constant = codegen_utils_->GetConstant(integer_constant);
     CheckGetSingleIntegerConstant(integer_constant, constant);
-
   }
 
   // Helper method for GetScalarConstantTest. Tests
@@ -1859,7 +1858,6 @@ TEST_F(CodegenUtilsTest, GetScalarConstantTest) {
 }
 
 TEST_F(CodegenUtilsTest, CreateCastTest) {
-
   // Check different integer types
   // signed to signed with ext / trunc
   CheckIntegerCast<std::int16_t, std::int8_t>();

@@ -66,11 +66,11 @@ double> {
  **/
 template <typename rtype, typename Arg0, typename Arg1>
 class PGArithFuncGenerator {
-
   template <typename CppType>
   using CGArithOpOverFlowTemplateFunc = llvm::Value* (GpCodegenUtils::*)(
       llvm::Value* arg0, llvm::Value* arg1);
   using CGArithOpOverFlowFunc = CGArithOpOverFlowTemplateFunc<rtype>;
+
  public:
   /**
    * @brief Create LLVM Mul instruction with check for overflow
