@@ -186,13 +186,10 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
   assert(nullptr != llvm_out_value);
   assert(nullptr != codegen_mem_funcptr);
   // Assumed caller checked vector size and nullptr for codegen_utils
-  llvm::Value* cpp_arg0 = codegen_utils->CreateDatumToCppTypeCast<Arg0>(
-      llvm_args[0]);
-  llvm::Value* cpp_arg1 = codegen_utils->CreateDatumToCppTypeCast<Arg1>(
-      llvm_args[1]);
-
-  llvm::Value* casted_arg0 = codegen_utils->CreateCast<rtype, Arg0>(cpp_arg0);
-  llvm::Value* casted_arg1 = codegen_utils->CreateCast<rtype, Arg1>(cpp_arg1);
+  llvm::Value* casted_arg0 =
+      codegen_utils->CreateCast<rtype, Arg0>(llvm_args[0]);
+  llvm::Value* casted_arg1 =
+      codegen_utils->CreateCast<rtype, Arg1>(llvm_args[1]);
 
   llvm::Value* llvm_arith_output = (codegen_utils->*codegen_mem_funcptr)(
       casted_arg0, casted_arg1);
