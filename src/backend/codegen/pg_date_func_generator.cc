@@ -61,7 +61,6 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
     llvm::BasicBlock* llvm_error_block) {
 
   assert(nullptr != llvm_arg && nullptr != llvm_arg->getType());
-  llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
 #ifdef HAVE_INT64_TIMESTAMP
 
@@ -84,6 +83,6 @@ llvm::Value* PGDateFuncGenerator::GenerateDate2Timestamp(
 #else
   llvm::Value *llvm_SECS_PER_DAY = codegen_utils->
       GetConstant<int64_t>(SECS_PER_DAY);
-  return irb->CreateMul(llvm_arg_64, llvm_SECS_PER_DAY);
+  return codegen_utils->ir_builder()->CreateMul(llvm_arg_64, llvm_SECS_PER_DAY);
 #endif
 }

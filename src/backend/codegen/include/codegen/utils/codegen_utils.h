@@ -322,14 +322,15 @@ class CodegenUtils {
   /**
    * @brief Extent or trunc given llvm::Value based on CppType
    *
-   * @tparam CppType  Destination type
+   * @tparam DestType  Destination type
+   * @tparam SrcType   Source type
    * @param value  Value that needs to be casted. Expected to be of same type as
-   *                CppType but can different in size
+   *               Source
    *
-   * @return LLVM Value of CppType
+   * @return LLVM Value of DestType
    **/
-  template <typename CppType>
-  llvm::Value* CreateExtOrTrunc(llvm::Value* value);
+  template <typename DestType, typename SrcType>
+  llvm::Value* CreateCast(llvm::Value* value);
 
   /**
    * @brief Register an external function if previously unregistered. Otherwise
@@ -1421,7 +1422,7 @@ llvm::Value* CodegenUtils::CreateMulOverflow(llvm::Value* arg0,
 }
 
 // ----------------------------------------------------------------------------
-// Implementation of CodegenUtils::CreateExtOrTrunc().
+// Implementation of CodegenUtils::CreateCast().
 
 // Helper template classes are nested in this namespace and are not considered
 // part of the public API.
@@ -1429,29 +1430,32 @@ namespace codegen_utils_detail {
 
 // CastMaker has various template specializations to handle casting of
 // different C++ types. The specialized versions have a static method
-// CreateExtOrTrunc() that takes an 'llvm::Value' of same CppType but different
-// size and a pointer to  CodegenUtils object,  and returns a pointer to an
-// 'llvm::Value' equivalent to CppType
-template <typename CppType, typename Enable = void>
+// CreateCast() that takes an 'llvm::Value' of SrcType and a pointer to
+// CodegenUtils object,  and returns a pointer to an
+// 'llvm::Value' equivalent to DestType
+template <typename DestType,
+          typename SrcType,
+          typename Enable = void>
 class CastMaker {
 };
 
 // Partial specialization for unsigned integer types (including bool).
-template <typename UnsignedIntType>
+template <typename IntegerType, typename UnsignedIntType>
 class CastMaker<
+    IntegerType,
     UnsignedIntType,
     typename std::enable_if<
-        std::is_integral<UnsignedIntType>::value
+        std::is_integral<IntegerType>::value
+        && std::is_integral<UnsignedIntType>::value
         && std::is_unsigned<UnsignedIntType>::value>::type> {
  public:
 
-  static llvm::Value* CreateExtOrTrunc(llvm::Value* value,
-                             CodegenUtils* codegen_utils) {
-    assert(nullptr != value);
-    llvm::Type* llvm_src_type = value->getType();
-    llvm::Type* llvm_dest_type = codegen_utils->GetType<UnsignedIntType>();
-    assert(llvm_src_type->isIntegerTy());
-    unsigned src_size = llvm_src_type->getScalarSizeInBits();
+  static llvm::Value* CreateCast(llvm::Value* value,
+                                 llvm::Type* llvm_dest_type,
+                                 CodegenUtils* codegen_utils) {
+    Checker(value, llvm_dest_type);
+
+    unsigned src_size = value->getType()->getScalarSizeInBits();
     unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
     if (src_size == dest_size) {
        return value;
@@ -1463,75 +1467,117 @@ class CastMaker<
       return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
     }
   }
+ private:
+  static void Checker(llvm::Value* value,
+               llvm::Type* llvm_dest_type) {
+    assert(nullptr != value);
+    llvm::Type* llvm_src_type = value->getType();
+    assert(nullptr != llvm_src_type);
+    assert(llvm_src_type->isIntegerTy());
+    assert(llvm_dest_type->isIntegerTy());
+  }
 };
 
-// Partial specialization for signed integer types.
-template <typename SignedIntType>
+template <typename IntegerType, typename SignedIntType>
 class CastMaker<
+    IntegerType,
     SignedIntType,
     typename std::enable_if<
-        std::is_integral<SignedIntType>::value
+        std::is_integral<IntegerType>::value
+        && std::is_integral<SignedIntType>::value
         && std::is_signed<SignedIntType>::value>::type> {
  public:
 
-  static llvm::Value* CreateExtOrTrunc(llvm::Value* value,
-                               CodegenUtils* codegen_utils) {
-      assert(nullptr != value);
-      llvm::Type* llvm_src_type = value->getType();
-      llvm::Type* llvm_dest_type = codegen_utils->GetType<SignedIntType>();
-      assert(llvm_src_type->isIntegerTy());
-      unsigned src_size = llvm_src_type->getScalarSizeInBits();
-      unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
-      if (src_size == dest_size) {
-         return value;
-      }
-      else if (src_size < dest_size) {
-        return codegen_utils->ir_builder()->CreateSExt(value, llvm_dest_type);
-      }
-      else {
-        return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
-      }
+  static llvm::Value* CreateCast(llvm::Value* value,
+                                 llvm::Type* llvm_dest_type,
+                                 CodegenUtils* codegen_utils) {
+    Checker(value, llvm_dest_type);
+
+    unsigned src_size = value->getType()->getScalarSizeInBits();
+    unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
+    if (src_size == dest_size) {
+       return value;
     }
+    else if (src_size < dest_size) {
+      return codegen_utils->ir_builder()->CreateSExt(value, llvm_dest_type);
+    }
+    else {
+      return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
+    }
+  }
+ private:
+  static void Checker(llvm::Value* value,
+               llvm::Type* llvm_dest_type) {
+    assert(nullptr != value);
+    llvm::Type* llvm_src_type = value->getType();
+    assert(nullptr != llvm_src_type);
+    assert(llvm_src_type->isIntegerTy());
+    assert(llvm_dest_type->isIntegerTy());
+  }
 };
 
 // Explicit specialization for 32-bit float.
-template <>
-class CastMaker<float> {
+template <typename FloatingPoint>
+class CastMaker<
+    float,
+    FloatingPoint,
+    typename std::enable_if<
+            std::is_floating_point<FloatingPoint>::value>::type> {
  public:
-  static llvm::Value* CreateExtOrTrunc(llvm::Value* value,
-                                       CodegenUtils* codegen_utils) {
-        assert(nullptr != value);
-        llvm::Type* llvm_src_type = value->getType();
-        assert(llvm_src_type->isFloatTy() ||
-               llvm_src_type->isDoubleTy());
-        if (llvm_src_type->isFloatTy()) { return value; }
-        return codegen_utils->ir_builder()->CreateFPTrunc(
-            value, codegen_utils->GetType<float>());
+  static llvm::Value* CreateCast(llvm::Value* value,
+                                 llvm::Type* llvm_dest_type,
+                                 CodegenUtils* codegen_utils) {
+    Checker(value, llvm_dest_type);
+    if (value->getType()->isFloatTy()) { return value; }
+    return codegen_utils->ir_builder()->CreateFPTrunc(
+        value, llvm_dest_type);
   }
+ private:
+  static void Checker(llvm::Value* value,
+                 llvm::Type* llvm_dest_type) {
+      assert(nullptr != value);
+      llvm::Type* llvm_src_type = value->getType();
+      assert(nullptr != llvm_src_type);
+      assert(llvm_src_type->isFloatTy() ||
+             llvm_src_type->isDoubleTy());
+      assert(llvm_dest_type->isFloatTy());
+    }
 };
 
 // Explicit specialization for 64-bit double.
-template <>
-class CastMaker<double> {
+template <typename FloatingPoint>
+class CastMaker<
+    double,
+    FloatingPoint,
+    typename std::enable_if<
+            std::is_floating_point<FloatingPoint>::value>::type> {
  public:
-  static llvm::Value* CreateExtOrTrunc(llvm::Value* value,
-                                         CodegenUtils* codegen_utils) {
-    assert(nullptr != value);
-    llvm::Type* llvm_src_type = value->getType();
-    assert(llvm_src_type->isFloatTy() ||
-           llvm_src_type->isDoubleTy());
-    if (llvm_src_type->isDoubleTy()) { return value; }
+  static llvm::Value* CreateCast(llvm::Value* value,
+                                 llvm::Type* llvm_dest_type,
+                                 CodegenUtils* codegen_utils) {
+    Checker(value, llvm_dest_type);
+    if (value->getType()->isDoubleTy()) { return value; }
     return codegen_utils->ir_builder()->CreateFPExt(
-        value, codegen_utils->GetType<double>());
+        value, llvm_dest_type);
   }
+ private:
+   static void Checker(llvm::Value* value,
+                  llvm::Type* llvm_dest_type) {
+       assert(nullptr != value);
+       llvm::Type* llvm_src_type = value->getType();
+       assert(nullptr != llvm_src_type);
+       assert(llvm_src_type->isFloatTy() ||
+              llvm_src_type->isDoubleTy());
+       assert(llvm_dest_type->isDoubleTy());
+     }
 };
 
 }  // namespace codegen_utils_detail
 
-template <typename CppType>
-llvm::Value* CodegenUtils::CreateExtOrTrunc(llvm::Value* value) {
-  return codegen_utils_detail::CastMaker<CppType>::CreateExtOrTrunc(
-      value, this);
+template <typename DestType, typename SrcType>
+llvm::Value* CodegenUtils::CreateCast(llvm::Value* value) {
+  return codegen_utils_detail::CastMaker<DestType, SrcType>::CreateCast(
+      value, this->GetType<DestType>(), this);
 }
 
 }  // namespace gpcodegen
