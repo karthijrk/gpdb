@@ -131,7 +131,7 @@ class GpCodegenUtils : public CodegenUtils {
 
     // Given src value, it should be of type Datum(int64_t)
     assert(llvm_src_type->isIntegerTy());
-    assert(src_size == sizeof(Datum)*8);
+    assert(src_size == sizeof(Datum) << 3);
 
     // Datum size should be the largest
     assert(dest_size <= src_size);

@@ -26,7 +26,7 @@ llvm::Value* GpCodegenUtils::CreateCppTypeToDatumCast(
 
   llvm::Type* llvm_dest_type = GetType<Datum>();
   unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
-  assert(0 != dest_size);
+  assert(sizeof(Datum) << 3 == dest_size);
 
   llvm::Type* llvm_src_type = value->getType();
   unsigned src_size = llvm_src_type->getScalarSizeInBits();
@@ -61,9 +61,6 @@ llvm::Value* GpCodegenUtils::CreateCppTypeToDatumCast(
       llvm_casted_value = ir_builder()->CreateZExt(llvm_int_value,
                                                    llvm_dest_type);
     }
-  }
-  if (llvm_src_type->getTypeID() != llvm_dest_type->getTypeID()) {
-    return ir_builder()->CreateBitCast(llvm_casted_value, llvm_dest_type);
   }
   return llvm_casted_value;
 }
