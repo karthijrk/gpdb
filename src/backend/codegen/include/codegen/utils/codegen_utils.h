@@ -1437,7 +1437,6 @@ class CastMaker<
         && std::is_integral<UnsignedIntType>::value
         && std::is_unsigned<UnsignedIntType>::value>::type> {
  public:
-
   static llvm::Value* CreateCast(llvm::Value* value,
                                  llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
@@ -1447,11 +1446,9 @@ class CastMaker<
     unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
     if (src_size == dest_size) {
        return value;
-    }
-    else if (src_size < dest_size) {
+    } else if (src_size < dest_size) {
       return codegen_utils->ir_builder()->CreateZExt(value, llvm_dest_type);
-    }
-    else {
+    } else {
       return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
     }
   }
@@ -1475,7 +1472,6 @@ class CastMaker<
         && std::is_integral<SignedIntType>::value
         && std::is_signed<SignedIntType>::value>::type> {
  public:
-
   static llvm::Value* CreateCast(llvm::Value* value,
                                  llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
@@ -1485,11 +1481,9 @@ class CastMaker<
     unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
     if (src_size == dest_size) {
        return value;
-    }
-    else if (src_size < dest_size) {
+    } else if (src_size < dest_size) {
       return codegen_utils->ir_builder()->CreateSExt(value, llvm_dest_type);
-    }
-    else {
+    } else {
       return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
     }
   }
@@ -1549,15 +1543,15 @@ class CastMaker<
         value, llvm_dest_type);
   }
  private:
-   static void Checker(llvm::Value* value,
-                  llvm::Type* llvm_dest_type) {
-       assert(nullptr != value);
-       llvm::Type* llvm_src_type = value->getType();
-       assert(nullptr != llvm_src_type);
-       assert(llvm_src_type->isFloatTy() ||
-              llvm_src_type->isDoubleTy());
-       assert(llvm_dest_type->isDoubleTy());
-     }
+  static void Checker(llvm::Value* value,
+                      llvm::Type* llvm_dest_type) {
+    assert(nullptr != value);
+    llvm::Type* llvm_src_type = value->getType();
+    assert(nullptr != llvm_src_type);
+    assert(llvm_src_type->isFloatTy() ||
+           llvm_src_type->isDoubleTy());
+    assert(llvm_dest_type->isDoubleTy());
+  }
 };
 
 }  // namespace codegen_utils_detail
