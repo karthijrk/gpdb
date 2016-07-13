@@ -188,13 +188,14 @@ Arg0, Arg1> {
                     llvm::Value** llvm_out_value) final {
     assert(nullptr != codegen_utils &&
            nullptr != llvm_out_value);
-    if (llvm_args.size() != this->GetTotalArgCount()) {
+    std::vector<llvm::Value*> llvm_preproc_args;
+    if (!this->PreProcessArgs(codegen_utils, llvm_args, &llvm_preproc_args)) {
       return false;
     }
     this->func_ptr()(codegen_utils,
         llvm_main_func,
         llvm_error_block,
-        llvm_args,
+        llvm_preproc_args,
         llvm_out_value);
     return true;
   }

@@ -1190,7 +1190,7 @@ void CodegenUtils::CreateFallback(llvm::Function* regular_function,
 
   llvm::CallInst* call_fallback_func = ir_builder()->CreateCall(
       regular_function, forwarded_args);
-  /* Return the result of the call, or voCid if the function returns void. */
+  /* Return the result of the call, or void if the function returns void. */
   if (std::is_same<typename
       codegen_utils_detail::FunctionTypeUnpacker<FunctionType>::R,
                                                  void>::value) {
@@ -1348,39 +1348,27 @@ class ArithOpMaker<double> {
                                         llvm::Value* arg0,
                                         llvm::Value* arg1) {
     Checker(arg0, arg1);
-    llvm::Value* casted_arg0 = generator->ir_builder()->
-        CreateBitCast(arg0, generator->GetType<double>());
-    llvm::Value* casted_arg1 = generator->ir_builder()->
-        CreateBitCast(arg1, generator->GetType<double>());
 
     // TODO(armenatzoglou) Support overflow
-    return generator->ir_builder()->CreateFAdd(casted_arg0, casted_arg1);
+    return generator->ir_builder()->CreateFAdd(arg0, arg1);
   }
 
   static llvm::Value* CreateSubOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
                                         llvm::Value* arg1) {
     Checker(arg0, arg1);
-    llvm::Value* casted_arg0 = generator->ir_builder()->
-        CreateBitCast(arg0, generator->GetType<double>());
-    llvm::Value* casted_arg1 = generator->ir_builder()->
-        CreateBitCast(arg1, generator->GetType<double>());
 
     // TODO(armenatzoglou) Support overflow
-    return generator->ir_builder()->CreateFSub(casted_arg0, casted_arg1);
+    return generator->ir_builder()->CreateFSub(arg0, arg1);
   }
 
   static llvm::Value* CreateMulOverflow(CodegenUtils* generator,
                                         llvm::Value* arg0,
                                         llvm::Value* arg1) {
     Checker(arg0, arg1);
-    llvm::Value* casted_arg0 = generator->ir_builder()->
-        CreateBitCast(arg0, generator->GetType<double>());
-    llvm::Value* casted_arg1 = generator->ir_builder()->
-        CreateBitCast(arg1, generator->GetType<double>());
 
     // TODO(armenatzoglou) Support overflow
-    return generator->ir_builder()->CreateFMul(casted_arg0, casted_arg1);
+    return generator->ir_builder()->CreateFMul(arg0, arg1);
   }
 
 
