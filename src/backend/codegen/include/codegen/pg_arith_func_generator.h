@@ -27,6 +27,7 @@ namespace gpcodegen {
  *  @{
  */
 
+namespace gpcodegen_ArithOp_detail {
 // ArithOpOverFlowErrorMsg has various template specializations to
 // handle error message for different C++ types. The specialized versions
 // have a static method OverFlowErrMsg() that returns an overflow error message
@@ -55,6 +56,9 @@ double> {
  public:
   static const char* OverFlowErrMsg() { return "float8 out of range"; }
 };
+}  // namespace gpcodegen_ArithOp_detail
+
+using gpcodegen_ArithOp_detail::ArithOpOverFlowErrorMsg;
 
 /**
  * @brief Class with Static member function to generate code for +, - and *
@@ -67,9 +71,9 @@ double> {
 template <typename rtype, typename Arg0, typename Arg1>
 class PGArithFuncGenerator {
   template <typename CppType>
-  using CGArithOpOverFlowTemplateFunc = llvm::Value* (GpCodegenUtils::*)(
+  using CGArithOpTemplateFunc = llvm::Value* (GpCodegenUtils::*)(
       llvm::Value* arg0, llvm::Value* arg1);
-  using CGArithOpOverFlowFunc = CGArithOpOverFlowTemplateFunc<rtype>;
+  using CGArithOpFunc = CGArithOpTemplateFunc<rtype>;
 
  public:
   /**
@@ -92,7 +96,7 @@ class PGArithFuncGenerator {
                                const std::vector<llvm::Value*>& llvm_args,
                                llvm::Value** llvm_out_value) {
     llvm::Value* llvm_err_msg = codegen_utils->GetConstant(
-            ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
+        ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
     return ArithOpWithOverflow(
         codegen_utils,
         &gpcodegen::GpCodegenUtils::CreateMulOverflow<rtype>,
@@ -123,7 +127,7 @@ class PGArithFuncGenerator {
                               const std::vector<llvm::Value*>& llvm_args,
                               llvm::Value** llvm_out_value) {
     llvm::Value* llvm_err_msg = codegen_utils->GetConstant(
-            ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
+        ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
     return ArithOpWithOverflow(
             codegen_utils,
             &gpcodegen::GpCodegenUtils::CreateAddOverflow<rtype>,
@@ -153,7 +157,7 @@ class PGArithFuncGenerator {
                                 const std::vector<llvm::Value*>& llvm_args,
                                 llvm::Value** llvm_out_value) {
     llvm::Value* llvm_err_msg = codegen_utils->GetConstant(
-            ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
+        ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
     return ArithOpWithOverflow(
             codegen_utils,
             &gpcodegen::GpCodegenUtils::CreateSubOverflow<rtype>,
@@ -165,7 +169,7 @@ class PGArithFuncGenerator {
   }
 
   static bool ArithOpWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
-                                  CGArithOpOverFlowFunc codegen_mem_funcptr,
+                                  CGArithOpFunc codegen_mem_funcptr,
                                   llvm::Function* llvm_main_func,
                                   llvm::BasicBlock* llvm_error_block,
                                   llvm::Value* llvm_error_msg,
@@ -176,7 +180,7 @@ class PGArithFuncGenerator {
 template <typename rtype, typename Arg0, typename Arg1>
 bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
     gpcodegen::GpCodegenUtils* codegen_utils,
-    CGArithOpOverFlowFunc codegen_mem_funcptr,
+    CGArithOpFunc codegen_mem_funcptr,
     llvm::Function* llvm_main_func,
     llvm::BasicBlock* llvm_error_block,
     llvm::Value* llvm_error_msg,
