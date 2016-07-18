@@ -49,7 +49,8 @@ llvm::Value* GpCodegenUtils::CreateCppTypeToDatumCast(
 
   llvm::Value* llvm_casted_value = llvm_int_value;
   if (src_size < dest_size) {
-    // If given type is integer and not bool & unsigned, do signed extension
+    // If a given src type is integer but not a bool and unsigned flag is set to
+    // false, then do signed extension
     if (llvm_src_type->isIntegerTy() &&
         src_size > 1 &&
         !is_src_unsigned) {

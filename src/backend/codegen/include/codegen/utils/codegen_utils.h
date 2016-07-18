@@ -1440,7 +1440,6 @@ class CastMaker<
  public:
   static llvm::Value* CreateCast(llvm::Value* value,
                                  CodegenUtils* codegen_utils) {
-
     assert(nullptr != codegen_utils);
     llvm::Type* llvm_dest_type = codegen_utils->GetType<IntegerType>();
     Checker(value, llvm_dest_type);
