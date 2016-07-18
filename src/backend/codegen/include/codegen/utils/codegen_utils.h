@@ -1450,9 +1450,8 @@ class CastMaker<
   static void Checker(llvm::Value* value,
                llvm::Type* llvm_dest_type) {
     assert(nullptr != value);
-    llvm::Type* llvm_src_type = value->getType();
-    assert(nullptr != llvm_src_type);
-    assert(llvm_src_type->isIntegerTy());
+    assert(nullptr != value->getType());
+    assert(value->getType()->isIntegerTy());
     assert(llvm_dest_type->isIntegerTy());
   }
 };
@@ -1480,9 +1479,8 @@ class CastMaker<
   static void Checker(llvm::Value* value,
                llvm::Type* llvm_dest_type) {
     assert(nullptr != value);
-    llvm::Type* llvm_src_type = value->getType();
-    assert(nullptr != llvm_src_type);
-    assert(llvm_src_type->isIntegerTy());
+    assert(nullptr != value->getType());
+    assert(value->getType()->isIntegerTy());
     assert(llvm_dest_type->isIntegerTy());
   }
 };
@@ -1508,10 +1506,9 @@ class CastMaker<
   static void Checker(llvm::Value* value,
                  llvm::Type* llvm_dest_type) {
       assert(nullptr != value);
-      llvm::Type* llvm_src_type = value->getType();
-      assert(nullptr != llvm_src_type);
-      assert(llvm_src_type->isFloatTy() ||
-             llvm_src_type->isDoubleTy());
+      assert(nullptr != value->getType());
+      assert(value->getType()->isFloatTy() ||
+             value->getType()->isDoubleTy());
       assert(llvm_dest_type->isFloatTy());
     }
 };
@@ -1537,10 +1534,9 @@ class CastMaker<
   static void Checker(llvm::Value* value,
                       llvm::Type* llvm_dest_type) {
     assert(nullptr != value);
-    llvm::Type* llvm_src_type = value->getType();
-    assert(nullptr != llvm_src_type);
-    assert(llvm_src_type->isFloatTy() ||
-           llvm_src_type->isDoubleTy());
+    assert(nullptr != value->getType());
+    assert(value->getType()->isFloatTy() ||
+           value->getType()->isDoubleTy());
     assert(llvm_dest_type->isDoubleTy());
   }
 };
