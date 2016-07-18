@@ -106,13 +106,6 @@ class CodegenUtils {
   }
 
   /**
-   * @return LLVMContext
-   **/
-  llvm::LLVMContext* context() {
-    return &context_;
-  }
-
-  /**
    * @return The LLVM Module that is managed by this CodegenUtils, or NULL if
    *         PrepareForExecution() has already been called.
    *
@@ -488,6 +481,14 @@ class CodegenUtils {
     }
     llvm::InlineFunctionInfo info;
     return llvm::InlineFunction(llvm::CallSite(call_inst), info);
+  }
+
+ protected:
+  /**
+   * @return LLVMContext
+   **/
+  llvm::LLVMContext* context() {
+    return &context_;
   }
 
  private:
@@ -1438,19 +1439,13 @@ class CastMaker<
         && std::is_unsigned<UnsignedIntType>::value>::type> {
  public:
   static llvm::Value* CreateCast(llvm::Value* value,
-                                 llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
-    Checker(value, llvm_dest_type);
 
-    unsigned src_size = value->getType()->getScalarSizeInBits();
-    unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
-    if (src_size == dest_size) {
-       return value;
-    } else if (src_size < dest_size) {
-      return codegen_utils->ir_builder()->CreateZExt(value, llvm_dest_type);
-    } else {
-      return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
-    }
+    assert(nullptr != codegen_utils);
+    llvm::Type* llvm_dest_type = codegen_utils->GetType<IntegerType>();
+    Checker(value, llvm_dest_type);
+    return codegen_utils->ir_builder()->CreateZExtOrTrunc(value,
+                                                         llvm_dest_type);
   }
  private:
   static void Checker(llvm::Value* value,
@@ -1474,19 +1469,13 @@ class CastMaker<
         && std::is_signed<SignedIntType>::value>::type> {
  public:
   static llvm::Value* CreateCast(llvm::Value* value,
-                                 llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
+    assert(nullptr != codegen_utils);
+    llvm::Type* llvm_dest_type = codegen_utils->GetType<IntegerType>();
     Checker(value, llvm_dest_type);
 
-    unsigned src_size = value->getType()->getScalarSizeInBits();
-    unsigned dest_size = llvm_dest_type->getScalarSizeInBits();
-    if (src_size == dest_size) {
-       return value;
-    } else if (src_size < dest_size) {
-      return codegen_utils->ir_builder()->CreateSExt(value, llvm_dest_type);
-    } else {
-      return codegen_utils->ir_builder()->CreateTrunc(value, llvm_dest_type);
-    }
+    return codegen_utils->ir_builder()->CreateSExtOrTrunc(value,
+                                                          llvm_dest_type);
   }
  private:
   static void Checker(llvm::Value* value,
@@ -1508,8 +1497,9 @@ class CastMaker<
             std::is_floating_point<FloatingPoint>::value>::type> {
  public:
   static llvm::Value* CreateCast(llvm::Value* value,
-                                 llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
+    assert(nullptr != codegen_utils);
+    llvm::Type* llvm_dest_type = codegen_utils->GetType<float>();
     Checker(value, llvm_dest_type);
     if (value->getType()->isFloatTy()) { return value; }
     return codegen_utils->ir_builder()->CreateFPTrunc(
@@ -1536,8 +1526,9 @@ class CastMaker<
             std::is_floating_point<FloatingPoint>::value>::type> {
  public:
   static llvm::Value* CreateCast(llvm::Value* value,
-                                 llvm::Type* llvm_dest_type,
                                  CodegenUtils* codegen_utils) {
+    assert(nullptr != codegen_utils);
+    llvm::Type* llvm_dest_type = codegen_utils->GetType<double>();
     Checker(value, llvm_dest_type);
     if (value->getType()->isDoubleTy()) { return value; }
     return codegen_utils->ir_builder()->CreateFPExt(
@@ -1560,7 +1551,7 @@ class CastMaker<
 template <typename DestType, typename SrcType>
 llvm::Value* CodegenUtils::CreateCast(llvm::Value* value) {
   return codegen_utils_detail::CastMaker<DestType, SrcType>::CreateCast(
-      value, this->GetType<DestType>(), this);
+      value, this);
 }
 
 }  // namespace gpcodegen
