@@ -46,6 +46,15 @@ bool ConstExprTreeGenerator::GenerateCode(GpCodegenUtils* codegen_utils,
   assert(nullptr != llvm_out_value);
   Const* const_expr = reinterpret_cast<Const*>(expr_state()->expr);
   // const_expr->constvalue is a datum
-  *llvm_out_value = codegen_utils->GetConstant(const_expr->constvalue);
+  llvm::Value* llvm_datum = codegen_utils->GetConstant(const_expr->constvalue);
+  if (const_expr->consttype == 1114) {
+    *llvm_out_value = codegen_utils->CreateDatumToCppTypeCast<int64_t>(llvm_datum);
+  } else if (const_expr->consttype == 701) {
+    *llvm_out_value = codegen_utils->CreateDatumToCppTypeCast<double>(llvm_datum);
+  }
+  else {
+    *llvm_out_value = llvm_datum;
+    elog(WARNING, "Unsupported const type: %d", const_expr->consttype);
+  }
   return true;
 }

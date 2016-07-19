@@ -188,6 +188,6 @@ bool OpExprTreeGenerator::GenerateCode(GpCodegenUtils* codegen_utils,
                                    llvm_arguments,
                                    &llvm_op_value);
   // convert return type to Datum
-  *llvm_out_value = codegen_utils->CreateCppTypeToDatumCast(llvm_op_value);
+  *llvm_out_value = llvm_op_value;
   return retval;
 }

@@ -72,10 +72,12 @@ class PGFuncBaseGenerator : public PGFuncGeneratorInterface {
       return false;
     }
     // Convert Datum to given cpp type.
-    llvm_out_args->push_back(codegen_utils->CreateDatumToCppTypeCast
+    /*llvm_out_args->push_back(codegen_utils->CreateDatumToCppTypeCast
                              <Arg0>(llvm_in_args[0]));
     llvm_out_args->push_back(codegen_utils->CreateDatumToCppTypeCast
-                             <Arg1>(llvm_in_args[1]));
+                             <Arg1>(llvm_in_args[1]));*/
+    llvm_out_args->push_back(llvm_in_args[0]);
+    llvm_out_args->push_back(llvm_in_args[1]);
     return true;
   }
 
