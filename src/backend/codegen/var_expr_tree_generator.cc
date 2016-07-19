@@ -84,25 +84,10 @@ bool VarExprTreeGenerator::GenerateCode(GpCodegenUtils* codegen_utils,
 
   assert(nullptr != gen_info.llvm_slot_getattr_func);
   // retrieve variable
-
-  llvm::Value* llvm_datum = irb->CreateCall(
+  *llvm_out_value = irb->CreateCall(
       gen_info.llvm_slot_getattr_func, {
           llvm_slot,
           llvm_variable_varattno,
           llvm_isnull_ptr /* TODO: Fix isNull */ });
-  if (var_expr->vartype == 701) {
-    *llvm_out_value = codegen_utils->CreateDatumToCppTypeCast<double>(llvm_datum);
-  }
-  else if (var_expr->vartype == 20) {
-    *llvm_out_value = codegen_utils->CreateDatumToCppTypeCast<int64_t>(llvm_datum);
-  }
-  else if (var_expr->vartype == 1082) {
-    *llvm_out_value = codegen_utils->CreateDatumToCppTypeCast<int32_t>(llvm_datum);
-  }
-  else {
-    *llvm_out_value = llvm_datum;
-   elog(WARNING, "Unsupported variable type %d", var_expr->vartype);
-  }
-
   return true;
 }
