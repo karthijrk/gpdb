@@ -104,48 +104,12 @@ bool ExecEvalExprCodegen::GenerateExecEvalExpr(
     return false;
   }
 
-  assert(nullptr != plan_state_);
-  switch(nodeTag(plan_state_)) {
-    case T_SeqScanState:
-    case T_TableScanState:
-      // Generate dependent slot_getattr() implementation for the given slot
-      if (gen_info.max_attr > 0) {
-        TupleTableSlot* slot = reinterpret_cast<ScanState*>(plan_state_)->ss_ScanTupleSlot;
-        assert(nullptr != slot);
-
-        std::string slot_getattr_func_name = "slot_getattr_" +
-            std::to_string(reinterpret_cast<uint64_t>(slot)) + "_" +
-            std::to_string(gen_info.max_attr);
-
-        bool ok = SlotGetAttrCodegen::GenerateSlotGetAttr(
-            codegen_utils,
-            slot_getattr_func_name,
-            slot,
-            gen_info.max_attr,
-            &gen_info.llvm_slot_getattr_func);
-        if (!ok) {
-          elog(DEBUG1, "slot_getattr generation for ExecEvalExpr failed!");
-        }
-      }
-      break;
-
-    case T_AggState:
-      // For now, we assume that tuples for the Aggs are already going to be deformed
-      // in which case, we can avoid generating and calling the generated slot_getattr().
-      // This may not be true always, but calling the regular slot_getattr() will still
-      // preserve correctness.
-      gen_info.llvm_slot_getattr_func = nullptr;
-      break;
-    default:
-      elog(DEBUG1, "Attempting to generate ExecEvalExpr for an unsupported operator!");
-      return false;
-  }
-
   // In case the generation above failed either or it was not needed,
   // we revert to use the external slot_getattr()
   if (nullptr == gen_info.llvm_slot_getattr_func) {
     gen_info.llvm_slot_getattr_func =
-        codegen_utils->GetOrRegisterExternalFunction(slot_getattr);
+        codegen_utils->GetOrRegisterExternalFunction(slot_getattr,
+                                                     "ExprEvalSlotGetAttr");
   }
 
   irb->SetInsertPoint(llvm_entry_block);
