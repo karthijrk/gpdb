@@ -299,8 +299,9 @@ InitScanStateRelationDetails(ScanState *scanState, Plan *plan, EState *estate)
 
 	ProjectionInfo *projInfo = scanState->ps.ps_ProjInfo;
 	if (NULL != projInfo && projInfo->pi_isVarList){
-		enroll_ExecVariableList_codegen(ExecVariableList,
-				&projInfo->ExecVariableList_gen_info.ExecVariableList_fn, projInfo, scanState->ss_ScanTupleSlot);
+		/*enroll_ExecVariableList_codegen(ExecVariableList,
+				&projInfo->ExecVariableList_gen_info.ExecVariableList_fn, projInfo, scanState->ss_ScanTupleSlot);*/
+		projInfo->ExecVariableList_gen_info.ExecVariableList_fn = ExecVariableList;
 	}
 
 	scanState->tableType = getTableType(scanState->ss_currentRelation);
