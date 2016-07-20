@@ -811,7 +811,8 @@ EnrollProjInfoTargetList(PlanState* result, ProjectionInfo* ProjInfo)
 {
 #ifdef USE_CODEGEN
   if (NULL == ProjInfo ||
-      NULL == ProjInfo->pi_targetlist)
+      NULL == ProjInfo->pi_targetlist ||
+      ProjInfo->pi_isVarList)
   {
     return;
   }
@@ -821,15 +822,6 @@ EnrollProjInfoTargetList(PlanState* result, ProjectionInfo* ProjInfo)
     GenericExprState *gstate = (GenericExprState *) lfirst(l);
     if (NULL == gstate->arg ||
         NULL == gstate->arg->evalfunc) {
-      continue;
-    }
-    if ((IsA(result, TableScanState) || IsA(result, SeqScanState)) &&
-        IsA(gstate->arg->expr, Var))
-    {
-      /*
-       * Skip generating expression evaluation for VAR elements in the target
-       * list since ExecVariableList will take of that
-       * */
       continue;
     }
     enroll_ExecEvalExpr_codegen(gstate->arg->evalfunc,
