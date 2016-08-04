@@ -27,8 +27,7 @@ namespace gpcodegen {
 
 // Forward declaration of GpCodegenUtils to manage llvm module
 class GpCodegenUtils;
-
-// Forward declaration of a CodegenInterface that will be managed by manager
+class CodegenCallsiteInterface;
 class CodegenInterface;
 
 /**
@@ -56,8 +55,10 @@ class CodegenManager {
    * @param generator    Generator that needs to be enrolled with manager.
    * @return true on successful enrollment.
    **/
-  bool EnrollCodeGenerator(CodegenFuncLifespan funcLifespan,
-                           CodegenInterface* generator);
+  bool EnrollCodegenCallsite(CodegenFuncLifespan funcLifespan,
+                             CodegenCallsiteInterface* generator);
+
+  bool EnrollSharedCodegen(CodegenInterface* generator);
 
   /**
    * @brief Request all enrolled generators to generate code.
@@ -117,7 +118,10 @@ class CodegenManager {
   std::string module_name_;
 
   // List of all enrolled code generators.
-  std::vector<std::unique_ptr<CodegenInterface>> enrolled_code_generators_;
+  std::vector<std::unique_ptr<CodegenCallsiteInterface>> enrolled_code_generators_;
+
+  // List of all generator cached
+  std::vector<std::unique_ptr<CodegenInterface>> cached_code_generators_;
 
   // Holds the dumped IR of all underlying modules for EXPLAIN CODEGEN queries
   std::string explain_string_;

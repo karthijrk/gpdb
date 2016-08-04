@@ -48,7 +48,7 @@ class BaseCodegen: public CodegenInterface {
    * 		    version of the target function.
    **/
   virtual ~BaseCodegen() {
-    SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
+
   }
 
   bool InitDependencies() override {
@@ -86,30 +86,8 @@ class BaseCodegen: public CodegenInterface {
     return is_generated_;
   }
 
-  bool SetToRegular() final {
-    assert(nullptr != regular_func_ptr_);
-    SetToRegular(regular_func_ptr_, ptr_to_chosen_func_ptr_);
-    return true;
-  }
-
-  bool SetToGenerated(gpcodegen::GpCodegenUtils* codegen_utils) final {
-    if (false == IsGenerated()) {
-      assert(*ptr_to_chosen_func_ptr_ == regular_func_ptr_);
-      return false;
-    }
-
-    FuncPtrType compiled_func_ptr = codegen_utils->GetFunctionPointer<
-        FuncPtrType>(GetUniqueFuncName());
-
-    if (nullptr != compiled_func_ptr) {
-      *ptr_to_chosen_func_ptr_ = compiled_func_ptr;
-      return true;
-    }
-    return false;
-  }
-
   void Reset() final {
-    SetToRegular();
+    is_generated_ = false;
   }
 
   const std::string& GetOrigFuncName() const final {
@@ -122,31 +100,6 @@ class BaseCodegen: public CodegenInterface {
 
   bool IsGenerated() const final {
     return is_generated_;
-  }
-
-  /**
-   * @return Regular version of the target function.
-   *
-   **/
-  FuncPtrType GetRegularFuncPointer() {
-    return regular_func_ptr_;
-  }
-
-  /**
-   * @brief Sets up the caller to use the corresponding regular version of the
-   *        target function.
-   *
-   * @param regular_func_ptr       Regular version of the target function.
-   * @param ptr_to_chosen_func_ptr Reference to caller.
-   *
-   * @return true on setting to regular version.
-   **/
-  static bool SetToRegular(FuncPtrType regular_func_ptr,
-                           FuncPtrType* ptr_to_chosen_func_ptr) {
-    assert(nullptr != ptr_to_chosen_func_ptr);
-    assert(nullptr != regular_func_ptr);
-    *ptr_to_chosen_func_ptr = regular_func_ptr;
-    return true;
   }
 
  protected:
@@ -163,17 +116,11 @@ class BaseCodegen: public CodegenInterface {
    *
    **/
   explicit BaseCodegen(gpcodegen::CodegenManager* manager,
-                       const std::string& orig_func_name,
-                       FuncPtrType regular_func_ptr,
-                       FuncPtrType* ptr_to_chosen_func_ptr)
+                       const std::string& orig_func_name)
   : manager_(manager),
     orig_func_name_(orig_func_name),
     unique_func_name_(CodegenInterface::GenerateUniqueName(orig_func_name)),
-    regular_func_ptr_(regular_func_ptr),
-    ptr_to_chosen_func_ptr_(ptr_to_chosen_func_ptr),
     is_generated_(false) {
-    // Initialize the caller to use regular version of target function.
-    SetToRegular(regular_func_ptr, ptr_to_chosen_func_ptr);
   }
 
   gpcodegen::CodegenManager* manager() const {
@@ -224,8 +171,6 @@ class BaseCodegen: public CodegenInterface {
   gpcodegen::CodegenManager* manager_;
   std::string orig_func_name_;
   std::string unique_func_name_;
-  FuncPtrType regular_func_ptr_;
-  FuncPtrType* ptr_to_chosen_func_ptr_;
   bool is_generated_;
   // To track uncompiled llvm functions it creates and erase from
   // llvm module on failed generations.

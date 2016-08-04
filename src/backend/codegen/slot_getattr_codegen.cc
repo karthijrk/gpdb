@@ -77,9 +77,7 @@ SlotGetAttrCodegen* SlotGetAttrCodegen::GetCodegenInstance(
     // For a slot we haven't see before, create and add a new object
     generator = new SlotGetAttrCodegen(manager, slot, max_attr);
     codegen_cache_by_manager[manager].insert(std::make_pair(slot, generator));
-    // Enroll this in the manager so that it can take ownership
-    manager->EnrollCodeGenerator(CodegenFuncLifespan_Parameter_Invariant,
-                                 generator);
+    manager->EnrollSharedCodegen(generator);
   }
 
   assert(nullptr != generator);

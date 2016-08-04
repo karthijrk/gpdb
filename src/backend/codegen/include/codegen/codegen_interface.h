@@ -48,25 +48,6 @@ class CodegenInterface {
   virtual bool GenerateCode(gpcodegen::GpCodegenUtils* codegen_utils) = 0;
 
   /**
-   * @brief Sets up the caller to use the corresponding regular version of the
-   *        target function.
-   *
-   *
-   * @return true on setting to regular version.
-   **/
-  virtual bool SetToRegular() = 0;
-
-  /**
-   * @brief Sets up the caller to use the generated function instead of the
-   *        regular version.
-   *
-   * @param codegen_utils Facilitates in obtaining the function pointer from
-   *        the compiled module.
-   * @return true on successfully setting to generated functions
-   **/
-  virtual bool SetToGenerated(gpcodegen::GpCodegenUtils* codegen_utils) = 0;
-
-  /**
    * @brief Resets the state of the generator, including reverting back to
    *        the regular version of the function.
    *

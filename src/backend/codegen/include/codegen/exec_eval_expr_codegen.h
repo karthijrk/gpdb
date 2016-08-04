@@ -41,8 +41,6 @@ class ExecEvalExprCodegen: public BaseCodegen<ExecEvalExprFn> {
    *
    **/
   explicit ExecEvalExprCodegen(CodegenManager* manager,
-                               ExecEvalExprFn regular_func_ptr,
-                               ExecEvalExprFn* ptr_to_regular_func_ptr,
                                ExprState *exprstate,
                                ExprContext *econtext,
                                PlanState* plan_state);

@@ -17,6 +17,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 
+#include "codegen/codegen_callsite_interface.h"
 #include "codegen/codegen_interface.h"
 #include "codegen/codegen_manager.h"
 #include "codegen/codegen_wrapper.h"
@@ -30,13 +31,17 @@ CodegenManager::CodegenManager(const std::string& module_name) {
   codegen_utils_.reset(new gpcodegen::GpCodegenUtils(module_name));
 }
 
-bool CodegenManager::EnrollCodeGenerator(
-    CodegenFuncLifespan funcLifespan, CodegenInterface* generator) {
+bool CodegenManager::EnrollCodegenCallsite(
+    CodegenFuncLifespan funcLifespan, CodegenCallsiteInterface* generator) {
   // Only CodegenFuncLifespan_Parameter_Invariant is supported as of now
   assert(funcLifespan == CodegenFuncLifespan_Parameter_Invariant);
   assert(nullptr != generator);
   enrolled_code_generators_.emplace_back(generator);
   return true;
+}
+
+bool CodegenManager::EnrollSharedCodegen(CodegenInterface* generator) {
+  cached_code_generators_.emplace_back(generator);
 }
 
 unsigned int CodegenManager::GenerateCode() {
@@ -48,7 +53,7 @@ unsigned int CodegenManager::GenerateCode() {
   }
   // Then ask them to generate code
   unsigned int success_count = 0;
-  for (std::unique_ptr<CodegenInterface>& generator :
+  for (std::unique_ptr<CodegenCallsiteInterface>& generator :
       enrolled_code_generators_) {
     success_count += generator->GenerateCode(codegen_utils_.get());
   }
@@ -75,7 +80,7 @@ unsigned int CodegenManager::PrepareGeneratedFunctions() {
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
   gpcodegen::GpCodegenUtils* codegen_utils = codegen_utils_.get();
-  for (std::unique_ptr<CodegenInterface>& generator :
+  for (std::unique_ptr<CodegenCallsiteInterface>& generator :
       enrolled_code_generators_) {
     success_count += generator->SetToGenerated(codegen_utils);
   }

@@ -18,6 +18,7 @@
 
 #include "codegen/base_codegen.h"
 #include "codegen/codegen_manager.h"
+#include "codegen/codegen_callsite.h"
 #include "codegen/exec_eval_expr_codegen.h"
 #include "codegen/exec_variable_list_codegen.h"
 #include "codegen/expr_tree_generator.h"
@@ -31,6 +32,8 @@ using gpcodegen::CodegenManager;
 using gpcodegen::BaseCodegen;
 using gpcodegen::ExecVariableListCodegen;
 using gpcodegen::ExecEvalExprCodegen;
+using gpcodegen::CodegenCallsiteInterface;
+using gpcodegen::CodegenCallsite;
 
 // Current code generator manager that oversees all code generators
 static void* ActiveCodeGeneratorManager = nullptr;
@@ -118,26 +121,30 @@ void SetActiveCodeGeneratorManager(void* manager) {
  **/
 template <typename ClassType, typename FuncType, typename ...Args>
 ClassType* CodegenEnroll(FuncType regular_func_ptr,
-                          FuncType* ptr_to_chosen_func_ptr,
-                          Args&&... args) {  // NOLINT(build/c++11)
+                         FuncType* ptr_to_chosen_func_ptr,
+                         Args&&... args) {  // NOLINT(build/c++11)
   CodegenManager* manager = static_cast<CodegenManager*>(
-        GetActiveCodeGeneratorManager());
+      GetActiveCodeGeneratorManager());
   if (nullptr == manager ||
       !codegen) {  // if codegen guc is false
-      BaseCodegen<FuncType>::SetToRegular(
-          regular_func_ptr, ptr_to_chosen_func_ptr);
-      return nullptr;
-    }
+    CodegenCallsite<ClassType, FuncType>::SetToRegular(
+        regular_func_ptr, ptr_to_chosen_func_ptr);
+    return nullptr;
+  }
 
   ClassType* generator = new ClassType(
-      manager,
-      regular_func_ptr,
-      ptr_to_chosen_func_ptr,
-      std::forward<Args>(args)...);
-    bool is_enrolled = manager->EnrollCodeGenerator(
-        CodegenFuncLifespan_Parameter_Invariant, generator);
-    assert(is_enrolled);
-    return generator;
+      manager, std::forward<Args>(args)...);
+  CodegenCallsiteInterface* callsite_generator =
+      new CodegenCallsite<ClassType, FuncType>(
+          manager,
+          generator,
+          regular_func_ptr,
+          ptr_to_chosen_func_ptr);
+
+  bool is_enrolled = manager->EnrollCodegenCallsite(
+      CodegenFuncLifespan_Parameter_Invariant, callsite_generator);
+  assert(is_enrolled);
+  return generator;
 }
 
 void* ExecVariableListCodegenEnroll(

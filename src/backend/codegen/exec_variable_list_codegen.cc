@@ -53,14 +53,10 @@ constexpr char ExecVariableListCodegen::kExecVariableListPrefix[];
 
 ExecVariableListCodegen::ExecVariableListCodegen(
     CodegenManager* manager,
-    ExecVariableListFn regular_func_ptr,
-    ExecVariableListFn* ptr_to_regular_func_ptr,
     ProjectionInfo* proj_info,
     TupleTableSlot* slot)
     : BaseCodegen(manager,
-                  kExecVariableListPrefix,
-                  regular_func_ptr,
-                  ptr_to_regular_func_ptr),
+                  kExecVariableListPrefix),
       proj_info_(proj_info),
       slot_(slot),
       max_attr_(0),

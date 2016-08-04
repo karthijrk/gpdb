@@ -104,7 +104,7 @@ class SlotGetAttrCodegen : public BaseCodegen<SlotGetAttrFn> {
   SlotGetAttrCodegen(gpcodegen::CodegenManager* manager,
                      TupleTableSlot* slot,
                      int max_attr)
-  : BaseCodegen(manager, kSlotGetAttrPrefix, slot_getattr, &dummy_func_),
+  : BaseCodegen(manager, kSlotGetAttrPrefix),
     slot_(slot),
     max_attr_(max_attr),
     llvm_function_(nullptr) {
@@ -148,9 +148,6 @@ class SlotGetAttrCodegen : public BaseCodegen<SlotGetAttrFn> {
   int max_attr_;
   // Primary function to be generated and populated
   llvm::Function* llvm_function_;
-  // A dummy function pointer that can be swapped by the BaseCodegen
-  // implementation
-  SlotGetAttrFn dummy_func_;
 
   static constexpr char kSlotGetAttrPrefix[] = "slot_getattr";
   /**

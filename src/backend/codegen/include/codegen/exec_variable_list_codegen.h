@@ -37,8 +37,6 @@ class ExecVariableListCodegen: public BaseCodegen<ExecVariableListFn> {
    *
    **/
   explicit ExecVariableListCodegen(CodegenManager* manager,
-                                   ExecVariableListFn regular_func_ptr,
-                                   ExecVariableListFn* ptr_to_regular_func_ptr,
                                    ProjectionInfo* proj_info,
                                    TupleTableSlot* slot);
 

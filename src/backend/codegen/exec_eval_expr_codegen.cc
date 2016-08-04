@@ -50,14 +50,11 @@ constexpr char ExecEvalExprCodegen::kExecEvalExprPrefix[];
 
 ExecEvalExprCodegen::ExecEvalExprCodegen(
     CodegenManager* manager,
-    ExecEvalExprFn regular_func_ptr,
-    ExecEvalExprFn* ptr_to_regular_func_ptr,
     ExprState *exprstate,
     ExprContext *econtext,
     PlanState* plan_state)
     : BaseCodegen(manager,
-                  kExecEvalExprPrefix,
-                  regular_func_ptr, ptr_to_regular_func_ptr),
+                  kExecEvalExprPrefix),
       exprstate_(exprstate),
       plan_state_(plan_state),
       gen_info_(econtext, nullptr, nullptr, nullptr, 0),
