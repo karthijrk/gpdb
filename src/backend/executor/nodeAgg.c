@@ -628,6 +628,62 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 	} /* aggno loop */
 }
 
+void
+advance_aggregates_to_be_generated(AggState *aggstate, AggStatePerGroup pergroup,
+           MemoryManagerContainer *mem_manager)
+{
+  int     aggno;
+
+  for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+  {
+    Datum value;
+    bool isnull;
+    AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+    AggStatePerGroup pergroupstate = &pergroup[aggno];
+    Aggref     *aggref = peraggstate->aggref;
+
+    // We don't codegen percentile function for now.
+    PercentileExpr *perc = peraggstate->perc;
+    int     i;
+    TupleTableSlot *slot;
+    int nargs;
+
+    if (!aggref) {
+      elog (ERROR, "We don't codegen non-aggref functions");
+    }
+
+    nargs = list_length(aggref->args);
+
+
+    // TODO : Revist this before team meating.
+    /* Evaluate the current input expressions for this aggregate */
+    slot = ExecProject(peraggstate->evalproj, NULL);
+    slot_getallattrs(slot);
+
+    if (peraggstate->numSortCols > 0)
+    {
+      elog(ERROR, "We don't support DISTINCT and/or ORDER by case\n");
+    }
+    /* We can apply the transition function immediately */
+    // In generated IR function, we don't need fcinfo.
+    // we can pass datum directly to generated / external built in function
+    FunctionCallInfoData fcinfo;
+
+    /* Load values into fcinfo */
+    /* Start from 1, since the 0th arg will be the transition value */
+    Assert(slot->PRIVATE_tts_nvalid >= nargs);
+
+    for (i = 0; i < nargs; i++)
+    {
+      fcinfo.arg[i + 1] = slot_getattr(slot, i+1, &isnull);
+      fcinfo.argnull[i + 1] = isnull;
+    }
+
+    advance_transition_function(aggstate, peraggstate, pergroupstate,
+                                &fcinfo, mem_manager);
+  }  /* aggno loop */
+}
+
 /*
  * Run the transition function for a DISTINCT or ORDER BY aggregate
  * with only one input.  This is called after we have completed
