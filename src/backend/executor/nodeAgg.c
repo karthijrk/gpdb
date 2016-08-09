@@ -512,12 +512,14 @@ void
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 				   MemoryManagerContainer *mem_manager)
 {
-  advance_aggregates_to_be_generated(aggstate, pergroup, mem_manager);
-  return;
-	int			aggno;
+  int			aggno;
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
+	  if (10 == memory_profiler_dataset_size) {
+	    advance_aggregate_to_be_generated(aggno, aggstate, pergroup, mem_manager);
+	    return;
+	  }
 		Datum value;
 		bool isnull;
 		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
@@ -631,139 +633,171 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 }
 
 void
-advance_aggregates_to_be_generated(AggState *aggstate, AggStatePerGroup pergroup,
+advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
            MemoryManagerContainer *mem_manager)
 {
-  int     aggno;
 
-  for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+  Datum value;
+  bool isnull;
+  AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+  AggStatePerGroup pergroupstate = &pergroup[aggno];
+  Aggref     *aggref = peraggstate->aggref;
+
+  // We don't codegen percentile function for now.
+  PercentileExpr *perc = peraggstate->perc;
+  int     i;
+  TupleTableSlot *slot;
+  int nargs;
+
+  if (!aggref)
   {
-    Datum value;
-    bool isnull;
-    AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
-    AggStatePerGroup pergroupstate = &pergroup[aggno];
-    Aggref     *aggref = peraggstate->aggref;
+    elog (ERROR, "We don't codegen non-aggref functions");
+  }
+  if (peraggstate->numSortCols > 0)
+  {
+    elog(ERROR, "We don't support DISTINCT and/or ORDER by case\n");
+  }
 
-    // We don't codegen percentile function for now.
-    PercentileExpr *perc = peraggstate->perc;
-    int     i;
-    TupleTableSlot *slot;
-    int nargs;
-
-    if (!aggref)
-    {
-      elog (ERROR, "We don't codegen non-aggref functions");
-    }
-    if (peraggstate->numSortCols > 0)
-    {
-      elog(ERROR, "We don't support DISTINCT and/or ORDER by case\n");
-    }
-
-    nargs = list_length(aggref->args);
-    Assert(nargs == peraggstate->numArguments);
+  nargs = list_length(aggref->args);
+  Assert(nargs == peraggstate->numArguments);
 
 
-    // TODO : Revist this before team meating.
-    /* Evaluate the current input expressions for this aggregate */
+  /* We can apply the transition function immediately */
+  // In generated IR function, we don't need fcinfo.
+  // we can pass datum directly to generated / external built in functions.
+  FunctionCallInfoData fcinfo;
+
+  // TODO : Revist this before team meating.
+  /* Evaluate the current input expressions for this aggregate */
+  bool non_use_slot = (2 == memory_profiler_dataset_size ||
+      10 == memory_profiler_dataset_size);
+  if (!non_use_slot) {
     slot = ExecProject(peraggstate->evalproj, NULL);
-
-
-    /* We can apply the transition function immediately */
-    // In generated IR function, we don't need fcinfo.
-    // we can pass datum directly to generated / external built in functions.
-    FunctionCallInfoData fcinfo;
-
-    /* Load values into fcinfo */
-    /* Start from 1, since the 0th arg will be the transition value */
-    Assert(slot->PRIVATE_tts_nvalid >= nargs);
-
-    MemoryContext oldContext;
-    Datum   newVal;
-
-
-    for (i = 0; i < nargs; i++)
+  }
+  else {
+    if (peraggstate->evalproj->pi_isVarList)
     {
+      call_ExecVariableList(peraggstate->evalproj,
+                            &fcinfo.arg[1],
+                            &fcinfo.argnull[1]);
+    }
+    else
+    {
+      ExecTargetList(peraggstate->evalproj->pi_targetlist,
+                     peraggstate->evalproj->pi_exprContext,
+                     &fcinfo.arg[1],
+                     &fcinfo.argnull[1],
+                     (ExprDoneCond *) peraggstate->evalproj->pi_itemIsDone,
+                     NULL);
+    }
+  }
+
+
+
+  /* Load values into fcinfo */
+  /* Start from 1, since the 0th arg will be the transition value */
+  //Assert(slot->PRIVATE_tts_nvalid >= nargs);
+
+  MemoryContext oldContext;
+  Datum   newVal;
+
+
+  for (i = 0; i < nargs; i++)
+  {
+    if (!non_use_slot) {
       fcinfo.arg[i + 1] = slot_getattr(slot, i+1, &isnull);
       fcinfo.argnull[i + 1] = isnull;
-      if (peraggstate->transfn.fn_strict &&
-          fcinfo.argnull[i + 1]) {
-        newVal = pergroupstate->transValue;
-        goto myreturn;
-      }
     }
+    if (peraggstate->transfn.fn_strict &&
+        fcinfo.argnull[i + 1]) {
+      newVal = pergroupstate->transValue;
+      goto myreturn;
+    }
+  }
 
-    if (peraggstate->transfn.fn_strict)
+  if (peraggstate->transfn.fn_strict)
+  {
+    if (pergroupstate->noTransValue)
     {
-      if (pergroupstate->noTransValue)
-      {
-        /*
-         * transValue has not been initialized. This is the first non-NULL
-         * input value. We use it as the initial value for transValue. (We
-         * already checked that the agg's input type is binary-compatible
-         * with its transtype, so straight copy here is OK.)
-         *
-         * We must copy the datum into aggcontext if it is pass-by-ref.
-         * We do not need to pfree the old transValue, since it's NULL.
-         */
-        newVal = datumCopyWithMemManager(pergroupstate->transValue,
-                                         fcinfo.arg[1], peraggstate->transtypeByVal,
-                                         peraggstate->transtypeLen, mem_manager);
-        pergroupstate->transValueIsNull = false;
-        pergroupstate->noTransValue = false;
-        goto myreturn;
-      }
-      if (pergroupstate->transValueIsNull)
-      {
-        /*
-         * Don't call a strict function with NULL inputs.  Note it is
-         * possible to get here despite the above tests, if the transfn is
-         * strict *and* returned a NULL on a prior cycle. If that happens
-         * we will propagate the NULL all the way to the end.
-         */
-        newVal = pergroupstate->transValue;
-        goto myreturn;
-      }
-    }
-
-    /* We run the transition functions in per-input-tuple memory context */
-    oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
-
-    /*
-     * OK to call the transition function
-     */
-    InitFunctionCallInfoData(fcinfo, &peraggstate->transfn,
-                             peraggstate->numArguments + 1,
-                             (void *) aggstate, NULL);
-    fcinfo.arg[0] = pergroupstate->transValue;
-    fcinfo.argnull[0] = pergroupstate->transValueIsNull;
-
-    newVal = FunctionCallInvoke(&fcinfo);
-
-    /*
-     * If pass-by-ref datatype, must copy the new value into aggcontext and
-     * pfree the prior transValue.  But if transfn returned a pointer to its
-     * first input, we don't need to do anything.
-     */
-    if (!peraggstate->transtypeByVal &&
-        DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
-    {
-      if (!fcinfo.isnull)
-      {
-        newVal = datumCopyWithMemManager(pergroupstate->transValue,
-                                         newVal, peraggstate->transtypeByVal,
-                                         peraggstate->transtypeLen, mem_manager);
-      }
-    }
-
-    pergroupstate->transValueIsNull = fcinfo.isnull;
-    if (!fcinfo.isnull)
+      /*
+       * transValue has not been initialized. This is the first non-NULL
+       * input value. We use it as the initial value for transValue. (We
+       * already checked that the agg's input type is binary-compatible
+       * with its transtype, so straight copy here is OK.)
+       *
+       * We must copy the datum into aggcontext if it is pass-by-ref.
+       * We do not need to pfree the old transValue, since it's NULL.
+       */
+      newVal = datumCopyWithMemManager(pergroupstate->transValue,
+                                       fcinfo.arg[1], peraggstate->transtypeByVal,
+                                       peraggstate->transtypeLen, mem_manager);
+      pergroupstate->transValueIsNull = false;
       pergroupstate->noTransValue = false;
+      goto myreturn;
+    }
+    if (pergroupstate->transValueIsNull)
+    {
+      /*
+       * Don't call a strict function with NULL inputs.  Note it is
+       * possible to get here despite the above tests, if the transfn is
+       * strict *and* returned a NULL on a prior cycle. If that happens
+       * we will propagate the NULL all the way to the end.
+       */
+      newVal = pergroupstate->transValue;
+      goto myreturn;
+    }
+  }
 
-    MemoryContextSwitchTo(oldContext);
+  /* We run the transition functions in per-input-tuple memory context */
+  oldContext = MemoryContextSwitchTo(aggstate->tmpcontext->ecxt_per_tuple_memory);
 
-    myreturn:
-    pergroupstate->transValue = newVal;
-  }  /* aggno loop */
+  /*
+   * OK to call the transition function
+   */
+  InitFunctionCallInfoData(fcinfo, &peraggstate->transfn,
+                           peraggstate->numArguments + 1,
+                           (void *) aggstate, NULL);
+  fcinfo.arg[0] = pergroupstate->transValue;
+  fcinfo.argnull[0] = pergroupstate->transValueIsNull;
+
+
+  if (10 == memory_profiler_dataset_size) {
+    int64 val = 0;
+    if (!fcinfo.argnull[0]) {
+      val = DatumGetInt64(fcinfo.arg[0]);
+    }
+    newVal = Int64GetDatum(val +
+                           (int64) DatumGetInt64(fcinfo.arg[1]));
+  }
+  else {
+    newVal = FunctionCallInvoke(&fcinfo);
+  }
+
+  /*
+   * If pass-by-ref datatype, must copy the new value into aggcontext and
+   * pfree the prior transValue.  But if transfn returned a pointer to its
+   * first input, we don't need to do anything.
+   */
+  if (!peraggstate->transtypeByVal &&
+      DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
+  {
+    if (!fcinfo.isnull)
+    {
+      newVal = datumCopyWithMemManager(pergroupstate->transValue,
+                                       newVal, peraggstate->transtypeByVal,
+                                       peraggstate->transtypeLen, mem_manager);
+    }
+  }
+
+  pergroupstate->transValueIsNull = fcinfo.isnull;
+  if (!fcinfo.isnull)
+    pergroupstate->noTransValue = false;
+
+  MemoryContextSwitchTo(oldContext);
+
+  myreturn:
+  pergroupstate->transValue = newVal;
+
 }
 
 /*

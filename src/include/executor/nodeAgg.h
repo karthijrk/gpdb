@@ -177,7 +177,7 @@ extern void
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 				   MemoryManagerContainer *mem_manager);
 extern void
-advance_aggregates_to_be_generated(AggState *aggstate, AggStatePerGroup pergroup,
+advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
            MemoryManagerContainer *mem_manager);
 
 extern List *find_hash_columns(AggState *aggstate);
