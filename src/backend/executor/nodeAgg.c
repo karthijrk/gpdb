@@ -513,130 +513,143 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 				   MemoryManagerContainer *mem_manager)
 {
   int			aggno;
-
-	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
+  if (10 == memory_profiler_dataset_size &&
+      -1 != Gp_segment) {
+    advance_aggregate(0, aggstate, pergroup, mem_manager);
+    advance_aggregate(1, aggstate, pergroup, mem_manager);
+    advance_aggregate(2, aggstate, pergroup, mem_manager);
+    advance_aggregate(3, aggstate, pergroup, mem_manager);
+    advance_aggregate(4, aggstate, pergroup, mem_manager);
+    advance_aggregate(5, aggstate, pergroup, mem_manager);
+    advance_aggregate(6, aggstate, pergroup, mem_manager);
+    advance_aggregate(7, aggstate, pergroup, mem_manager);
+    return;
+  }
+  for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-	  if (10 == memory_profiler_dataset_size) {
-	    advance_aggregate_to_be_generated(aggno, aggstate, pergroup, mem_manager);
-	    return;
-	  }
-		Datum value;
-		bool isnull;
-		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
-		AggStatePerGroup pergroupstate = &pergroup[aggno];
-		Aggref	   *aggref = peraggstate->aggref;
-		PercentileExpr *perc = peraggstate->perc;
-		int			i;
-		TupleTableSlot *slot;
-		int nargs;
-
-		if (aggref)
-			nargs = list_length(aggref->args);
-		else
-		{
-			Assert (perc);
-			nargs = list_length(perc->args);
-		}
-
-		/* Evaluate the current input expressions for this aggregate */
-		slot = ExecProject(peraggstate->evalproj, NULL);
-		slot_getallattrs(slot);	
-		
-		if (peraggstate->numSortCols > 0)
-		{
-			/* DISTINCT and/or ORDER BY case */
-			Assert(slot->PRIVATE_tts_nvalid == peraggstate->numInputs);
-			Assert(!perc);
-
-			/*
-			 * If the transfn is strict, we want to check for nullity before
-			 * storing the row in the sorter, to save space if there are a lot
-			 * of nulls.  Note that we must only check numArguments columns,
-			 * not numInputs, since nullity in columns used only for sorting
-			 * is not relevant here.
-			 */
-			if (peraggstate->transfn.fn_strict)
-			{
-				for (i = 0; i < nargs; i++)
-				{
-					value = slot_getattr(slot, i+1, &isnull);
-					
-					if (isnull)
-						break; /* arg loop */
-				}
-				if (i < nargs)
-					continue; /* aggno loop */
-			}
-			
-			/* OK, put the tuple into the tuplesort object */
-			if (peraggstate->numInputs == 1)
-			{
-				value = slot_getattr(slot, 1, &isnull);
-				
-				if (gp_enable_mk_sort)
-					tuplesort_putdatum_mk((Tuplesortstate_mk*) peraggstate->sortstate,
-									   value,
-									   isnull);
-				else 
-					tuplesort_putdatum((Tuplesortstate*) peraggstate->sortstate,
-									   value,
-									   isnull);
-			}
-			else
-			{
-				if (gp_enable_mk_sort)
-					tuplesort_puttupleslot_mk((Tuplesortstate_mk*) peraggstate->sortstate, 
-											  slot);
-				else 
-					tuplesort_puttupleslot((Tuplesortstate*) peraggstate->sortstate, 
-										   slot);
-			}
-		}
-		else
-		{
-			/* We can apply the transition function immediately */
-			FunctionCallInfoData fcinfo;
-			
-			/* Load values into fcinfo */
-			/* Start from 1, since the 0th arg will be the transition value */
-			Assert(slot->PRIVATE_tts_nvalid >= nargs);
-			if (aggref)
-			{
-				for (i = 0; i < nargs; i++)
-				{
-					fcinfo.arg[i + 1] = slot_getattr(slot, i+1, &isnull);
-					fcinfo.argnull[i + 1] = isnull;
-				}
-
-			}
-			else
-			{
-				/*
-				 * In case of percentile functions, put everything into
-				 * fcinfo's argument since there should be the required
-				 * attributes as arguments in the tuple.
-				 */
-				int		natts;
-
-				Assert(perc);
-				natts = slot->tts_tupleDescriptor->natts;
-				for (i = 0; i < natts; i++)
-				{
-					fcinfo.arg[i + 1] = slot_getattr(slot, i + 1, &isnull);
-					fcinfo.argnull[i + 1] = isnull;
-				}
-			}
-			advance_transition_function(aggstate, peraggstate, pergroupstate,
-										&fcinfo, mem_manager);
-		}
+	  advance_aggregate(aggno, aggstate, pergroup, mem_manager);
 	} /* aggno loop */
 }
 
-void
+__attribute__((always_inline)) void
+advance_aggregate(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
+                  MemoryManagerContainer *mem_manager) {
+  Datum value;
+  bool isnull;
+  AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+  AggStatePerGroup pergroupstate = &pergroup[aggno];
+  Aggref     *aggref = peraggstate->aggref;
+  PercentileExpr *perc = peraggstate->perc;
+  int     i;
+  TupleTableSlot *slot;
+  int nargs;
+
+  if (aggref)
+    nargs = list_length(aggref->args);
+  else
+  {
+    Assert (perc);
+    nargs = list_length(perc->args);
+  }
+
+  /* Evaluate the current input expressions for this aggregate */
+  slot = ExecProject(peraggstate->evalproj, NULL);
+  slot_getallattrs(slot);
+
+  if (peraggstate->numSortCols > 0)
+  {
+    /* DISTINCT and/or ORDER BY case */
+    Assert(slot->PRIVATE_tts_nvalid == peraggstate->numInputs);
+    Assert(!perc);
+
+    /*
+     * If the transfn is strict, we want to check for nullity before
+     * storing the row in the sorter, to save space if there are a lot
+     * of nulls.  Note that we must only check numArguments columns,
+     * not numInputs, since nullity in columns used only for sorting
+     * is not relevant here.
+     */
+    if (peraggstate->transfn.fn_strict)
+    {
+      for (i = 0; i < nargs; i++)
+      {
+        value = slot_getattr(slot, i+1, &isnull);
+
+        if (isnull)
+          break; /* arg loop */
+      }
+      if (i < nargs)
+        //continue; /* aggno loop */
+        return;
+    }
+
+    /* OK, put the tuple into the tuplesort object */
+    if (peraggstate->numInputs == 1)
+    {
+      value = slot_getattr(slot, 1, &isnull);
+
+      if (gp_enable_mk_sort)
+        tuplesort_putdatum_mk((Tuplesortstate_mk*) peraggstate->sortstate,
+                              value,
+                              isnull);
+      else
+        tuplesort_putdatum((Tuplesortstate*) peraggstate->sortstate,
+                           value,
+                           isnull);
+    }
+    else
+    {
+      if (gp_enable_mk_sort)
+        tuplesort_puttupleslot_mk((Tuplesortstate_mk*) peraggstate->sortstate,
+                                  slot);
+      else
+        tuplesort_puttupleslot((Tuplesortstate*) peraggstate->sortstate,
+                               slot);
+    }
+  }
+  else
+  {
+    /* We can apply the transition function immediately */
+    FunctionCallInfoData fcinfo;
+
+    /* Load values into fcinfo */
+    /* Start from 1, since the 0th arg will be the transition value */
+    Assert(slot->PRIVATE_tts_nvalid >= nargs);
+    if (aggref)
+    {
+      for (i = 0; i < nargs; i++)
+      {
+        fcinfo.arg[i + 1] = slot_getattr(slot, i+1, &isnull);
+        fcinfo.argnull[i + 1] = isnull;
+      }
+
+    }
+    else
+    {
+      /*
+       * In case of percentile functions, put everything into
+       * fcinfo's argument since there should be the required
+       * attributes as arguments in the tuple.
+       */
+      int   natts;
+
+      Assert(perc);
+      natts = slot->tts_tupleDescriptor->natts;
+      for (i = 0; i < natts; i++)
+      {
+        fcinfo.arg[i + 1] = slot_getattr(slot, i + 1, &isnull);
+        fcinfo.argnull[i + 1] = isnull;
+      }
+    }
+    advance_transition_function(aggstate, peraggstate, pergroupstate,
+                                &fcinfo, mem_manager);
+  }
+}
+
+__attribute__((always_inline))  void
 advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
            MemoryManagerContainer *mem_manager)
 {
-
   Datum value;
   bool isnull;
   AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
@@ -669,13 +682,7 @@ advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGrou
 
   // TODO : Revist this before team meating.
   /* Evaluate the current input expressions for this aggregate */
-  bool non_use_slot = (2 == memory_profiler_dataset_size ||
-      10 == memory_profiler_dataset_size);
-  if (!non_use_slot) {
-    slot = ExecProject(peraggstate->evalproj, NULL);
-  }
-  else {
-    if (peraggstate->evalproj->pi_isVarList)
+  if (peraggstate->evalproj->pi_isVarList)
     {
       call_ExecVariableList(peraggstate->evalproj,
                             &fcinfo.arg[1],
@@ -690,7 +697,7 @@ advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGrou
                      (ExprDoneCond *) peraggstate->evalproj->pi_itemIsDone,
                      NULL);
     }
-  }
+
 
 
 
@@ -701,22 +708,16 @@ advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGrou
   MemoryContext oldContext;
   Datum   newVal;
 
-
-  for (i = 0; i < nargs; i++)
-  {
-    if (!non_use_slot) {
-      fcinfo.arg[i + 1] = slot_getattr(slot, i+1, &isnull);
-      fcinfo.argnull[i + 1] = isnull;
-    }
-    if (peraggstate->transfn.fn_strict &&
-        fcinfo.argnull[i + 1]) {
-      newVal = pergroupstate->transValue;
-      goto myreturn;
-    }
-  }
-
   if (peraggstate->transfn.fn_strict)
   {
+    for (i = 0; i < nargs; i++)
+    {
+      if (fcinfo.argnull[i + 1]) {
+        newVal = pergroupstate->transValue;
+        goto myreturn;
+      }
+    }
+
     if (pergroupstate->noTransValue)
     {
       /*
@@ -761,17 +762,18 @@ advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGrou
   fcinfo.argnull[0] = pergroupstate->transValueIsNull;
 
 
-  if (10 == memory_profiler_dataset_size) {
-    int64 val = 0;
-    if (!fcinfo.argnull[0]) {
-      val = DatumGetInt64(fcinfo.arg[0]);
-    }
-    newVal = Int64GetDatum(val +
-                           (int64) DatumGetInt64(fcinfo.arg[1]));
-  }
-  else {
-    newVal = FunctionCallInvoke(&fcinfo);
-  }
+//  if (10 == memory_profiler_dataset_size) {
+//    int64 val = 0;
+//    if (!fcinfo.argnull[0]) {
+//      val = DatumGetInt64(fcinfo.arg[0]);
+//    }
+//    newVal = Int64GetDatum(val +
+//                           (int64) DatumGetInt64(fcinfo.arg[1]));
+//  }
+//  else {
+//    newVal = FunctionCallInvoke(&fcinfo);
+//  }
+  newVal = FunctionCallInvoke(&fcinfo);
 
   /*
    * If pass-by-ref datatype, must copy the new value into aggcontext and

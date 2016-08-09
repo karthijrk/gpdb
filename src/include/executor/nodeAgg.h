@@ -176,7 +176,10 @@ initialize_aggregates(AggState *aggstate,
 extern void 
 advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup,
 				   MemoryManagerContainer *mem_manager);
-extern void
+void
+advance_aggregate(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
+           MemoryManagerContainer *mem_manager);
+void
 advance_aggregate_to_be_generated(int aggno, AggState *aggstate, AggStatePerGroup pergroup,
            MemoryManagerContainer *mem_manager);
 
