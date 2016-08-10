@@ -109,7 +109,7 @@ void SetActiveCodeGeneratorManager(void* manager) {
  * @brief Template function to facilitate enroll for any type of
  *        codegen
  *
- * @tparam ClassType Type of Code Generator class
+ * @tparam CodegenType Type of Code Generator class
  * @tparam FuncType Type of the regular function
  * @tparam Args Variable argument that ClassType will take in its constructor
  *
@@ -119,7 +119,7 @@ void SetActiveCodeGeneratorManager(void* manager) {
  *
  * @return Pointer to ClassType
  **/
-template <typename ClassType, typename FuncType, typename ...Args>
+template <typename CodegenType, typename FuncType, typename ...Args>
 CodegenCallsiteInterface* EnrollCodegenCallSite(FuncType regular_func_ptr,
                                                 FuncType* ptr_to_chosen_func_ptr,
                                                 Args&&... args) {  // NOLINT(build/c++11)
@@ -127,11 +127,11 @@ CodegenCallsiteInterface* EnrollCodegenCallSite(FuncType regular_func_ptr,
       GetActiveCodeGeneratorManager());
   if (nullptr == manager ||
       !codegen) {  // if codegen guc is false
-    CodegenCallsite<ClassType, FuncType>::SetToRegular(
+    CodegenCallsite<CodegenType, FuncType>::SetToRegular(
         regular_func_ptr, ptr_to_chosen_func_ptr);
     return nullptr;
   }
-  return manager->EnrollCodegenCallsite<ClassType>(
+  return manager->EnrollCodegenCallsite<CodegenType>(
       CodegenFuncLifespan_Parameter_Invariant,
       regular_func_ptr,
       ptr_to_chosen_func_ptr,
@@ -143,9 +143,9 @@ void* ExecVariableListCodegenEnroll(
     ExecVariableListFn* ptr_to_chosen_func_ptr,
     ProjectionInfo* proj_info,
     TupleTableSlot* slot) {
-  CodegenCallsiteInterface* generator = EnrollCodegenCallSite<ExecVariableListCodegen>(
+  CodegenCallsiteInterface* callsite = EnrollCodegenCallSite<ExecVariableListCodegen>(
       regular_func_ptr, ptr_to_chosen_func_ptr, proj_info, slot);
-  return generator;
+  return callsite;
 }
 
 void* ExecEvalExprCodegenEnroll(
@@ -154,13 +154,13 @@ void* ExecEvalExprCodegenEnroll(
     ExprState *exprstate,
     ExprContext *econtext,
     PlanState* plan_state) {
-  CodegenCallsiteInterface* generator = EnrollCodegenCallSite<ExecEvalExprCodegen>(
+  CodegenCallsiteInterface* callsite = EnrollCodegenCallSite<ExecEvalExprCodegen>(
       regular_func_ptr,
       ptr_to_chosen_func_ptr,
       exprstate,
       econtext,
       plan_state);
-  return generator;
+  return callsite;
 }
 
 

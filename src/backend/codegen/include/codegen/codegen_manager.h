@@ -47,39 +47,46 @@ class CodegenManager {
   ~CodegenManager() = default;
 
   /**
-   * @brief Enroll a code generator with manager
+   * @brief Enroll a CodegenCallsite with manager
    *
-   * @note Manager manages the memory of enrolled generator.
+   * @note Manager manages the memory of enrolled callsite object.
    *
-   * @param funcLifespan Life span of the enrolling generator. Based on life span,
+   * @tparam CodegenType Type of Code Generator class
+   * @tparam FuncType Type of the regular function
+   * @tparam Args Variable argument that ClassType will take in its constructor
+   *
+   * @param funcLifespan Life span of the enrolling callsite object. Based on life span,
    *                     corresponding GpCodegenUtils will be used for code generation
-   * @param generator    Generator that needs to be enrolled with manager.
+   * @param regular_func_ptr Regular version of the target function.
+   * @param ptr_to_chosen_func_ptr Reference to the function pointer that the caller will call.
+   * @param args Variable length argument for ClassType
+   *
    * @return true on successful enrollment.
    **/
-  template <typename ClassType, typename FuncType, typename ...Args>
+  template <typename CodegenType, typename FuncType, typename ...Args>
   CodegenCallsiteInterface* EnrollCodegenCallsite(CodegenFuncLifespan funcLifespan,
-                                   FuncType regular_func_ptr,
-                                   FuncType* ptr_to_chosen_func_ptr,
-                                   Args&&... args) {  // NOLINT(build/c++11)
-    ClassType* generator = new ClassType(
+                                                  FuncType regular_func_ptr,
+                                                  FuncType* ptr_to_chosen_func_ptr,
+                                                  Args&&... args) {  // NOLINT(build/c++11)
+    CodegenType* generator = new CodegenType(
         this, std::forward<Args>(args)...);
-    CodegenCallsiteInterface* callsite_generator =
-        new CodegenCallsite<ClassType, FuncType>(
+    CodegenCallsiteInterface* callsite =
+        new CodegenCallsite<CodegenType, FuncType>(
             this,
             generator,
             regular_func_ptr,
             ptr_to_chosen_func_ptr);
     // Only CodegenFuncLifespan_Parameter_Invariant is supported as of now
     assert(funcLifespan == CodegenFuncLifespan_Parameter_Invariant);
-    assert(nullptr != callsite_generator);
-    enrolled_code_generators_.emplace_back(callsite_generator);
-    return callsite_generator;
+    assert(nullptr != callsite);
+    enrolled_callsites_.emplace_back(callsite);
+    return callsite;
   }
 
   bool EnrollSharedCodegen(CodegenInterface* generator);
 
   /**
-   * @brief Request all enrolled generators to generate code.
+   * @brief Request all enrolled callsites to generate code.
    *
    * @return The number of enrolled codegen that successfully generated code.
    **/
@@ -112,10 +119,10 @@ class CodegenManager {
   bool InvalidateGeneratedFunctions();
 
   /**
-   * @return Number of enrolled generators.
+   * @return Number of enrolled callsites.
    **/
   size_t GetEnrollmentCount() {
-    return enrolled_code_generators_.size();
+    return enrolled_callsites_.size();
   }
 
   /*
@@ -135,8 +142,8 @@ class CodegenManager {
 
   std::string module_name_;
 
-  // List of all enrolled code generators.
-  std::vector<std::unique_ptr<CodegenCallsiteInterface>> enrolled_code_generators_;
+  // List of all enrolled codegen callsites
+  std::vector<std::unique_ptr<CodegenCallsiteInterface>> enrolled_callsites_;
 
   // List of all generator cached
   std::vector<std::unique_ptr<CodegenInterface>> cached_code_generators_;

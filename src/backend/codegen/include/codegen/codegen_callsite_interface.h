@@ -6,7 +6,7 @@
 //    codegen_callsite_interface.h
 //
 //  @doc:
-//    Interface for all code generator for call sites from gpdb
+//    Interface for using generated code in call sites from gpdb
 //
 //---------------------------------------------------------------------------
 #ifndef GPCODEGEN_CODEGEN_CALLSITE_INTERFACE_H_  // NOLINT(build/header_guard)
@@ -25,7 +25,7 @@ namespace gpcodegen {
 class GpCodegenUtils;
 
 /**
- * @brief Interface for all code generators.
+ * @brief Interface for using generated code in call sites from gpdb
  **/
 class CodegenCallsiteInterface {
  public:
@@ -67,7 +67,7 @@ class CodegenCallsiteInterface {
   virtual bool SetToGenerated(gpcodegen::GpCodegenUtils* codegen_utils) = 0;
 
   /**
-   * @brief Resets the state of the generator, including reverting back to
+   * @brief Resets the state, including reverting back to
    *        the regular version of the function.
    *
    **/

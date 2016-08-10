@@ -37,16 +37,16 @@ bool CodegenManager::EnrollSharedCodegen(CodegenInterface* generator) {
 
 unsigned int CodegenManager::GenerateCode() {
   // First, allow all code generators to initialize their dependencies
-  for (size_t i = 0; i < enrolled_code_generators_.size(); ++i) {
+  for (size_t i = 0; i < enrolled_callsites_.size(); ++i) {
     // NB: This list is still volatile at this time, as more generators may be
     // enrolled as we iterate to initialize dependencies.
-    enrolled_code_generators_[i]->InitDependencies();
+    enrolled_callsites_[i]->InitDependencies();
   }
   // Then ask them to generate code
   unsigned int success_count = 0;
-  for (std::unique_ptr<CodegenCallsiteInterface>& generator :
-      enrolled_code_generators_) {
-    success_count += generator->GenerateCode(codegen_utils_.get());
+  for (std::unique_ptr<CodegenCallsiteInterface>& callsite :
+      enrolled_callsites_) {
+    success_count += callsite->GenerateCode(codegen_utils_.get());
   }
   return success_count;
 }
@@ -55,7 +55,7 @@ unsigned int CodegenManager::PrepareGeneratedFunctions() {
   unsigned int success_count = 0;
 
   // If no generator registered, just return with success count as 0
-  if (enrolled_code_generators_.empty()) {
+  if (enrolled_callsites_.empty()) {
     return success_count;
   }
 
@@ -71,9 +71,9 @@ unsigned int CodegenManager::PrepareGeneratedFunctions() {
   // On successful compilation, go through all generator and swap
   // the pointer so compiled function get called
   gpcodegen::GpCodegenUtils* codegen_utils = codegen_utils_.get();
-  for (std::unique_ptr<CodegenCallsiteInterface>& generator :
-      enrolled_code_generators_) {
-    success_count += generator->SetToGenerated(codegen_utils);
+  for (std::unique_ptr<CodegenCallsiteInterface>& callsite :
+      enrolled_callsites_) {
+    success_count += callsite->SetToGenerated(codegen_utils);
   }
   return success_count;
 }

@@ -33,9 +33,11 @@ namespace gpcodegen {
 class CodegenManager;
 
 /**
- * @brief Base code generator with common implementation that other
- *      code generators can use.
+ * @brief Implement CodgenCallSiteInterface to use generated code from
+ *        CodegenType for given callsites.
  *
+ * @tparam CodegenType Type of CodegenInterface to use for getting generated
+ *         code.
  * @tparam FuncPtrType Function type for regular version of target functions
  *         or generated functions.
  **/
@@ -43,7 +45,7 @@ template <typename CodegenType, typename FuncPtrType>
 class CodegenCallsite: public CodegenCallsiteInterface {
  public:
   /**
-   * @brief Destroys the code generator and reverts back to using regular
+   * @brief Destroys and reverts back to using regular
    *        version of the target function.
    **/
   virtual ~CodegenCallsite() {
@@ -149,6 +151,8 @@ class CodegenCallsite: public CodegenCallsiteInterface {
   FuncPtrType* ptr_to_chosen_func_ptr_;
   std::unique_ptr<CodegenType> generator_;
 
+  // Declared as friend, so CodegenManager can create CodegenCallsite
+  // but not other class
   friend class CodegenManager;
 };
 
