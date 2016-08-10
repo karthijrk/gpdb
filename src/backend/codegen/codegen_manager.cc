@@ -31,15 +31,6 @@ CodegenManager::CodegenManager(const std::string& module_name) {
   codegen_utils_.reset(new gpcodegen::GpCodegenUtils(module_name));
 }
 
-bool CodegenManager::EnrollCodegenCallsite(
-    CodegenFuncLifespan funcLifespan, CodegenCallsiteInterface* generator) {
-  // Only CodegenFuncLifespan_Parameter_Invariant is supported as of now
-  assert(funcLifespan == CodegenFuncLifespan_Parameter_Invariant);
-  assert(nullptr != generator);
-  enrolled_code_generators_.emplace_back(generator);
-  return true;
-}
-
 bool CodegenManager::EnrollSharedCodegen(CodegenInterface* generator) {
   cached_code_generators_.emplace_back(generator);
 }

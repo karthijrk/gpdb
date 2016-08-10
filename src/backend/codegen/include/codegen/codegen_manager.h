@@ -19,6 +19,7 @@
 
 #include "codegen/utils/macros.h"
 #include "codegen/codegen_wrapper.h"
+#include "codegen/codegen_callsite.h"
 
 namespace gpcodegen {
 /** \addtogroup gpcodegen
@@ -55,8 +56,25 @@ class CodegenManager {
    * @param generator    Generator that needs to be enrolled with manager.
    * @return true on successful enrollment.
    **/
-  bool EnrollCodegenCallsite(CodegenFuncLifespan funcLifespan,
-                             CodegenCallsiteInterface* generator);
+  template <typename ClassType, typename FuncType, typename ...Args>
+  CodegenCallsiteInterface* EnrollCodegenCallsite(CodegenFuncLifespan funcLifespan,
+                                   FuncType regular_func_ptr,
+                                   FuncType* ptr_to_chosen_func_ptr,
+                                   Args&&... args) {  // NOLINT(build/c++11)
+    ClassType* generator = new ClassType(
+        this, std::forward<Args>(args)...);
+    CodegenCallsiteInterface* callsite_generator =
+        new CodegenCallsite<ClassType, FuncType>(
+            this,
+            generator,
+            regular_func_ptr,
+            ptr_to_chosen_func_ptr);
+    // Only CodegenFuncLifespan_Parameter_Invariant is supported as of now
+    assert(funcLifespan == CodegenFuncLifespan_Parameter_Invariant);
+    assert(nullptr != callsite_generator);
+    enrolled_code_generators_.emplace_back(callsite_generator);
+    return callsite_generator;
+  }
 
   bool EnrollSharedCodegen(CodegenInterface* generator);
 

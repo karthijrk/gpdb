@@ -114,7 +114,7 @@ class CodegenCallsite: public CodegenCallsiteInterface {
     return true;
   }
 
- public:
+ protected:
   /**
    * @brief Constructor
    *
@@ -148,6 +148,8 @@ class CodegenCallsite: public CodegenCallsiteInterface {
   FuncPtrType regular_func_ptr_;
   FuncPtrType* ptr_to_chosen_func_ptr_;
   std::unique_ptr<CodegenType> generator_;
+
+  friend class CodegenManager;
 };
 
 /** @} */
