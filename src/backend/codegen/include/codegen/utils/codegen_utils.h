@@ -119,6 +119,11 @@ class CodegenUtils {
     return module_.get();
   }
 
+  llvm::Function* CloneFunction(llvm::Function* function) {
+    llvm::ValueToValueMapTy _vmap;
+    return llvm::CloneFunction(function, _vmap, false);
+  }
+
   /**
    * @brief Get a C++ type's equivalent in the LLVM type system.
    *

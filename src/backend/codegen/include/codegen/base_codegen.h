@@ -18,6 +18,7 @@ extern "C" {
 
 #include <string>
 #include <vector>
+#include <ctime>
 #include "codegen/utils/gp_codegen_utils.h"
 #include "codegen/codegen_manager.h"
 #include "codegen/codegen_interface.h"
@@ -57,8 +58,22 @@ class BaseCodegen: public CodegenInterface {
 
   bool GenerateCode(gpcodegen::GpCodegenUtils* codegen_utils) final {
     bool valid_generated_functions = true;
+    std::clock_t    start;
+    start = std::clock();
     valid_generated_functions &= GenerateCodeInternal(codegen_utils);
+    std::clock_t end = std::clock();
+    elog(INFO, "Generation time for '%s' is %lf ms",
+         GetOrigFuncName().c_str(), (end - start) / (double)(CLOCKS_PER_SEC / 1000));
 
+    if (!uncompiled_generated_functions_.empty()) {
+      std::unique_ptr<GpCodegenUtils> temp(new GpCodegenUtils("temp"));
+      start = std::clock();
+      llvm::Function* cloned_func = temp->CloneFunction(uncompiled_generated_functions_[0]);
+      std::clock_t end = std::clock();
+      elog(INFO, "Clone time for '%s' is %lf ms",
+           GetOrigFuncName().c_str(), (end - start) / (double)(CLOCKS_PER_SEC / 1000));
+      cloned_func->eraseFromParent();
+    }
     // Do this check only if it enabled by guc
     if (codegen_validate_functions && valid_generated_functions) {
       for (llvm::Function* function : uncompiled_generated_functions_) {
@@ -97,9 +112,13 @@ class BaseCodegen: public CodegenInterface {
       assert(*ptr_to_chosen_func_ptr_ == regular_func_ptr_);
       return false;
     }
-
+    std::clock_t    start;
+    start = std::clock();
     FuncPtrType compiled_func_ptr = codegen_utils->GetFunctionPointer<
         FuncPtrType>(GetUniqueFuncName());
+    std::clock_t end = std::clock();
+    elog(INFO, "GetFunctionPtr time for '%s' is %lf ms",
+         GetOrigFuncName().c_str(), (end - start) / (double)(CLOCKS_PER_SEC / 1000));
 
     if (nullptr != compiled_func_ptr) {
       *ptr_to_chosen_func_ptr_ = compiled_func_ptr;

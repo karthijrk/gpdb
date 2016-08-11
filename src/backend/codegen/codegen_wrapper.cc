@@ -25,6 +25,8 @@
 
 extern "C" {
 #include "lib/stringinfo.h"
+#include "utils/inval.h"
+#include "utils/syscache.h"
 }
 
 using gpcodegen::CodegenManager;
@@ -37,6 +39,90 @@ static void* ActiveCodeGeneratorManager = nullptr;
 
 extern bool codegen;  // defined from guc
 extern bool init_codegen;  // defined from guc
+
+static bool mdcache_invalidation_counter_registered = false;
+static int64 mdcache_invalidation_counter = 0;
+static int64 last_mdcache_invalidation_counter = 0;
+
+static void
+mdsyscache_invalidation_counter_callback(Datum arg, int cacheid,  ItemPointer tuplePtr)
+{
+  mdcache_invalidation_counter++;
+}
+
+static void
+mdrelcache_invalidation_counter_callback(Datum arg, Oid relid)
+{
+  mdcache_invalidation_counter++;
+}
+
+static void
+register_mdcache_invalidation_callbacks(void)
+{
+  /* These are all the catalog tables that we care about. */
+  int     metadata_caches[] = {
+    AGGFNOID,     /* pg_aggregate */
+    AMOPOPID,     /* pg_amop */
+    CASTSOURCETARGET, /* pg_cast */
+    CONSTROID,      /* pg_constraint */
+    OPEROID,      /* pg_operator */
+    OPFAMILYOID,    /* pg_opfamily */
+    PARTOID,      /* pg_partition */
+    PARTRULEOID,    /* pg_partition_rule */
+    STATRELATT,     /* pg_statistics */
+    TYPEOID,      /* pg_type */
+    PROCOID,      /* pg_proc */
+
+    /*
+     * lookup_type_cache() will also access pg_opclass, via GetDefaultOpClass(),
+     * but there is no syscache for it. Postgres doesn't seem to worry about
+     * invalidating the type cache on updates to pg_opclass, so we don't
+     * worry about that either.
+     */
+    /* pg_opclass */
+
+    /*
+     * Information from the following catalogs are included in the
+     * relcache, and any updates will generate relcache invalidation
+     * event. We'll catch the relcache invalidation event and don't need
+     * to register a catcache callback for them.
+     */
+    /* pg_class */
+    /* pg_index */
+    /* pg_trigger */
+
+    /*
+     * pg_exttable is only updated when a new external table is dropped/created,
+     * which will trigger a relcache invalidation event.
+     */
+    /* pg_exttable */
+
+    /*
+     * XXX: no syscache on pg_inherits. Is that OK? For any partitioning
+     * changes, I think there will also be updates on pg_partition and/or
+     * pg_partition_rules.
+     */
+    /* pg_inherits */
+
+    /*
+     * We assume that gp_segment_config will not change on the fly in a way that
+     * would affect ORCA
+     */
+    /* gp_segment_config */
+  };
+  int     i;
+
+  for (i = 0; i < lengthof(metadata_caches); i++)
+  {
+    CacheRegisterSyscacheCallback(metadata_caches[i],
+                    &mdsyscache_invalidation_counter_callback,
+                    (Datum) 0);
+  }
+
+  /* also register the relcache callback */
+  CacheRegisterRelcacheCallback(&mdrelcache_invalidation_counter_callback,
+                  (Datum) 0);
+}
 
 // Perform global set-up tasks for code generation. Returns 0 on
 // success, nonzero on error.
@@ -145,6 +231,11 @@ void* ExecVariableListCodegenEnroll(
     ExecVariableListFn* ptr_to_chosen_func_ptr,
     ProjectionInfo* proj_info,
     TupleTableSlot* slot) {
+  static bool is_registered = false;
+  if (!is_registered) {
+    register_mdcache_invalidation_callbacks();
+    is_registered = true;
+  }
   ExecVariableListCodegen* generator = CodegenEnroll<ExecVariableListCodegen>(
       regular_func_ptr, ptr_to_chosen_func_ptr, proj_info, slot);
   return generator;
@@ -164,6 +255,8 @@ void* ExecEvalExprCodegenEnroll(
       plan_state);
   return generator;
 }
+
+
 
 
 
