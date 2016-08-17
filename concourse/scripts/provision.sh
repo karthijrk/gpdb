@@ -10,30 +10,30 @@ error() {
 }
 
 main() {
-    install_tools
     check_config
+	check_tools
     run_instances
 }
 
-install_tools() {
-    # ec2 toolset
-    yum install -y java-1.8.0-openjdk
-    wget http://s3.amazonaws.com/ec2-downloads/ec2-api-tools.zip
-    mkdir /usr/local/ec2
-    unzip ec2-api-tools.zip -d /usr/local/ec2
+check_tools() {
+  if ! command -v ec2-run-instances >/dev/null 2>&1; then
+    error "Amazon EC2 API Tools not installed (see http://aws.amazon.com/developertools/351)"
+  fi
 }
+
 
 check_config() {
     # Error out when secret keys are not set
-    if [[ -z $AWS_ACCESS_KEY_ID ]]; then
-        error " AWS_ACCESS_KEY_ID must be specified."
+    if [[ -z $AWS_ACCESS_KEY ]]; then
+        error " AWS_ACCESS_KEY must be specified."
     fi
-    if [[ -z $AWS_SECRET_ACCESS_KEY ]]; then
-        error "AWS_SECRET_ACCESS_KEY must be specified."
+    if [[ -z $AWS_SECRET_KEY ]]; then
+        error "AWS_SECRET_KEY must be specified."
     fi
     if [[ -z $AWS_KEYPAIR ]]; then
         error "AWS_KEYPAIR must be specified."
     fi
+
 
     # Display values for non-secret configuration values
     if [[ -z $AWS_REGION ]]; then
@@ -90,7 +90,7 @@ run_instances() {
       cut -f2
     ))
 
-    log "Done."
+    log "Created instances: ${INSTANCE_IDS[*]}"
 
 }
 

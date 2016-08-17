@@ -1,5 +1,5 @@
 platform: linux
-image: docker:///pivotaldata/gpdb-devel-gcc5#centos6
+image: docker:///pivotaldata/gpdb-devel-gcc5#perf
 inputs:
   - name: gpdb_src
 run:
