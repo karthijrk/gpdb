@@ -97,9 +97,7 @@ run_instances() {
         --show-empty-fields \
         -k $AWS_KEYPAIR \
         --instance-type $INSTANCE_TYPE \
-        #--subnet $SUBNET_ID \
         --associate-public-ip-address true |
-        #${MAPPINGS} |
       grep INSTANCE |
       cut -f2
     ))
