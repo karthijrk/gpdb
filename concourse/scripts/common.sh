@@ -21,7 +21,8 @@ check_config() {
         error "AWS_KEYPAIR must be specified."
     fi
 
-	log "Configuration"
+	  log "Configuration"
+	  log "=============================="
 
     # Display values for non-secret configuration values
     if [[ -z $AWS_REGION ]]; then
@@ -78,7 +79,7 @@ check_config() {
         log "RETRIES=${RETRIES}"
     fi
 
-	log "=============================="
+	  log "=============================="
 }
 
 wait_until_status() {
