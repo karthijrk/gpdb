@@ -2,8 +2,8 @@
 
 set +x
 
-RETRIES=3
-WAIT=15
+RETRIES=6
+WAIT=30
 
 log() {
     echo -e "$@"
