@@ -16,7 +16,11 @@ main() {
 }
 
 install_tools() {
-    yum install -y epel-release awscli
+    # ec2 toolset
+    yum install -y java-1.8.0-openjdk
+    wget http://s3.amazonaws.com/ec2-downloads/ec2-api-tools.zip
+    mkdir /usr/local/ec2
+    unzip ec2-api-tools.zip -d /usr/local/ec2
 }
 
 check_config() {
@@ -72,12 +76,19 @@ check_config() {
 run_instances() {
     log "Starting instances"
 
-    aws ec2 run-instances \
-        --image-id ${AMI} \
-        --count 1 \
-        --instance-type ${INSTANCE_TYPE} \
-        --key-name ${AWS_KEYPAIR} \
-        --placement Tenancy=${TENANCY}
+    INSTANCE_IDS=($(
+      ec2-run-instances $IMAGE_ID \
+        -n 1 \
+        --tenancy ${TENANCY} \
+        --show-empty-fields \
+        -k $AWS_KEYPAIR \
+        --instance-type $INSTANCE_TYPE \
+        #--subnet $SUBNET_ID \
+        --associate-public-ip-address true \
+        #${MAPPINGS} |
+      grep INSTANCE |
+      cut -f2
+    ))
 
     log "Done."
 

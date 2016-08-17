@@ -25,8 +25,8 @@ jobs:
   - task: provision_instance
     file: gpdb_src/concourse/provision.yml
     params:
-      AWS_ACCESS_KEY_ID : {{aws-access_key_id}}
-      AWS_SECRET_ACCESS_KEY : {{aws-secret_access_key}}
+      AWS_ACCESS_KEY_ID : {{aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY : {{aws-secret-access-key}}
       AWS_KEYPAIR : "gporca"
       AWS_REGION : "us-west-1"
       AMI : "ami-7f7ab01f"
