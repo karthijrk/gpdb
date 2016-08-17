@@ -25,14 +25,14 @@ jobs:
   - task: provision_instance
     file: gpdb_src/concourse/provision.yml
     params:
-      AWS_SECRET_KEY : "FO"
-      AWS_ACCESS_KEY : "FA"
-      AWS_KEYPAIR : "keypair"
-      AMI : "ami"
-      INSTANCE_TYPE : "instance type"
+      AWS_ACCESS_KEY_ID : {{aws-access_key_id}}
+      AWS_SECRET_ACCESS_KEY : {{aws-secret_access_key}}
+      AWS_KEYPAIR : "gporca"
+      AWS_REGION : "us-west-1"
+      AMI : "ami-7f7ab01f"
+      INSTANCE_TYPE : "t1.micro"
       VPC_ID : "vpc=id"
       SUBNET_ID : "subnet-id"
       SSH_USER : "centos"
-      IMAGE_NAME : "Greenplum Database Virtual Appliance"
       TENANCY : "default"
 
