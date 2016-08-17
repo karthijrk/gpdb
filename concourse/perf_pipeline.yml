@@ -28,7 +28,7 @@ jobs:
       AWS_ACCESS_KEY : {{aws-access-key-id}}
       AWS_SECRET_KEY : {{aws-secret-access-key}}
       AWS_KEYPAIR : "gporca"
-      AWS_REGION : "us-west-1"
+      AWS_REGION : "us-west-2"
       AMI : "ami-7f7ab01f"
       INSTANCE_TYPE : "t1.micro"
       VPC_ID : "vpc=id"

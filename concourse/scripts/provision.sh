@@ -82,6 +82,7 @@ run_instances() {
     INSTANCE_IDS=($(
       ec2-run-instances $AMI \
         -n 1 \
+		--region ${AWS_REGION} \
         --tenancy ${TENANCY} \
         --show-empty-fields \
         -k $AWS_KEYPAIR \
