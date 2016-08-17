@@ -2,7 +2,7 @@
 
 set +x
 
-source scripts/common.sh
+source $(dirname "$0")/scripts/common.sh
 
 main() {
     check_config
