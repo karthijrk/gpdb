@@ -2,8 +2,6 @@
 
 set +x
 
-RETRIES=6
-WAIT=30
 
 log() {
     echo -e "$@"
@@ -19,6 +17,7 @@ main() {
 	check_tools
 
     run_instances
+    set_networking
 
     print_addresses
 }
@@ -86,6 +85,17 @@ check_config() {
         error "TENANCY must be specified."
     else
         log "TENANCY=${TENANCY}"
+    fi
+    if [[ -z $WAIT_SECS ]]; then
+        error "WAIT_SECS must be specified."
+    else
+        log "WAIT_SECS=${WAIT_SECS}"
+        export WAIT=${WAIT_SECS}
+    fi
+    if [[ -z $RETRIES ]]; then
+        error "RETRIES must be specified."
+    else
+        log "RETRIES=${RETRIES}"
     fi
 
 	log "=============================="
@@ -182,6 +192,25 @@ wait_until_check_ok() {
   if [[ $N -ge $RETRIES ]]; then
     error "Timed out waiting for instances to pass status checks"
   fi
+}
+
+set_networking() {
+  log "Enabling enhanced networking"
+
+  ec2-stop-instances ${INSTANCE_IDS[*]}
+
+  wait_until_status "stopped"
+
+  for INSTANCE_ID in ${INSTANCE_IDS[*]}; do
+    log "Enabling enhanced networking for ${INSTANCE_ID}"
+
+    ec2-modify-instance-attribute $INSTANCE_ID --sriov simple
+  done
+
+  ec2-start-instances ${INSTANCE_IDS[*]}
+
+  wait_until_status "running"
+  wait_until_check_ok
 }
 
 print_addresses() {

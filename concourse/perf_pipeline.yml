@@ -36,4 +36,6 @@ jobs:
       SUBNET_ID : "subnet-id"
       SSH_USER : "centos"
       TENANCY : "default"
+      WAIT_SECS : "30"
+      RETRIES : "10"
 
