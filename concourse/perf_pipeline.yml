@@ -48,5 +48,27 @@ jobs:
       RETRIES : "10"
   - put: instance_ids
     params:
-      file: output/instance_ids.txt
+      file: instance_info/instance_ids.txt
+- name: unprovision
+  max_in_flight: 1
+  plan:
+  - get: instance_ids
+    passed: [provision]
+    trigger: true
+  - task: unprovision_instance
+    file: gpdb_src/concourse/unprovision.yml
+    params:
+      AWS_ACCESS_KEY : {{aws-access-key-id}}
+      AWS_SECRET_KEY : {{aws-secret-access-key}}
+      AWS_KEYPAIR : "gporca"
+      AWS_REGION : "us-west-2"
+      AMI : "ami-7f7ab01f"
+      INSTANCE_TYPE : "t2.micro"
+      INSTANCE_NAME : "qp-perf-test0"
+      VPC_ID : "vpc=id"
+      SUBNET_ID : "subnet-id"
+      SSH_USER : "centos"
+      TENANCY : "default"
+      WAIT_SECS : "30"
+      RETRIES : "10"
 
