@@ -9,7 +9,7 @@ main() {
 	check_tools
 
     run_instances
-    set_networking
+#    set_networking
 
     print_addresses
 }
