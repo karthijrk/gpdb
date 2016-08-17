@@ -34,6 +34,7 @@ check_config() {
         error "AWS_KEYPAIR must be specified."
     fi
 
+	log "Configuration"
 
     # Display values for non-secret configuration values
     if [[ -z $AWS_REGION ]]; then
@@ -71,13 +72,15 @@ check_config() {
     else
         log "TENANCY=${TENANCY}"
     fi
+
+	log "=============================="
 }
 
 run_instances() {
     log "Starting instances"
 
     INSTANCE_IDS=($(
-      ec2-run-instances $IMAGE_ID \
+      ec2-run-instances $AMI \
         -n 1 \
         --tenancy ${TENANCY} \
         --show-empty-fields \
