@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set +x
+
 RETRIES=3
 
 log() {
@@ -46,6 +48,8 @@ check_config() {
         error "AWS_REGION must be specified."
     else
         log "AWS_REGION=${AWS_REGION}"
+        export EC2_URL="https://ec2.${AWS_REGION}.amazonaws.com"
+        log "EC2_URL=${EC2_URL}"
     fi
     if [[ -z $AMI ]]; then
         error "AMI must be specified."
@@ -92,7 +96,6 @@ run_instances() {
     INSTANCE_IDS=($(
       ec2-run-instances $AMI \
         -n 1 \
-		--region ${AWS_REGION} \
         --tenancy ${TENANCY} \
         --show-empty-fields \
         -k $AWS_KEYPAIR \
