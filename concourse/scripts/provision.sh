@@ -1,5 +1,7 @@
 #!/bin/bash
 
+RETRIES=3
+
 log() {
     echo -e "$@"
 }
@@ -12,7 +14,10 @@ error() {
 main() {
     check_config
 	check_tools
+
     run_instances
+
+    print_addresses
 }
 
 check_tools() {
@@ -52,6 +57,11 @@ check_config() {
     else
         log "INSTANCE_TYPE=${INSTANCE_TYPE}"
     fi
+    if [[ -z $INSTANCE_NAME ]]; then
+        error "INSTANCE_NAME must be specified."
+    else
+        log "INSTANCE_NAME=${INSTANCE_NAME}"
+    fi
     if [[ -z $VPC_ID ]]; then
         error "VPC_ID must be specified."
     else
@@ -88,7 +98,7 @@ run_instances() {
         -k $AWS_KEYPAIR \
         --instance-type $INSTANCE_TYPE \
         #--subnet $SUBNET_ID \
-        --associate-public-ip-address true \
+        --associate-public-ip-address true |
         #${MAPPINGS} |
       grep INSTANCE |
       cut -f2
@@ -96,7 +106,88 @@ run_instances() {
 
     log "Created instances: ${INSTANCE_IDS[*]}"
 
+	local INSTANCE_ID=${INSTANCE_IDS}
+	ec2-create-tags ${INSTANCE_ID} -t Name=${INSTANCE_NAME}
+
+	wait_until_status "running"
+    wait_until_check_ok
 }
 
+wait_until_status() {
+  local STATUS=$1
+
+  log "Waiting for status: ${STATUS}"
+
+  local N=0
+  until [[ $N -ge $RETRIES ]]; do
+    local COUNT=$(
+      ec2-describe-instances --show-empty-fields ${INSTANCE_IDS[*]} |
+      grep INSTANCE |
+      cut -f6 |
+      grep -c ${STATUS}
+    ) || true
+
+    log "${COUNT} of ${#INSTANCE_IDS[@]} instances ${STATUS}"
+
+    [[ "$COUNT" -eq "${#INSTANCE_IDS[@]}" ]] && break
+
+    N=$(($N+1))
+    sleep $WAIT
+  done
+
+  if [[ $N -ge $RETRIES ]]; then
+    error "Timed out waiting for instances to reach status: ${STATUS}"
+  fi
+}
+
+wait_until_check_ok() {
+  local STATUS=$1
+
+  log "Waiting for instances to pass status checks"
+
+  local N=0
+  until [[ $N -ge $RETRIES ]]; do
+    local COUNT
+
+    COUNT=$(
+      ec2-describe-instance-status --show-empty-fields ${INSTANCE_IDS[*]} |
+      grep -e "\bINSTANCE\b" |
+      cut -f6,7 |
+      xargs -n 2 |
+      grep -c "ok ok"
+    ) || true
+
+    log "${COUNT} of ${#INSTANCE_IDS[@]} instances pass status checks"
+
+    [[ "$COUNT" -eq "${#INSTANCE_IDS[@]}" ]] && break
+
+    COUNT=$(
+      ec2-describe-instance-status --show-empty-fields ${INSTANCE_IDS[*]} |
+      grep -e "\bINSTANCE\b" |
+      cut -f6,7 |
+      xargs -n 2 |
+      grep -c "impaired"
+    ) || true
+
+    if [[ "$COUNT" -gt 0 ]]; then
+      error "${COUNT} of ${#INSTANCE_IDS[@]} failed to pass status checks"
+    fi
+
+    N=$(($N+1))
+    sleep $WAIT
+  done
+
+  if [[ $N -ge $RETRIES ]]; then
+    error "Timed out waiting for instances to pass status checks"
+  fi
+}
+
+print_addresses() {
+  log "Provision complete\n\n"
+
+  log "INSTANCE\tPUBLIC IP\tPRIVATE IP"
+
+  ec2-describe-instances --show-empty-fields ${INSTANCE_IDS[*]} | grep INSTANCE | cut -f2,17,18
+}
 
 main "$@"

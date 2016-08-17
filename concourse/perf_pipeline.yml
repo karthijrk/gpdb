@@ -15,7 +15,7 @@ resources:
 ########
 jobs:
 - name: provision
-  max_in_flight: 1
+  max_in_flight: 1  ## IMPORTANT
   plan:
   - aggregate:
     - get: gpdb_src
@@ -30,7 +30,8 @@ jobs:
       AWS_KEYPAIR : "gporca"
       AWS_REGION : "us-west-2"
       AMI : "ami-7f7ab01f"
-      INSTANCE_TYPE : "t1.micro"
+      INSTANCE_TYPE : "t2.micro"
+      INSTANCE_NAME : "qp-perf-test0"
       VPC_ID : "vpc=id"
       SUBNET_ID : "subnet-id"
       SSH_USER : "centos"
