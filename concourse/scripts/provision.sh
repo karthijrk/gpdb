@@ -3,6 +3,7 @@
 set +x
 
 RETRIES=3
+WAIT=15
 
 log() {
     echo -e "$@"
