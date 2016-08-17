@@ -35,6 +35,7 @@ run_instances() {
       grep INSTANCE |
       cut -f2
     ))
+	echo ${INSTANCE_IDS} > output/instance_ids.txt
 
     log "Created instances: ${INSTANCE_IDS[*]}"
 

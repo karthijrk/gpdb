@@ -9,13 +9,21 @@ resources:
     private_key: {{gpdb_deploy_key}}
     uri: git@github.com:hardikar/gpdb.git
 
+- name: instance_ids
+  type: s3
+  source:
+    access_key_id: {{aws-access-key-id}}
+    bucket: {{bucket-name}}
+    region_name: {{aws-region}}
+    secret_access_key: {{aws-secret-access-key}}
+    versioned_file: instance_ids.txt
 
 ########
 # JOBS #
 ########
 jobs:
 - name: provision
-  max_in_flight: 1  ## IMPORTANT
+  max_in_flight: 1
   plan:
   - aggregate:
     - get: gpdb_src
@@ -38,4 +46,7 @@ jobs:
       TENANCY : "default"
       WAIT_SECS : "30"
       RETRIES : "10"
+  - put: instance_ids
+    params:
+      file: output/instance_ids.txt
 

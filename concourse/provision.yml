@@ -2,6 +2,8 @@ platform: linux
 image: docker:///pivotaldata/gpdb-devel-gcc5#perf
 inputs:
   - name: gpdb_src
+outputs:
+  - name: output
 run:
   path: /bin/bash
   args:
