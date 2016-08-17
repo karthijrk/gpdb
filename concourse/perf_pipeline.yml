@@ -48,7 +48,7 @@ jobs:
       RETRIES : "10"
   - put: instance_ids
     params:
-      file: instance_info/instance_ids.txt
+      file: instance_ids/instance_ids.txt
 - name: unprovision
   max_in_flight: 1
   plan:
