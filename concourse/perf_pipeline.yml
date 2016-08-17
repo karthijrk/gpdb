@@ -52,9 +52,13 @@ jobs:
 - name: unprovision
   max_in_flight: 1
   plan:
-  - get: instance_ids
-    passed: [provision]
-    trigger: true
+  - aggregate:
+    - get: gpdb_src
+      params:
+        submodules: none
+    - get: instance_ids
+      passed: [provision]
+      trigger: true
   - task: unprovision_instance
     file: gpdb_src/concourse/unprovision.yml
     params:
