@@ -3,7 +3,7 @@ image: docker:///pivotaldata/gpdb-devel-gcc5#perf
 inputs:
   - name: gpdb_src
 outputs:
-  - name: instance_info
+  - name: instance_ids
 run:
   path: /bin/bash
   args:
