@@ -32,7 +32,7 @@ jobs:
       trigger: true
   - task: provision_instance
     file: gpdb_src/concourse/provision.yml
-    params:
+    params: &provision_param
       AWS_ACCESS_KEY : {{aws-access-key-id}}
       AWS_SECRET_KEY : {{aws-secret-access-key}}
       AWS_KEYPAIR : "gporca"
@@ -46,6 +46,10 @@ jobs:
       TENANCY : "default"
       WAIT_SECS : "30"
       RETRIES : "10"
+    on_failure:
+      task: unprovision_instance
+      file: gpdb_src/concourse/unprovision.yml
+      params: *provision_param
   - put: instance_ids
     params:
       file: instance_ids/instance_ids.txt
@@ -61,20 +65,11 @@ jobs:
       trigger: true
   - task: buildgpdb_instance
     file: gpdb_src/concourse/buildgpdb_instance.yml
-    params:
-      AWS_ACCESS_KEY : {{aws-access-key-id}}
-      AWS_SECRET_KEY : {{aws-secret-access-key}}
-      AWS_KEYPAIR : "gporca"
-      AWS_REGION : "us-west-2"
-      AMI : "ami-7f7ab01f"
-      INSTANCE_TYPE : "t2.micro"
-      INSTANCE_NAME : "qp-perf-test0"
-      VPC_ID : "vpc=id"
-      SUBNET_ID : "subnet-id"
-      SSH_USER : "centos"
-      TENANCY : "default"
-      WAIT_SECS : "30"
-      RETRIES : "10"
+    params: *provision_param
+    on_failure:
+      task: unprovision_instance
+      file: gpdb_src/concourse/unprovision.yml
+      params: *provision_param
 - name: unprovision
   max_in_flight: 1
   plan:
@@ -87,17 +82,4 @@ jobs:
       trigger: true
   - task: unprovision_instance
     file: gpdb_src/concourse/unprovision.yml
-    params:
-      AWS_ACCESS_KEY : {{aws-access-key-id}}
-      AWS_SECRET_KEY : {{aws-secret-access-key}}
-      AWS_KEYPAIR : "gporca"
-      AWS_REGION : "us-west-2"
-      AMI : "ami-7f7ab01f"
-      INSTANCE_TYPE : "t2.micro"
-      INSTANCE_NAME : "qp-perf-test0"
-      VPC_ID : "vpc=id"
-      SUBNET_ID : "subnet-id"
-      SSH_USER : "centos"
-      TENANCY : "default"
-      WAIT_SECS : "30"
-      RETRIES : "10"
+    params: *provision_param
