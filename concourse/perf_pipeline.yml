@@ -7,7 +7,7 @@ resources:
   source:
     branch: concourse_perf
     private_key: {{gpdb_deploy_key}}
-    uri: git@github.com:hardikar/gpdb.git
+    uri: git@github.com:karthijrk/gpdb.git
 
 - name: instance_ids
   type: s3
@@ -49,7 +49,7 @@ jobs:
   - put: instance_ids
     params:
       file: instance_ids/instance_ids.txt
-- name: unprovision
+- name: buildgpdb
   max_in_flight: 1
   plan:
   - aggregate:
@@ -58,6 +58,32 @@ jobs:
         submodules: none
     - get: instance_ids
       passed: [provision]
+      trigger: true
+  - task: buildgpdb_instance
+    file: gpdb_src/concourse/buildgpdb_instance.yml
+    params:
+      AWS_ACCESS_KEY : {{aws-access-key-id}}
+      AWS_SECRET_KEY : {{aws-secret-access-key}}
+      AWS_KEYPAIR : "gporca"
+      AWS_REGION : "us-west-2"
+      AMI : "ami-7f7ab01f"
+      INSTANCE_TYPE : "t2.micro"
+      INSTANCE_NAME : "qp-perf-test0"
+      VPC_ID : "vpc=id"
+      SUBNET_ID : "subnet-id"
+      SSH_USER : "centos"
+      TENANCY : "default"
+      WAIT_SECS : "30"
+      RETRIES : "10"
+- name: unprovision
+  max_in_flight: 1
+  plan:
+  - aggregate:
+    - get: gpdb_src
+      params:
+        submodules: none
+    - get: instance_ids
+      passed: [provision, buildgpdb]
       trigger: true
   - task: unprovision_instance
     file: gpdb_src/concourse/unprovision.yml
@@ -75,4 +101,3 @@ jobs:
       TENANCY : "default"
       WAIT_SECS : "30"
       RETRIES : "10"
-
