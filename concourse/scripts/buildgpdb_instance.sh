@@ -9,8 +9,10 @@ main() {
     INSTANCE_IDS=($(cat instance_ids/instance_ids.txt))
 
     check_config
+    check_tools
 
     # Get Ip address
+    ec2-describe-instances --help
     IPS=ec2-describe-instances --show-empty-fields ${INSTANCE_IDS[*]} | grep INSTANCE | cut -f17
 
     # run ssh to publish ec2 hostname name

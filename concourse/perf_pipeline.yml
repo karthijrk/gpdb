@@ -66,10 +66,6 @@ jobs:
   - task: buildgpdb_instance
     file: gpdb_src/concourse/buildgpdb_instance.yml
     params: *provision_param
-    on_failure:
-      task: unprovision_instance
-      file: gpdb_src/concourse/unprovision.yml
-      params: *provision_param
 - name: unprovision
   max_in_flight: 1
   plan:

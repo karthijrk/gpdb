@@ -6,18 +6,12 @@ source $(dirname "$0")/common.sh
 
 main() {
     check_config
-	check_tools
+	   check_tools
 
     run_instances
 #    set_networking
 
     print_addresses
-}
-
-check_tools() {
-  if ! command -v ec2-run-instances >/dev/null 2>&1; then
-    error "Amazon EC2 API Tools not installed (see http://aws.amazon.com/developertools/351)"
-  fi
 }
 
 

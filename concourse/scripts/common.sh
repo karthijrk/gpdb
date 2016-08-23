@@ -82,6 +82,12 @@ check_config() {
 	  log "=============================="
 }
 
+check_tools() {
+  if ! command -v ec2-run-instances >/dev/null 2>&1; then
+    error "Amazon EC2 API Tools not installed (see http://aws.amazon.com/developertools/351)"
+  fi
+}
+
 wait_until_status() {
   local STATUS=$1
 
