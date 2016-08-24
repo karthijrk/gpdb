@@ -35,7 +35,8 @@ jobs:
     params: &provision_param
       AWS_ACCESS_KEY : {{aws-access-key-id}}
       AWS_SECRET_KEY : {{aws-secret-access-key}}
-      AWS_KEYPAIR : "gporca"
+      AWS_KEYNAME : "gporca"
+      AWS_KEYPAIR : {{gporca_aws_keypair}}
       AWS_REGION : "us-west-2"
       AMI : "ami-7f7ab01f"
       INSTANCE_TYPE : "t2.micro"

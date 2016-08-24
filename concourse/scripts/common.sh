@@ -17,6 +17,9 @@ check_config() {
     if [[ -z $AWS_SECRET_KEY ]]; then
         error "AWS_SECRET_KEY must be specified."
     fi
+    if [[ -z $AWS_KEYNAME ]]; then
+        error "AWS_KEYNAME must be specified."
+    fi
     if [[ -z $AWS_KEYPAIR ]]; then
         error "AWS_KEYPAIR must be specified."
     fi

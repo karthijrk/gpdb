@@ -23,7 +23,7 @@ run_instances() {
         -n 1 \
         --tenancy ${TENANCY} \
         --show-empty-fields \
-        -k $AWS_KEYPAIR \
+        -k $AWS_KEYNAME \
         --instance-type $INSTANCE_TYPE \
         --associate-public-ip-address true |
       grep INSTANCE |
