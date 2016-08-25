@@ -26,6 +26,7 @@ extern "C" {
 #include "llvm/IR/Verifier.h"
 
 extern bool codegen_validate_functions;
+extern int codegen_messages;
 
 namespace gpcodegen {
 

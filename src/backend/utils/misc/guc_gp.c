@@ -573,6 +573,10 @@ bool		init_codegen;
 bool		codegen;
 bool		codegen_validate_functions;
 int			codegen_varlen_tolerance;
+int			codegen_messages = NOTICE;
+static char *codegen_messages_str;
+static const char *
+assign_codegen_messages(const char *newval, bool doit, GucSource source);
 
 /* Security */
 bool		gp_reject_internal_tcp_conn = true;
@@ -5453,6 +5457,18 @@ struct config_string ConfigureNamesString_gp[] =
 		"csv", assign_gp_log_format, NULL
 	},
 
+	{
+		{"codegen_messages", PGC_USERSET, LOGGING_WHEN,
+			gettext_noop("Sets the message levels that are sent to the client."),
+			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "
+						 "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
+						 "levels that follow it. The later the level, the fewer messages are "
+						 "sent."),
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_GPDB_ADDOPT
+		},		&codegen_messages_str,
+		"NOTICE", assign_codegen_messages, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
@@ -5844,6 +5860,12 @@ assign_codegen(bool newval, bool doit, GucSource source)
 #endif
 
 	return true;
+}
+
+static const char *
+assign_codegen_messages(const char *newval, bool doit, GucSource source)
+{
+	return (assign_msglvl(&codegen_messages, newval, doit, source));
 }
 
 static bool
