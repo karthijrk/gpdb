@@ -5,7 +5,7 @@ set -e
 
 source $(dirname "$0")/common.sh
 
-create_pem_file {
+create_pem_file() {
   KEYPAIR_FILE=$(mktemp /tmp/$AWS_KEYNAME.pem.XXX)
   echo $AWS_KEYPAIR > KEYPAIR_FILE
 }
