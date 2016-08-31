@@ -40,6 +40,7 @@ bool CodegenManager::EnrollCodeGenerator(
 }
 
 unsigned int CodegenManager::GenerateCode() {
+	return 0;
   // First, allow all code generators to initialize their dependencies
   for (size_t i = 0; i < enrolled_code_generators_.size(); ++i) {
     // NB: This list is still volatile at this time, as more generators may be
@@ -56,6 +57,7 @@ unsigned int CodegenManager::GenerateCode() {
 }
 
 unsigned int CodegenManager::PrepareGeneratedFunctions() {
+	return 0;
   unsigned int success_count = 0;
 
   // If no generator registered, just return with success count as 0
