@@ -18,6 +18,7 @@
 
 #include "codegen/utils/gp_codegen_utils.h"
 #include "codegen/pg_func_generator_interface.h"
+#include "codegen/int4mul.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
@@ -105,6 +106,22 @@ class PGArithFuncGenerator {
         llvm_out_value);
   }
 
+  static bool Int4MulWithOverflow(gpcodegen::GpCodegenUtils* codegen_utils,
+                                const PGFuncGeneratorInfo& pg_func_info,
+                                 llvm::Value** llvm_out_value) {
+      llvm::Value* llvm_err_msg = codegen_utils->GetConstant(
+          ArithOpOverFlowErrorMsg<rtype>::OverFlowErrMsg());
+      return ArithOpWithOverflow(
+          codegen_utils,
+          &gpcodegen::GpCodegenUtils::CreateMulOverflow<rtype>,
+          llvm_err_msg,
+          pg_func_info,
+          llvm_out_value,
+		  true);
+    }
+
+
+
   /**
    * @brief Create LLVM Add instruction with check for overflow
    *
@@ -162,7 +179,8 @@ class PGArithFuncGenerator {
                                   CGArithOpFunc codegen_mem_funcptr,
                                   llvm::Value* llvm_error_msg,
                                   const PGFuncGeneratorInfo& pg_func_info,
-                                  llvm::Value** llvm_out_value);
+                                  llvm::Value** llvm_out_value,
+								  bool use_int4mul_codegen = false);
 };
 
 template <typename rtype, typename Arg0, typename Arg1>
@@ -171,7 +189,8 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
     CGArithOpFunc codegen_mem_funcptr,
     llvm::Value* llvm_error_msg,
     const PGFuncGeneratorInfo& pg_func_info,
-    llvm::Value** llvm_out_value) {
+    llvm::Value** llvm_out_value,
+	bool use_int4mul_codegen) {
 
   assert(nullptr != llvm_out_value);
   assert(nullptr != codegen_mem_funcptr);
@@ -181,11 +200,21 @@ bool PGArithFuncGenerator<rtype, Arg0, Arg1>::ArithOpWithOverflow(
       codegen_utils->CreateCast<rtype, Arg0>(pg_func_info.llvm_args[0]);
   llvm::Value* casted_arg1 =
       codegen_utils->CreateCast<rtype, Arg1>(pg_func_info.llvm_args[1]);
+  llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
+
+  if (use_int4mul_codegen) {
+	  llvm::BasicBlock* llvm_bfr_int4mul_block = codegen_utils->CreateBasicBlock(
+	         "bfr_int4mul", pg_func_info.llvm_main_func);
+	  irb->CreateBr(llvm_bfr_int4mul_block);
+	  llvm::Function* int4mul = GenerateInt4Mul(codegen_utils->module());
+	  irb->SetInsertPoint(llvm_bfr_int4mul_block);
+	  *llvm_out_value = irb->CreateCall(int4mul, {casted_arg0, casted_arg1});
+	  return true;
+  }
 
   llvm::Value* llvm_arith_output = (codegen_utils->*codegen_mem_funcptr)(
       casted_arg0, casted_arg1);
 
-  llvm::IRBuilder<>* irb = codegen_utils->ir_builder();
 
   // Check if it is a Integer type
   if (std::is_integral<rtype>::value) {
