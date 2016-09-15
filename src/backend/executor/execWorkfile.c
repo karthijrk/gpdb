@@ -38,7 +38,8 @@ static void ExecWorkFile_AdjustBFZSize(ExecWorkFile *workfile, int64 file_size);
  * If this fails, NULL is returned.
  */
 ExecWorkFile *
-ExecWorkFile_Create(const char *fileName,
+ExecWorkFile_Create(workfile_set *work_set,
+					const char *fileName,
 					ExecWorkFileType fileType,
 					bool delOnClose,
 					int compressType)
@@ -84,6 +85,7 @@ ExecWorkFile_Create(const char *fileName,
 	workfile->fileName = pstrdup(fileName);
 	workfile->size = 0;
 	ExecWorkFile_SetFlags(workfile, delOnClose, true /* created */);
+	ExecWorkfile_SetWorkset(workfile, work_set);
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -115,14 +117,15 @@ ExecWorkFile_AddUniqueSuffix(const char *filename)
  *   In addition, it adds a unique suffix
  */
 ExecWorkFile *
-ExecWorkFile_CreateUnique(const char *filename,
+ExecWorkFile_CreateUnique(workfile_set *work_set,
+		const char *filename,
 		ExecWorkFileType fileType,
 		bool delOnClose,
 		int compressType)
 {
 
 	StringInfo uniquename = ExecWorkFile_AddUniqueSuffix(filename);
-	ExecWorkFile *ewf = ExecWorkFile_Create(uniquename->data, fileType, delOnClose, compressType);
+	ExecWorkFile *ewf = ExecWorkFile_Create(work_set, uniquename->data, fileType, delOnClose, compressType);
 	pfree(uniquename->data);
 	pfree(uniquename);
 

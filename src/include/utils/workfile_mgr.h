@@ -85,6 +85,7 @@ typedef struct workfile_set
 	workfile_set_hashkey_t key;
 
 	/* Number of files in set */
+	// TODO: Comment here about the actual use of no_files
 	uint32 no_files;
 
 	/* Size in bytes of the files in this workfile set */

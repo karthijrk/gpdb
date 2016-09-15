@@ -49,7 +49,19 @@ workfile_mgr_create_fileno(workfile_set *work_set, uint32 file_no)
 	char file_name[MAXPGPATH];
 	retrieve_file_no(work_set, file_no, file_name, sizeof(file_name));
 
-	ExecWorkFile *ewfile = ExecWorkFile_Create(file_name,
+	return workfile_mgr_create_filename(workset, file_name);
+}
+
+ExecWorkFile *
+workfile_mgr_create_filename(workfile_set *work_set,
+		const char* file_name)
+{
+	Assert(NULL != work_set);
+	// TODO: Add some more asserts
+
+	ExecWorkFile *ewfile = ExecWorkFile_Create(
+			work_set,
+			file_name,
 			work_set->metadata.type,
 			true /* del_on_close */,
 			work_set->metadata.bfz_compress_type);
@@ -62,10 +74,9 @@ workfile_mgr_create_fileno(workfile_set *work_set, uint32 file_no)
       ""); // tableName
 #endif
 
-	ExecWorkfile_SetWorkset(ewfile, work_set);
-
 	return ewfile;
 }
+
 
 /*
  * Opens a numbered workfile of a given set

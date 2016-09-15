@@ -67,12 +67,14 @@ typedef struct ExecWorkFile
  * If this fails, NULL is returned.
  */
 ExecWorkFile *
-ExecWorkFile_Create(const char *fileName,
+ExecWorkFile_Create(struct workfile_set *work_set,
+					const char *fileName,
 					ExecWorkFileType fileType,
 					bool delOnClose,
 					int compressType);
 ExecWorkFile *
-ExecWorkFile_CreateUnique(const char *filename,
+ExecWorkFile_CreateUnique(struct workfile_set *work_set,
+		const char *filename,
 		ExecWorkFileType fileType,
 		bool delOnClose,
 		int compressType);
