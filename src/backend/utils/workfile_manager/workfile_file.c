@@ -49,7 +49,7 @@ workfile_mgr_create_fileno(workfile_set *work_set, uint32 file_no)
 	char file_name[MAXPGPATH];
 	retrieve_file_no(work_set, file_no, file_name, sizeof(file_name));
 
-	return workfile_mgr_create_filename(workset, file_name);
+	return workfile_mgr_create_filename(work_set, file_name);
 }
 
 ExecWorkFile *
@@ -59,7 +59,7 @@ workfile_mgr_create_filename(workfile_set *work_set,
 	Assert(NULL != work_set);
 	// TODO: Add some more asserts
 
-	ExecWorkFile *ewfile = ExecWorkFile_Create(
+	ExecWorkFile *ewfile = ExecWorkFile_Create_Secret(
 			work_set,
 			file_name,
 			work_set->metadata.type,

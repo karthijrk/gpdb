@@ -563,7 +563,7 @@ tuplesort_begin_common(ScanState * ss, int workMem, bool randomAccess, bool allo
     state->randomAccess = randomAccess;
     state->memAllowed = workMem * 1024L;
 
-    state->work_set = NULL;
+    state->work_set = NULL; // TODO : maybe set state->tapeset_state_file=NULL here?
     state->ss = ss;
 
     state->sortcontext = sortcontext;
@@ -1751,10 +1751,9 @@ inittapes_mk(Tuplesortstate_mk *state, const char* rwfile_prefix)
     else
     {
     	/* We are shared XSLICE, use given prefix to create files so that consumers can find them */
-    	ExecWorkFile *tape_file = ExecWorkFile_Create(rwfile_prefix,
-    			BUFFILE,
-    			true /* delOnClose */,
-    			0 /* compressType */);
+    	state->work_set = workfile_mgr_create_set(BUFFILE, false /* can_be_reused */, NULL /* ps */, NULL_SNAPSHOT);
+
+    	ExecWorkFile *tape_file = workfile_mgr_create_filename(state->work_set, rwfile_prefix);
 
     	state->tapeset = LogicalTapeSetCreate_File(tape_file, maxTapes);
     }

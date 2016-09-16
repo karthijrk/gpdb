@@ -30,6 +30,16 @@ static uint64 temp_file_counter = 0;
 static void ExecWorkFile_SetFlags(ExecWorkFile *workfile, bool delOnClose, bool created);
 static void ExecWorkFile_AdjustBFZSize(ExecWorkFile *workfile, int64 file_size);
 
+ExecWorkFile *
+ExecWorkFile_Create(const char *fileName,
+					ExecWorkFileType fileType,
+					bool delOnClose,
+					int compressType)
+{
+	return ExecWorkFile_Create_Secret(NULL, fileName, fileType, delOnClose, compressType);
+}
+
+
 /*
  * ExecWorkFile_Create
  *    create a new work file with the specified name, the file type,
@@ -38,7 +48,7 @@ static void ExecWorkFile_AdjustBFZSize(ExecWorkFile *workfile, int64 file_size);
  * If this fails, NULL is returned.
  */
 ExecWorkFile *
-ExecWorkFile_Create(workfile_set *work_set,
+ExecWorkFile_Create_Secret(workfile_set *work_set,
 					const char *fileName,
 					ExecWorkFileType fileType,
 					bool delOnClose,
@@ -85,7 +95,8 @@ ExecWorkFile_Create(workfile_set *work_set,
 	workfile->fileName = pstrdup(fileName);
 	workfile->size = 0;
 	ExecWorkFile_SetFlags(workfile, delOnClose, true /* created */);
-	ExecWorkfile_SetWorkset(workfile, work_set);
+	if (work_set != NULL)
+		ExecWorkfile_SetWorkset(workfile, work_set);
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -117,7 +128,7 @@ ExecWorkFile_AddUniqueSuffix(const char *filename)
  *   In addition, it adds a unique suffix
  */
 ExecWorkFile *
-ExecWorkFile_CreateUnique(workfile_set *work_set,
+ExecWorkFile_CreateUnique(
 		const char *filename,
 		ExecWorkFileType fileType,
 		bool delOnClose,
@@ -125,7 +136,7 @@ ExecWorkFile_CreateUnique(workfile_set *work_set,
 {
 
 	StringInfo uniquename = ExecWorkFile_AddUniqueSuffix(filename);
-	ExecWorkFile *ewf = ExecWorkFile_Create(work_set, uniquename->data, fileType, delOnClose, compressType);
+	ExecWorkFile *ewf = ExecWorkFile_Create(uniquename->data, fileType, delOnClose, compressType);
 	pfree(uniquename->data);
 	pfree(uniquename);
 
