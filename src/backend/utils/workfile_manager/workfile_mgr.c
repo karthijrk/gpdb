@@ -69,6 +69,10 @@ Cache *workfile_mgr_cache = NULL;
 /* Workfile error type */
 WorkfileError workfileError = WORKFILE_ERROR_UNKNOWN;
 
+static struct workfile_unaccounted_data workfile_unaccounted_data = {
+	.in_progress_size = 0
+};
+
 /*
  * Initialize the cache in shared memory, or attach to an existing one
  *
@@ -766,6 +770,7 @@ workfile_mgr_cleanup(void)
 {
 	Assert(NULL != workfile_mgr_cache);
 	Cache_SurrenderClientEntries(workfile_mgr_cache);
+	WorkfileDiskspace_Commit(0, workfile_unaccounted_data.in_progress_size, false /* TODO: WTF */);
 }
 
 /*
@@ -924,6 +929,9 @@ workfile_update_in_progress_size(ExecWorkFile *workfile, int64 size)
 	{
 		workfile->work_set->in_progress_size += size;
 		Assert(workfile->work_set->in_progress_size >= 0);
+	} else {
+		workfile_unaccounted_data.in_progress_size += size;
+		Assert(workfile_unaccounted_data.in_progress_size >= size);
 	}
 }
 

@@ -43,6 +43,13 @@ typedef uint32 workfile_set_snapshot;
 /* placeholder snapshot information */
 #define NULL_SNAPSHOT 0
 
+
+typedef struct workfile_unaccounted_data
+{
+	/* keep track of in_progress_size from workfile for whose workset is null*/
+	int64 in_progress_size;
+};
+
 typedef struct workfile_set_plan
 {
 	/* serialized representation of the subplan */
