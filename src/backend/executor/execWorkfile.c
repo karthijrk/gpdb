@@ -20,6 +20,8 @@
 #include "utils/workfile_mgr.h"
 #include "utils/memutils.h"
 
+#include "utils/faultinjector.h"
+
 /*
  * Number of temporary files opened during the current session;
  * this is used in generation of unique tempfile names.
@@ -217,6 +219,8 @@ ExecWorkFile_Write(ExecWorkFile *workfile,
 {
 	Assert(workfile != NULL);
 	uint64 bytes;
+
+	SIMPLE_FAULT_INJECTOR(WorkfileWriteFail);
 
 	if (data == NULL || size == 0)
 	{

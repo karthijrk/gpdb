@@ -37,6 +37,9 @@ typedef struct workset_info
 	char *dir_path;
 } workset_info;
 
+/* Counter to keep track of workfile segspace used without a workfile set. */
+static int64 used_segspace_not_in_workfile_set;
+
 /* Forward declarations */
 static void workfile_mgr_populate_set(const void *resource, const void *param);
 static void workfile_mgr_cleanup_set(const void *resource);
@@ -86,6 +89,8 @@ workfile_mgr_cache_init(void)
 	 * to track disk space usage
 	 */
 	WorkfileDiskspace_Init();
+
+	used_segspace_not_in_workfile_set = 0;
 }
 
 /*
@@ -455,6 +460,8 @@ workfile_mgr_cleanup(void)
 {
 	Assert(NULL != workfile_mgr_cache);
 	Cache_SurrenderClientEntries(workfile_mgr_cache);
+	WorkfileDiskspace_Commit(0, used_segspace_not_in_workfile_set, false /* update_query_space */);
+	used_segspace_not_in_workfile_set = 0;
 }
 
 /*
@@ -467,6 +474,11 @@ workfile_update_in_progress_size(ExecWorkFile *workfile, int64 size)
 	{
 		workfile->work_set->in_progress_size += size;
 		Assert(workfile->work_set->in_progress_size >= 0);
+	}
+	else
+	{
+		used_segspace_not_in_workfile_set += size;
+		Assert(used_segspace_not_in_workfile_set >= 0);
 	}
 }
 
