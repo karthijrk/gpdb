@@ -468,12 +468,12 @@ workfile_mgr_cleanup(void)
  * Updates the in-progress size of a workset while it is being created.
  */
 void
-workfile_update_in_progress_size(ExecWorkFile *workfile, int64 size)
+workfile_set_update_in_progress_size(workfile_set *work_set, int64 size)
 {
-	if (NULL != workfile->work_set)
+	if (NULL != work_set)
 	{
-		workfile->work_set->in_progress_size += size;
-		Assert(workfile->work_set->in_progress_size >= 0);
+		work_set->in_progress_size += size;
+		Assert(work_set->in_progress_size >= 0);
 	}
 	else
 	{
