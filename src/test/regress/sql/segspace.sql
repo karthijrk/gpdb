@@ -4,7 +4,7 @@
 
 -- check segspace before test
 reset statement_mem;
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 --- create and populate the table
 
@@ -46,8 +46,18 @@ SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE 
 rollback;
 
 -- check used segspace after test
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+begin;
+-- Doing select count so output file doesn't have 75000 rows.
+select count(*) from 
+(SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE t1.i1=t2.i2) temp;
+rollback;
+
+-- check used segspace after test
 reset statement_mem;
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 
 ------------ Interrupting INSERT INTO query that spills -------------------
@@ -74,8 +84,19 @@ SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE 
 rollback;
 
 -- check used segspace after test
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+begin;
+
+insert into segspace_t1_created
+SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE t1.i1=t2.i2;
+
+rollback;
+
+-- check used segspace after test
 reset statement_mem;
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 --start_ignore
 drop table if exists segspace_t1_created;
@@ -103,8 +124,19 @@ SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE 
 rollback;
 
 -- check used segspace after test
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+begin;
+
+create table segspace_t1_created AS
+SELECT t1.* FROM segspace_test_hj_skew AS t1, segspace_test_hj_skew AS t2 WHERE t1.i1=t2.i2;
+
+rollback;
+
+-- check used segspace after test
 reset statement_mem;
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 
 ------------ workfile_limit_per_segment leak check during ERROR on UPDATE with CTE and MK_SORT -------------------
@@ -138,12 +170,23 @@ update foo set j=m.cc1 from (
   from ctesisc as t1, ctesisc as t2
   where t1.i1 = t2.i2 ) as m;
 
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+-- LEAK in UPDATE: update with sisc xslice sort
+update foo set j=m.cc1 from (
+  with ctesisc as
+    (select * from testsisc order by i2)
+  select t1.i1 as cc1, t1.i2 as cc2
+  from ctesisc as t1, ctesisc as t2
+  where t1.i1 = t2.i2 ) as m;
+  
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
 reset statement_mem;
 reset gp_resqueue_print_operator_memory_limits;
 reset gp_enable_mk_sort;
 reset gp_cte_sharing;
-
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 ------------ workfile_limit_per_segment leak check during ERROR on DELETE with APPEND-ONLY table -------------------
 
@@ -175,8 +218,17 @@ delete from testsisc using (
   from foo
 ) src  where testsisc.i1 = src.i;
 
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+-- LEAK in DELETE with APPEND ONLY tables
+delete from testsisc using (
+  select *
+  from foo
+) src  where testsisc.i1 = src.i;
+
 reset statement_mem;
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 ------------ workfile_limit_per_segment leak check during UPDATE of SORT -------------------
 
@@ -197,10 +249,17 @@ create table foo (c int, d int);
 --end_ignore
 
 -- expect to see leak if we hit error
-explain analyze update foo set d = i1 from (select i1,i2 from testsort order by i2) x;
+update foo set d = i1 from (select i1,i2 from testsort order by i2) x;
 
 -- check counter leak
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+-- expect to see leak if we hit error
+update foo set d = i1 from (select i1,i2 from testsort order by i2) x;
+
+-- check counter leak
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
 
 ------------ workfile_limit_per_segment leak check during UPDATE of SHARE_SORT_XSLICE -------------------
 
@@ -222,10 +281,20 @@ create table foo (c int, d int);
 \! gpfaultinjector -f workfile_write_failure -y error --seg_dbid 2
 --end_ignore
 
-explain analyze update foo set d = i1 from (with ctesisc as (select * from testsisc order by i2)
+update foo set d = i1 from (with ctesisc as (select * from testsisc order by i2)
 select * from
 (select count(*) from ctesisc) x(a), ctesisc
 where x.a = ctesisc.i1) y;
 
 -- check counter leak
-select max(bytes) from gp_toolkit.gp_workfile_mgr_used_diskspace;
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
+-- Run the test without fault injection
+update foo set d = i1 from (with ctesisc as (select * from testsisc order by i2)
+select * from
+(select count(*) from ctesisc) x(a), ctesisc
+where x.a = ctesisc.i1) y;
+
+-- check counter leak
+select max(bytes) as max, min(bytes) as min from gp_toolkit.gp_workfile_mgr_used_diskspace;
+
