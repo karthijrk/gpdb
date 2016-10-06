@@ -11,7 +11,7 @@ set(CMAKE_BUILD_FILES_DIRECTORY build)
 set(CMAKE_BUILD_DIRECTORY build)
 get_filename_component(TOP_SRC_DIR "../../.." ABSOLUTE)
 set(MOCK_DIR ${TOP_SRC_DIR}/src/test/unit/mock)
-
+set(CMAKE_LIBS "" CACHE STRING "Linker flag from autoconf of gpdb")
 
 # Options. Turn on with 'cmake -Dvar_name=ON'
 option(build_examples "Build examples also" OFF)
@@ -313,7 +313,7 @@ function(add_cmockery_gtest TEST_NAME TEST_SOURCES)
     )
     target_include_directories(${TEST_NAME} PUBLIC ${TEST_LIB_INC_DIRECTORIES})
     # Bring these from $ENV{LIBS}
-    target_link_libraries(${TEST_NAME} "-lnetsnmp -lpam -lxml2 -lpgport -lbz2 -lrt -lz -lreadline -lcrypt -ldl -lm -lcurl -L../../port -lpgport_srv" gpcodegen gtest)
+    target_link_libraries(${TEST_NAME} ${CMAKE_LIBS} gpcodegen gtest)
     add_test(${TEST_NAME} ${TEST_NAME})
     add_dependencies(check ${TEST_NAME})
 endfunction(add_cmockery_gtest)

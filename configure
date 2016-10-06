@@ -654,6 +654,8 @@ PTHREAD_CC
 acx_pthread_config
 LIBOBJS
 HAVE_IPV6
+CMAKE
+enable_codegen
 OSSP_UUID_LIBS
 CURL_LIBS
 CURL_CFLAGS
@@ -729,8 +731,6 @@ enable_netbackup
 enable_ddboost
 enable_connectemc
 enable_snmp
-CMAKE
-enable_codegen
 enable_orca
 autodepend
 TAS
@@ -835,8 +835,6 @@ enable_debugbreak
 enable_debugntuplestore
 enable_testutils
 enable_orca
-enable_codegen
-with_codegen_prefix
 enable_snmp
 enable_connectemc
 enable_ddboost
@@ -866,6 +864,8 @@ with_rt
 with_libcurl
 with_apr_config
 with_gnu_ld
+enable_codegen
+with_codegen_prefix
 enable_largefile
 '
       ac_precious_vars='build_alias
@@ -1509,7 +1509,6 @@ Optional Features:
   --enable-ntuplestore    enable debug_ntuplestore (for debugging)
   --enable-testutils      enable testing utilities
   --enable-orca           enable ORCA optimizer
-  --enable-codegen        enable code generation
   --enable-snmp           enable snmp for MIB and alerts via TRAP/INFORM
   --enable-connectemc     enable connect emc support
   --enable-ddboost        enable DD Boost support
@@ -1517,6 +1516,7 @@ Optional Features:
   --enable-mapreduce      enable Greenplum Mapreduce support
   --disable-thread-safety  Do not make client libraries thread-safe
   --enable-thread-safety-force  force thread-safety despite thread test failure
+  --enable-codegen        enable code generation
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -1529,7 +1529,6 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number [5432]
-  --with-codegen-prefix="PATH;PATH"  semicolon separated prefix search path for LLVM and Clang
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
@@ -1552,6 +1551,7 @@ Optional Packages:
   --without-libcurl       do not use libcurl
   --with-apr-config=PATH  path to apr-1-config utility
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+  --with-codegen-prefix="PATH;PATH"  semicolon separated prefix search path for LLVM and Clang
 
 Some influential environment variables:
   CC          C compiler command
@@ -5299,149 +5299,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking whether to build with ORCA... $enable_orca" >&5
 $as_echo "checking whether to build with ORCA... $enable_orca" >&6; }
 
-
-#
-# Enable code generation
-#
-
-pgac_args="$pgac_args enable_codegen"
-
-# Check whether --enable-codegen was given.
-if test "${enable_codegen+set}" = set; then :
-  enableval=$enable_codegen;
-  case $enableval in
-    yes)
-
-$as_echo "#define USE_CODEGEN 1" >>confdefs.h
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-codegen option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_codegen=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking whether to build with codegen... $enable_codegen" >&5
-$as_echo "checking whether to build with codegen... $enable_codegen" >&6; }
-
-
-
-pgac_args="$pgac_args with_codegen_prefix"
-
-
-# Check whether --with-codegen-prefix was given.
-if test "${with_codegen_prefix+set}" = set; then :
-  withval=$with_codegen_prefix;
-  case $withval in
-    yes)
-      as_fn_error $? "argument required for --with-codegen-prefix option" "$LINENO" 5
-      ;;
-    no)
-      as_fn_error $? "argument required for --with-codegen-prefix option" "$LINENO" 5
-      ;;
-    *)
-      if test "${enable_codegen}" = no; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-codegen-prefix used without --enable-codegen" >&5
-$as_echo "$as_me: WARNING: --with-codegen-prefix used without --enable-codegen" >&2;}
-fi
-      ;;
-  esac
-
-fi
-
-
-
-if test "$enable_codegen" = yes; then :
-   # then
-
-if test -z "$CMAKE"; then
-  for ac_prog in cmake
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_CMAKE+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $CMAKE in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_CMAKE="$CMAKE" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_CMAKE="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-CMAKE=$ac_cv_path_CMAKE
-if test -n "$CMAKE"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CMAKE" >&5
-$as_echo "$CMAKE" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$CMAKE" && break
-done
-
-fi
-
-if test -n "$CMAKE"; then
-  gpac_cmake_version=`$CMAKE --version 2>/dev/null | sed q`
-  if test -z "$gpac_cmake_version"; then
-    as_fn_error $? "cmake is required for codegen, unable to identify version" "$LINENO" 5
-  fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: using $gpac_cmake_version" >&5
-$as_echo "$as_me: using $gpac_cmake_version" >&6;}
-else
-  as_fn_error $? "cmake is required for codegen, unable to find binary" "$LINENO" 5
-fi
-
-
-   cd src/backend/codegen
-   if test "${prefix}" = NONE; then :
-  prefix=${ac_default_prefix}
-fi
-   if test "${enable_debug}" = yes; then :
-  build_type="Debug"
-else
-  build_type="Release"
-fi
-
-   CMAKE_CMD="${CMAKE} -DCMAKE_PREFIX_PATH="${with_codegen_prefix}" -DCMAKE_INSTALL_PREFIX=${prefix} -DCMAKE_BUILD_TYPE=${build_type} ."
-   echo "Executing cmake command : ${CMAKE_CMD}"
-   if ${CMAKE_CMD}; then :
-
-else
-  as_fn_error $? "'error while configuring codegen.'" "$LINENO" 5
-fi
-   cd -
-
-fi # fi
 
 #
 # --enable-snmp enables snmp mib and trap/inform
@@ -10794,6 +10651,148 @@ done
 
 fi
 
+#
+# Enable code generation
+#
+
+pgac_args="$pgac_args enable_codegen"
+
+# Check whether --enable-codegen was given.
+if test "${enable_codegen+set}" = set; then :
+  enableval=$enable_codegen;
+  case $enableval in
+    yes)
+
+$as_echo "#define USE_CODEGEN 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --enable-codegen option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  enable_codegen=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking whether to build with codegen... $enable_codegen" >&5
+$as_echo "checking whether to build with codegen... $enable_codegen" >&6; }
+
+
+
+pgac_args="$pgac_args with_codegen_prefix"
+
+
+# Check whether --with-codegen-prefix was given.
+if test "${with_codegen_prefix+set}" = set; then :
+  withval=$with_codegen_prefix;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-codegen-prefix option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-codegen-prefix option" "$LINENO" 5
+      ;;
+    *)
+      if test "${enable_codegen}" = no; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-codegen-prefix used without --enable-codegen" >&5
+$as_echo "$as_me: WARNING: --with-codegen-prefix used without --enable-codegen" >&2;}
+fi
+      ;;
+  esac
+
+fi
+
+
+
+if test "$enable_codegen" = yes; then :
+   # then
+
+if test -z "$CMAKE"; then
+  for ac_prog in cmake
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_CMAKE+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CMAKE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CMAKE="$CMAKE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CMAKE="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CMAKE=$ac_cv_path_CMAKE
+if test -n "$CMAKE"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CMAKE" >&5
+$as_echo "$CMAKE" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$CMAKE" && break
+done
+
+fi
+
+if test -n "$CMAKE"; then
+  gpac_cmake_version=`$CMAKE --version 2>/dev/null | sed q`
+  if test -z "$gpac_cmake_version"; then
+    as_fn_error $? "cmake is required for codegen, unable to identify version" "$LINENO" 5
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: using $gpac_cmake_version" >&5
+$as_echo "$as_me: using $gpac_cmake_version" >&6;}
+else
+  as_fn_error $? "cmake is required for codegen, unable to find binary" "$LINENO" 5
+fi
+
+
+   cd src/backend/codegen
+   if test "${prefix}" = NONE; then :
+  prefix=${ac_default_prefix}
+fi
+   if test "${enable_debug}" = yes; then :
+  build_type="Debug"
+else
+  build_type="Release"
+fi
+
+   CMAKE_CMD="${CMAKE} -DCMAKE_PREFIX_PATH="${with_codegen_prefix}" -DCMAKE_INSTALL_PREFIX=${prefix} -DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_LIBS=\"${LIBS}\" ."
+   echo "Executing cmake command : ${CMAKE_CMD}"
+   if ${CMAKE_CMD}; then :
+
+else
+  as_fn_error $? "'error while configuring codegen.'" "$LINENO" 5
+fi
+   cd -
+
+fi # fi
 
 # realtime library header
 if test "$with_rt" = yes; then
