@@ -40,6 +40,12 @@ ExecTableScan(TableScanState *node)
 	}
 
 	TupleTableSlot *slot = ExecTableScanRelation(scanState);
+
+	void* p = malloc(25);
+	p = palloc(50);
+	elog(INFO, "%p", p);
+	p = palloc0(50);
+	elog(INFO, "%p", p);
 	
 	if (!TupIsNull(slot))
 	{

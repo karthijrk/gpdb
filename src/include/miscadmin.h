@@ -152,6 +152,12 @@ do { \
 } while(0)
 #endif   /* WIN32 */
 
+#define CHECK_FOR_QUERY_CANCEL_INTERRUPTS() \
+do { \
+	if (InterruptPending && \
+		QueryCancelPending) \
+		ProcessInterrupts(); \
+} while(0)
 
 #define HOLD_INTERRUPTS() \
 do { \

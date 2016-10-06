@@ -1052,6 +1052,8 @@ MemoryContextAllocImpl(MemoryContext context, Size size, const char* sfile, cons
 {
 	void *ret;
 
+	CHECK_FOR_QUERY_CANCEL_INTERRUPTS();
+
 #ifdef PGTRACE_ENABLED
 	StandardChunkHeader *header;
 #endif
@@ -1089,6 +1091,8 @@ void *
 MemoryContextAllocZeroImpl(MemoryContext context, Size size, const char* sfile, const char *sfunc, int sline)
 {
 	void	   *ret;
+
+	CHECK_FOR_QUERY_CANCEL_INTERRUPTS();
 
 #ifdef PGTRACE_ENABLED
 	StandardChunkHeader *header;
