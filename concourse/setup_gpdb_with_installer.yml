@@ -1,0 +1,7 @@
+platform: linux
+image: docker:///yolo/gpdbdev#centos6
+inputs:
+  - name: workloads
+  - name: gpdb_src
+run:
+  path: gpdb_src/concourse/scripts/perf/setup_gpdb_with_installer.bash

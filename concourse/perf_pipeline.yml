@@ -25,6 +25,16 @@ resources:
     uri: git@github.com:karthijrk/workloads.git
     private_key: {{workloads_deploy_key}}
 
+- name: installer_rhel5_gpdb_rc
+  type: s3
+  source:
+    access_key_id: {{aws_toolsmiths_access_key_id}}
+    bucket: gpdb-4.3-stable-concourse
+    private: true
+    region_name: us-west-2
+    secret_access_key: {{aws_toolsmiths_secret_access_key}}
+    versioned_file: deliverables/greenplum-db-4.3.9.1-build-1-rhel5-x86_64.zip
+
 ########
 # JOBS #
 ########
@@ -69,7 +79,7 @@ jobs:
     task: unprovision_instance
     file: gpdb_src/concourse/unprovision.yml
     params: *aws_config
-- name: tpch1g
+- name: tpch1g_nopartition
   max_in_flight: 1
   plan:
     - aggregate:
@@ -79,5 +89,10 @@ jobs:
         params:
           submodule: none
         trigger: false
+      - get: installer_rhel5_gpdb_rc
     - task: compile_gpdb_tpch
       file: gpdb_src/concourse/compile_gpdb_tpch.yml
+    - task: setup_gpdb_local_with_installer
+      input_mapping:
+        gpdb_installer: installer_rhel5_gpdb_rc
+      file: gpdb_serc/concourse/setup_gpdb_local_with_installer.yml
