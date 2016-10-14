@@ -5,8 +5,9 @@ resources:
 - name: gpdb_src
   type: git
   source:
-    branch: master
-    uri: https://github.com/greenplum-db/gpdb
+    branch: tpch-stats
+    uri: git@github.com:karthijrk/gpdb.git
+    private_key: {{workloads_deploy_key}}
 
 - name: instance_ids
   type: s3
@@ -17,6 +18,13 @@ resources:
     secret_access_key: {{aws-secret-access-key}}
     versioned_file: instance_ids.txt
 
+- name: workloads
+  type: git
+  source:
+    branch: tpch
+    uri: git@github.com:karthijrk/workloads.git
+    private_key: {{workloads_deploy_key}}
+
 ########
 # JOBS #
 ########
@@ -26,8 +34,6 @@ jobs:
   plan:
   - aggregate:
     - get: gpdb_src
-      params:
-        submodules: none
       trigger: false  # At this stage we don't want create/delete VMs for each commit
   - task: provision_instance
     file: gpdb_src/concourse/provision.yml
@@ -56,8 +62,6 @@ jobs:
   - aggregate:
     - get: gpdb_src
       passed: [provision]
-      params:
-        submodules: none
     - get: instance_ids
       passed: [provision]
       trigger: true
@@ -65,3 +69,15 @@ jobs:
     task: unprovision_instance
     file: gpdb_src/concourse/unprovision.yml
     params: *aws_config
+- name: tpch1g
+  max_in_flight: 1
+  plan:
+    - aggregate:
+      - get: gpdb_src
+        trigger: false
+      - get: workloads
+        params:
+          submodule: none
+        trigger: false
+    - task: compile_gpdb_tpch
+      file: gpdb_src/concourse/compile_gpdb_tpch.yml
