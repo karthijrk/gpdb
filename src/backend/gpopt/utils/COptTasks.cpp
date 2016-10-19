@@ -180,17 +180,11 @@ COptTasks::SOptContext::HandleError
 	BOOL *pfUnexpectedFailure
 	)
 {
-	BOOL bhasError = false;
-	if (NULL != m_szErrorMsg)
-	{
-		bhasError = true;
-		elog(WARNING, "%s", m_szErrorMsg);
-	}
 	*pfUnexpectedFailure = m_fUnexpectedFailure;
 
 	// clean up context
 	Free(epinQuery, epinPlStmt);
-	if (bhasError)
+	if (NULL != m_szErrorMsg)
 	{
 		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError);
 	}
@@ -376,8 +370,7 @@ COptTasks::SzAllocate
 	}
 	GPOS_CATCH_EX(ex)
 	{
-		elog(WARNING, "no available memory to allocate string buffer");
-		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError);
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiNoAvailableMemory);
 	}
 	GPOS_CATCH_END;
 
@@ -1667,26 +1660,27 @@ PlannedStmt *
 COptTasks::PplstmtOptimize
 	(
 	Query *pquery,
+	SOptContext *octx,
 	BOOL *pfUnexpectedFailure // output : set to true if optimizer unexpectedly failed to produce plan
 	)
 {
 	Assert(pquery);
+	Assert(octx);
 
-	SOptContext octx;
-	octx.m_pquery = pquery;
-	octx.m_fGeneratePlStmt= true;
+	octx->m_pquery = pquery;
+	octx->m_fGeneratePlStmt= true;
 	GPOS_TRY
 	{
 		Execute(&PvOptimizeTask, &octx);
 	}
 	GPOS_CATCH_EX(ex)
 	{
-		octx.HandleError(pfUnexpectedFailure);
+		octx->HandleError(pfUnexpectedFailure);
 		GPOS_RETHROW(ex);
 	}
 	GPOS_CATCH_END;
-	octx.HandleError(pfUnexpectedFailure);
-	return octx.m_pplstmt;
+	octx->HandleError(pfUnexpectedFailure);
+	return octx->m_pplstmt;
 }
 
 
@@ -1898,8 +1892,7 @@ COptTasks::UlCmpt
 		}
 	}
 
-	elog(WARNING, "Invalid comparison type code. Valid values are Eq, NEq, LT, LEq, GT, GEq");
-	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError);
+	GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiInvalidComparisonTypeCode);
 	return CmptOther;
 }
 

@@ -262,6 +262,7 @@ class COptTasks
 		PlannedStmt *PplstmtOptimize
 			(
 			Query *pquery,
+			SOptContext* octx,
 			BOOL *pfUnexpectedFailure // output : set to true if optimizer unexpectedly failed to produce plan
 			);
 

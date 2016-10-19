@@ -57,19 +57,29 @@ CGPOptimizer::PplstmtOptimize
 	bool *pfUnexpectedFailure // output : set to true if optimizer unexpectedly failed to produce plan
 	)
 {
+	COptTasks::SOptContext octx;
 	GPOS_TRY
 	{
-		return COptTasks::PplstmtOptimize(pquery, pfUnexpectedFailure);
+		return COptTasks::PplstmtOptimize(pquery, &octx, pfUnexpectedFailure);
 	}
 	GPOS_CATCH_EX(ex)
 	{
 		if (GPOS_MATCH_EX(ex, gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError))
 		{
-		  elog(ERROR, "PQO unable to generate plan, please see the above message for details.");
+		  Assert(NULL != octx.m_szErrorMsg);
+		  elog(ERROR, "PQO unable to generate plan, %s", octx.m_szErrorMsg);
 		}
-		if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiGPDBError))
+		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiGPDBError))
 		{
 		  elog(ERROR, "GPDB exception. Aborting PQO plan generation.");
+		}
+		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiNoAvailableMemory))
+		{
+		  elog(ERROR, "PQO unable to generate plan, no available memory to allocate string buffer.");
+		}
+		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiInvalidComparisonTypeCode))
+		{
+		  elog(ERROR, "PQO unable to generate plan, Invalid comparison type code. Valid values are Eq, NEq, LT, LEq, GT, GEq.");
 		}
 	}
 	GPOS_CATCH_END;
