@@ -54,7 +54,7 @@ using namespace gpopt;
 class COptTasks
 {
 
-	private:
+	public:
 
 		// context of optimizer input and output objects
 		struct SOptContext
@@ -111,6 +111,8 @@ class COptTasks
 
 		}; // struct SOptContext
 
+
+	private:
 
 		// context of relcache input and output objects
 		struct SContextRelcacheToDXL

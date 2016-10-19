@@ -20,6 +20,7 @@
 #include "gpopt/utils/nodeutils.h"
 #include "gpopt/utils/CCatalogUtils.h"
 #include "gpopt/utils/COptTasks.h"
+#include "gpopt/CGPOptimizer.h"
 #include "gpopt/mdcache/CMDCache.h"
 #include "utils/guc.h"
 
@@ -1156,24 +1157,6 @@ Optimize(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(stringToText(szOutput));
-}
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		orca
-//
-//	@doc:
-//		API for planner replacement
-//
-//---------------------------------------------------------------------------
-
-extern "C" {
-PlannedStmt *orca(Query *pquery)
-{
-	BOOL fUnexpectedFailure = false;
-
-	return COptTasks::PplstmtOptimize(pquery, &fUnexpectedFailure);
 }
 }
 

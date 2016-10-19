@@ -66,20 +66,21 @@ CGPOptimizer::PplstmtOptimize
 	{
 		if (GPOS_MATCH_EX(ex, gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError))
 		{
-		  Assert(NULL != octx.m_szErrorMsg);
-		  elog(ERROR, "PQO unable to generate plan, %s", octx.m_szErrorMsg);
+			Assert(NULL != octx.m_szErrorMsg);
+			elog(ERROR, "%s", octx.m_szErrorMsg);
 		}
 		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiGPDBError))
 		{
-		  elog(ERROR, "GPDB exception. Aborting PQO plan generation.");
+			elog(ERROR, "GPDB exception. Aborting PQO plan generation.");
 		}
 		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiNoAvailableMemory))
 		{
-		  elog(ERROR, "PQO unable to generate plan, no available memory to allocate string buffer.");
+			elog(ERROR, "PQO unable to generate plan, no available memory to allocate string buffer.");
 		}
 		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiInvalidComparisonTypeCode))
 		{
-		  elog(ERROR, "PQO unable to generate plan, Invalid comparison type code. Valid values are Eq, NEq, LT, LEq, GT, GEq.");
+			elog(ERROR, "PQO unable to generate plan, "
+						"invalid comparison type code. Valid values are Eq, NEq, LT, LEq, GT, GEq.");
 		}
 	}
 	GPOS_CATCH_END;
