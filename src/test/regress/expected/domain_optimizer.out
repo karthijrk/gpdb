@@ -49,7 +49,7 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 -- Test copy
 COPY basictest (testvarchar) FROM stdin; -- fail
 ERROR:  value too long for type character varying(5)
-CONTEXT:  COPY basictest, line 1, column testvarchar: "notsoshorttext"
+CONTEXT:  COPY basictest, line 1, column notsoshorttext
 COPY basictest (testvarchar) FROM stdin;
 select * from basictest;
  testint4 | testtext | testvarchar | testnumeric 
@@ -130,7 +130,7 @@ select testint4arr[1], testchar4arr[2:2] from domarrtest;
 COPY domarrtest FROM stdin;
 COPY domarrtest FROM stdin;	-- fail
 ERROR:  value too long for type character varying(4)
-CONTEXT:  COPY domarrtest, line 1, column testchar4arr: "{qwerty,w,e}"
+CONTEXT:  COPY domarrtest, line 1, column {3,4}
 select * from domarrtest;
   testint4arr  |    testchar4arr     
 ---------------+---------------------
@@ -157,8 +157,7 @@ create table nulltest
            , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
-WARNING:  null value in column "col3" violates not-null constraint
-ERROR:  PQO unable to generate plan, please see the above message for details. (CGPOptimizer.cpp:66)
+ERROR:  null value in column "col3" violates not-null constraint (CGPOptimizer.cpp:68)
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
 ERROR:  domain dcheck does not allow null values
@@ -166,8 +165,7 @@ ERROR:  domain dcheck does not allow null values
 --   https://www.pivotaltracker.com/story/show/116312671
 -- start_ignore
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
-ERROR:  One or more assertions failed
-DETAIL:  Check constraint nulltest_col5_check for table nulltest was violated
+ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5_check"
 -- end_ignore
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
 ERROR:  domain dnotnull does not allow null values
@@ -177,8 +175,7 @@ ERROR:  domain dnotnull does not allow null values
 --   https://www.pivotaltracker.com/story/show/116312671
 -- start_ignore
 INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
-ERROR:  One or more assertions failed
-DETAIL:  Not null constraint for column col3 of table nulltest was violated
+ERROR:  null value in column "col3" violates not-null constraint
 -- end_ignore
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
@@ -187,7 +184,7 @@ ERROR:  null value in column "col3" violates not-null constraint
 CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	d"
 COPY nulltest FROM stdin; --fail
 ERROR:  domain dcheck does not allow null values
-CONTEXT:  COPY nulltest, line 1, column col5: null input
+CONTEXT:  COPY nulltest, line 1, column a
 -- Last row is bad
 COPY nulltest FROM stdin;
 ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5_check"
@@ -253,10 +250,10 @@ COPY defaulttest(col5) FROM stdin;
 select * from defaulttest;
  col1 | col2 | col3 | col4 | col5 | col6 | col7 | col8  
 ------+------+------+------+------+------+------+-------
-    3 |   12 | 5    |    1 |    3 |   88 | 8000 | 12.12
-    3 |   12 | 5    |    2 |    3 |   88 | 8000 | 12.12
     3 |   12 | 5    |    3 |    3 |   88 | 8000 | 12.12
     3 |   12 | 5    |    4 |   42 |   88 | 8000 | 12.12
+    3 |   12 | 5    |    1 |    3 |   88 | 8000 | 12.12
+    3 |   12 | 5    |    2 |    3 |   88 | 8000 | 12.12
 (4 rows)
 
 drop table defaulttest cascade;
@@ -284,6 +281,8 @@ NOTICE:  drop cascades to table domnotnull column col2
 NOTICE:  drop cascades to table domnotnull column col1
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'col1' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into domdeftest default values;
 select * from domdeftest;
  col1 
@@ -321,13 +320,13 @@ ERROR:  column "col1" of table "domcontest" contains values that violate the new
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails
-ERROR:  value for domain con violates check constraint "con_check"
+ERROR:  value for domain con violates check constraint "con_check"  (seg2 172.17.0.2:25434 pid=2931) (cdbdisp.c:220)
 insert into domcontest values (42); -- fails
-ERROR:  value for domain con violates check constraint "t"
+ERROR:  value for domain con violates check constraint "t"  (seg1 172.17.0.2:25433 pid=2930) (cdbdisp.c:220)
 insert into domcontest values (5);
 alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
-ERROR:  value for domain con violates check constraint "con_check"
+ERROR:  value for domain con violates check constraint "con_check" 
 insert into domcontest values (42);
 -- Confirm ALTER DOMAIN with RULES.
 create table domtab (col1 integer);
@@ -344,7 +343,7 @@ select * from domview;
 
 alter domain dom set not null;
 select * from domview; -- fail
-ERROR:  domain dom does not allow null values
+ERROR:  domain dom does not allow null values  (seg1 slice1 172.17.0.2:25433 pid=2930) (cdbdisp.c:220)
 alter domain dom drop not null;
 select * from domview;
  col1 
@@ -355,7 +354,7 @@ select * from domview;
 
 alter domain dom add constraint domchkgt6 check(value > 6);
 select * from domview; --fail
-ERROR:  value for domain dom violates check constraint "domchkgt6"
+ERROR:  value for domain dom violates check constraint "domchkgt6"  (seg1 slice1 172.17.0.2:25433 pid=2930) (cdbdisp.c:220)
 alter domain dom drop constraint domchkgt6 restrict;
 select * from domview;
  col1 
@@ -396,6 +395,8 @@ ERROR:  value for domain dtop violates check constraint "dinter_check"
 select 'xz23'::dtop; -- fail
 ERROR:  value for domain dtop violates check constraint "dtop_check"
 create temp table dtest(f1 dtop);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 insert into dtest values('x123');
 insert into dtest values('x1234'); -- fail, implicit coercion
 ERROR:  value too long for type character varying(4)
@@ -424,7 +425,7 @@ ERROR:  domain str_domain does not allow null values
 create domain str_domain2 as text check (value <> 'foo') default 'foo';
 -- should fail
 alter table domain_test add column d str_domain2;
-ERROR:  value for domain str_domain2 violates check constraint "str_domain2_check"
+ERROR:  value for domain str_domain2 violates check constraint "str_domain2_check"  (seg0 172.17.0.2:25432 pid=2920) (cdbdisp_query.c:503)
 -- Check that domain constraints on prepared statement parameters of
 -- unknown type are enforced correctly.
 create domain pos_int as int4 check (value > 0) not null;
@@ -448,7 +449,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail because of implicit null assignment
 ERROR:  domain pos_int does not allow null values
-CONTEXT:  PL/pgSQL function "doubledecrement" line 2 at block variables initialization
+CONTEXT:  PL/pgSQL function "doubledecrement" line 2 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 0;
 begin
@@ -456,7 +457,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail at initialization assignment
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
-CONTEXT:  PL/pgSQL function "doubledecrement" line 2 at block variables initialization
+CONTEXT:  PL/pgSQL function "doubledecrement" line 2 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 1;
 begin
@@ -497,12 +498,12 @@ alter domain posint add constraint c1 check(value >= 0);
 create domain posint2 as posint check (value % 2 = 0);
 create table ddtest2(f1 posint2);
 insert into ddtest2 values(11); -- fail
-ERROR:  value for domain posint2 violates check constraint "posint2_check"
+ERROR:  value for domain posint2 violates check constraint "posint2_check"  (seg0 172.17.0.2:25432 pid=2920) (cdbdisp.c:220)
 insert into ddtest2 values(-2); -- fail
-ERROR:  value for domain posint2 violates check constraint "c1"
+ERROR:  value for domain posint2 violates check constraint "c1"  (seg0 172.17.0.2:25432 pid=2920) (cdbdisp.c:220)
 insert into ddtest2 values(2);
 alter domain posint add constraint c2 check(value >= 10); -- fail
-ERROR:  column "f1" of table "ddtest2" contains values that violate the new constraint
+ERROR:  column "f1" of table "ddtest2" contains values that violate the new constraint  (seg0 172.17.0.2:25432 pid=2920) (cdbdisp_query.c:503)
 alter domain posint add constraint c2 check(value > 0); -- OK
 drop table ddtest2;
 drop type ddtest1;

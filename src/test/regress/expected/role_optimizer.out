@@ -4,8 +4,9 @@
 -- MPP-15479: ALTER ROLE SET statement
 DROP ROLE IF EXISTS role_112911;
 NOTICE:  role "role_112911" does not exist, skipping
-NOTICE:  role "role_112911" does not exist, skipping  (seg0 localhost:12001 pid=20806)
-NOTICE:  role "role_112911" does not exist, skipping  (seg1 localhost:12002 pid=20807)
+NOTICE:  role "role_112911" does not exist, skipping  (seg0 172.17.0.2:25432 pid=10932)
+NOTICE:  role "role_112911" does not exist, skipping  (seg1 172.17.0.2:25433 pid=10933)
+NOTICE:  role "role_112911" does not exist, skipping  (seg2 172.17.0.2:25434 pid=10934)
 CREATE ROLE role_112911 WITH LOGIN;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 CREATE SCHEMA common_schema;
@@ -99,7 +100,7 @@ revoke all privileges on TABLE t1, t1_view FROM u1;
 set role u1;
 select * from t1_view order by 1;
 ERROR:  permission denied for relation t1_view
-ERROR:  GPDB exception. Aborting PQO plan generation. (CGPOptimizer.cpp:70)
+ERROR:  GPDB exception. Aborting PQO plan generation. (CGPOptimizer.cpp:72)
 reset role;
 drop view t1_view;
 drop table t1;

@@ -14,7 +14,7 @@ INSERT INTO ABSTIME_HOROLOGY_TBL (f1) VALUES ('Jan 14, 1973 03:14:21'),
 -- orca will fail for this
 INSERT INTO ABSTIME_HOROLOGY_TBL (f1) VALUES('Jun 10, 1843');
 ERROR:  cannot convert abstime "invalid" to timestamp
-ERROR:  GPDB exception. Aborting PQO plan generation. (CGPOptimizer.cpp:70)
+ERROR:  GPDB exception. Aborting PQO plan generation. (CGPOptimizer.cpp:72)
 CREATE TABLE INTERVAL_HOROLOGY_TBL (f1 interval);
 NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
 HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
@@ -1093,7 +1093,7 @@ SELECT t.d1 AS t, i.f1 AS i, t.d1 + i.f1 AS "add", t.d1 - i.f1 AS "subtract"
   WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
     AND i.f1 BETWEEN '00:00' AND '23:00'
   ORDER BY 1,2;
-              t             |     i     |             add            |          subtract           
+             t              |     i     |            add             |          subtract          
 ----------------------------+-----------+----------------------------+----------------------------
  Wed Feb 28 17:32:01 1996   | @ 1 min   | Wed Feb 28 17:33:01 1996   | Wed Feb 28 17:31:01 1996
  Wed Feb 28 17:32:01 1996   | @ 5 hours | Wed Feb 28 22:32:01 1996   | Wed Feb 28 12:32:01 1996
@@ -1555,6 +1555,8 @@ SELECT (time '00:00', interval '1 hour')
 (1 row)
 
 CREATE TABLE TEMP_TIMESTAMP (f1 timestamp with time zone);
+NOTICE:  Table doesn't have 'DISTRIBUTED BY' clause -- Using column named 'f1' as the Greenplum Database data distribution key for this table.
+HINT:  The 'DISTRIBUTED BY' clause determines the distribution of data. Make sure column(s) chosen are the optimal data distribution key to minimize skew.
 -- get some candidate input values
 INSERT INTO TEMP_TIMESTAMP (f1)
   SELECT d1 FROM TIMESTAMP_HOROLOGY_TBL
