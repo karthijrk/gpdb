@@ -67,7 +67,7 @@ CGPOptimizer::PplstmtOptimize
 		if (GPOS_MATCH_EX(ex, gpdxl::ExmaDXL, gpdxl::ExmiWarningAsError))
 		{
 			Assert(NULL != octx.m_szErrorMsg);
-			elog(ERROR, "%s", octx.m_szErrorMsg);
+			elog(ERROR, "PQO unable to generate plan, %s.", octx.m_szErrorMsg);
 		}
 		else if (GPOS_MATCH_EX(ex, gpdxl::ExmaGPDB, gpdxl::ExmiGPDBError))
 		{
