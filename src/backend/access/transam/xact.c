@@ -3563,6 +3563,7 @@ CommitTransaction(void)
 	CurTransactionResourceOwner = NULL;
 	TopTransactionResourceOwner = NULL;
 
+	AtEOXact_ExtTables();
 	AtCommit_Memory();
 
 	ResetXidBuffer(&subxbuf);
@@ -3957,7 +3958,6 @@ AbortTransaction(void)
 	 */
 	AfterTriggerEndXact(false);
 	AtAbort_Portals();
-	AtAbort_ExtTables();
 
 	AtEOXact_SharedSnapshot();
 
@@ -4066,6 +4066,8 @@ AbortTransaction(void)
 		AtEOXact_PgStat(false);
 		pgstat_report_xact_timestamp(0);
 	}
+
+	AtEOXact_ExtTables();
 
 	/*
 	 * Do abort to all QE. NOTE: we don't process

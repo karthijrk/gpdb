@@ -1661,12 +1661,6 @@ close_external_source(FILE *dataSource, bool failOnError, const char *relname)
 	{
 		url_fclose((URL_FILE*) f, failOnError, relname);
 	}
-
-	if (g_dataSourceCtx != NULL)
-	{
-		MemoryContextDelete(g_dataSourceCtx);
-		g_dataSourceCtx = NULL;
-	}
 }
 
 /*
@@ -1813,12 +1807,17 @@ void readHeaderLine(CopyState pstate)
 }
 
 /*
- * Free external resources on Abort.
+ * Free external resources on end of transaction.
  */
-void AtAbort_ExtTables(void)
+void AtEOXact_ExtTables(void)
 {
 	close_external_source(g_dataSource, false, NULL);
 	g_dataSource = NULL;
+	if (g_dataSourceCtx != NULL)
+	{
+		MemoryContextDelete(g_dataSourceCtx);
+		g_dataSourceCtx = NULL;
+	}
 }
 
 void
