@@ -1661,6 +1661,12 @@ close_external_source(FILE *dataSource, bool failOnError, const char *relname)
 	{
 		url_fclose((URL_FILE*) f, failOnError, relname);
 	}
+
+	if (g_dataSourceCtx != NULL)
+	{
+		MemoryContextDelete(g_dataSourceCtx);
+		g_dataSourceCtx = NULL;
+	}
 }
 
 /*
@@ -1845,7 +1851,7 @@ gfile_malloc(size_t size)
 {
 	if (g_dataSourceCtx == NULL)
 	{
-		g_dataSourceCtx = AllocSetContextCreate(TopTransactionContext,
+		g_dataSourceCtx = AllocSetContextCreate(TopMemoryContext,
 												"DataSourceContext",
 												ALLOCSET_SMALL_MINSIZE,
 												ALLOCSET_SMALL_INITSIZE,
