@@ -73,6 +73,11 @@ typedef struct ResourceOwnerData
 	int			nfiles;			/* number of owned temporary files */
 	File	   *files;			/* dynamically allocated array */
 	int			maxfiles;		/* currently allocated array size */
+
+	/* We have built-in support for remembering open bfz files */
+	int			nbfzfiles;		/* number of owned bfz files */
+	bfz_t	   **bfzfiles;		/* dynamically allocated array */
+	int			maxbfzfiles;	/* currently allocated array size */
 } ResourceOwnerData;
 
 
@@ -334,6 +339,20 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			FileClose(owner->files[owner->nfiles - 1]);
 		}
 
+		/* Ditto for bfz files */
+		while (owner->nbfzfiles > 0)
+		{
+			/*
+			 * We don't print leak warning on commit here. Usually, ExecutorEnd
+			 * will close / delete the file. But for `update` statement we never
+			 * call ExecutorEnd. So we rely on this callback to clean up even in the commit.
+			 */
+			bfz_close(owner->bfzfiles[owner->nbfzfiles - 1], false, isCommit);
+			/* forget the last file */
+			--owner->nbfzfiles;
+			Assert(owner->nbfzfiles >= 0);
+		}
+
 		/* Clean up index scans too */
 		ReleaseResources_hash();
 	}
@@ -365,6 +384,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->nplanrefs == 0);
 	Assert(owner->ntupdescs == 0);
 	Assert(owner->nfiles == 0);
+	Assert(owner->nbfzfiles == 0);
 
 	/*
 	 * Delete children.  The recursive call will delink the child from me, so
@@ -395,6 +415,8 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->tupdescs);
 	if (owner->files)
 		pfree(owner->files);
+	if (owner->bfzfiles)
+		pfree(owner->bfzfiles);
 
 	pfree(owner);
 }
@@ -1055,3 +1077,75 @@ PrintFileLeakWarning(File file)
 		 "temporary file leak: File %d still referenced",
 		 file);
 }
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * bfz files reference array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargeBFZFiles(ResourceOwner owner)
+{
+	int			newmax;
+
+	if (owner->nbfzfiles < owner->maxbfzfiles)
+		return;					/* nothing to do */
+
+	if (owner->bfzfiles == NULL)
+	{
+		newmax = 16;
+		owner->bfzfiles = (bfz_t **)
+			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(bfz_t *));
+		owner->maxbfzfiles = newmax;
+	}
+	else
+	{
+		newmax = owner->maxbfzfiles * 2;
+		owner->bfzfiles = (bfz_t **)
+			repalloc(owner->bfzfiles, newmax * sizeof(bfz_t *));
+		owner->maxbfzfiles = newmax;
+	}
+}
+
+/*
+ * Remember that a bfz file is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargeFiles()
+ */
+void
+ResourceOwnerRememberBFZFile(ResourceOwner owner, bfz_t *bfz)
+{
+	Assert(owner->nbfzfiles < owner->maxbfzfiles);
+	owner->bfzfiles[owner->nbfzfiles] = bfz;
+	owner->nbfzfiles++;
+}
+
+/*
+ * Forget that a bfz file is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetBFZFile(ResourceOwner owner, bfz_t *bfz)
+{
+	bfz_t	   **bfzfiles = owner->bfzfiles;
+	int			ns1 = owner->nbfzfiles - 1;
+	int			i;
+
+	for (i = ns1; i >= 0; i--)
+	{
+		if (bfzfiles[i] == bfz)
+		{
+			while (i < ns1)
+			{
+				bfzfiles[i] = bfzfiles[i + 1];
+				i++;
+			}
+			owner->nbfzfiles = ns1;
+			return;
+		}
+	}
+	elog(ERROR, "bfz file %s is not owned by resource owner %s",
+		 bfz->filename, owner->name);
+}
+
