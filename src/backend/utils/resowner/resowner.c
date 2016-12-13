@@ -111,6 +111,7 @@ static void PrintRelCacheLeakWarning(Relation rel);
 static void PrintPlanCacheLeakWarning(CachedPlan *plan);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
 static void PrintFileLeakWarning(File file);
+static void PrintBFZFileLeakWarning(bfz_t *bfz);
 
 
 /*****************************************************************************
@@ -342,11 +343,8 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Ditto for bfz files */
 		while (owner->nbfzfiles > 0)
 		{
-			/*
-			 * We don't print leak warning on commit here. Usually, ExecutorEnd
-			 * will close / delete the file. But for `update` statement we never
-			 * call ExecutorEnd. So we rely on this callback to clean up even in the commit.
-			 */
+			if (isCommit)
+				PrintBFZFileLeakWarning(owner->bfzfiles[owner->nbfzfiles - 1]);
 			bfz_close(owner->bfzfiles[owner->nbfzfiles - 1], false, isCommit);
 			/* forget the last file */
 			--owner->nbfzfiles;
@@ -1149,3 +1147,14 @@ ResourceOwnerForgetBFZFile(ResourceOwner owner, bfz_t *bfz)
 		 bfz->filename, owner->name);
 }
 
+/*
+ * Debugging subroutine
+ */
+static void
+PrintBFZFileLeakWarning(bfz_t *bfz)
+{
+	Assert(NULL != bfz);
+	elog(WARNING,
+		 "temporary bfz file leak: File %s still referenced",
+		 bfz->filename);
+}

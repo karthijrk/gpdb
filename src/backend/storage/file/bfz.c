@@ -358,12 +358,12 @@ bfz_create_internal(bfz_t *bfz_handle, const char *fileName, bool open_existing,
 		else
 		{
 			ereport(ERROR,
-					(errcode(ERRCODE_IO_ERROR),
+					(errcode_for_file_access(),
 							errmsg("could not create temporary file %s:%m", bfz_handle->filename)));
 		}
 	}
-	ResourceOwnerEnlargeBFZFiles(TopTransactionResourceOwner);
-	ResourceOwnerRememberBFZFile(TopTransactionResourceOwner, bfz_handle);
+	ResourceOwnerEnlargeBFZFiles(CurrentResourceOwner);
+	ResourceOwnerRememberBFZFile(CurrentResourceOwner, bfz_handle);
 
 	bfz_handle->mode = BFZ_MODE_APPEND;
 	bfz_handle->compression_index = compress;
@@ -420,7 +420,7 @@ void
 bfz_close(bfz_t * thiz, bool unreg, bool error_on_unlink)
 {
 	if (unreg)
-		ResourceOwnerForgetBFZFile(TopTransactionResourceOwner, thiz);
+		ResourceOwnerForgetBFZFile(CurrentResourceOwner, thiz);
 
 	if (thiz->freeable_stuff)
 	{
