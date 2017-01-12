@@ -444,8 +444,7 @@ static void z_free(voidpf a, voidpf b)
 	gfile_free(b);
 }
 
-static int
-gz_file_open(gfile_t *fd)
+int gz_file_open(gfile_t *fd)
 {
 	if (!(fd->u.z = gfile_malloc(sizeof *fd->u.z)))
 	{
