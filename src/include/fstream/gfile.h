@@ -40,6 +40,21 @@ typedef enum Compression_type
 	BZ_COMPRESSION
 } compression_type;
 
+typedef enum FileAccessType
+{
+	Invalid = 0,
+	CFileObj,
+	PostgresFileObj
+} FileAccessType;
+
+typedef struct FileAccessInterface
+{
+	FileAccessType ftype;
+	ssize_t (*read_file)(struct FileAccessInterface *fileaccess, void *ptr, size_t size);
+	ssize_t (*write_file)(struct FileAccessInterface *fileaccess, void *ptr, size_t size);
+	int (*close_file)(struct FileAccessInterface *fileaccess);
+} FileAccessInterface;
+
 /* The struct gfile_t is private.  Please do not use any of its fields. */
 typedef struct gfile_t
 {
@@ -51,7 +66,7 @@ typedef struct gfile_t
 
 	union
 	{
-		int filefd;
+		FileAccessInterface *file_access;
 #ifdef WIN32
 		HANDLE pipefd;
 #endif
@@ -80,11 +95,12 @@ int gfile_open_flags(int writing, int usesync);
 #define GFILE_OPEN_FOR_WRITE_SYNC   2
 
 int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, const char** response_string, struct gpfxdist_t* transform);
-int gfile_close(gfile_t*fd);
+void gfile_close(gfile_t*fd);
 off_t gfile_get_compressed_size(gfile_t*fd);
 off_t gfile_get_compressed_position(gfile_t*fd);
 ssize_t gfile_read(gfile_t* fd, void* ptr, size_t len); /* gfile_read reads as much as it can--short read indicates error. */
 ssize_t gfile_write(gfile_t* fd, void* ptr, size_t len);
+void gfile_init_file_access(gfile_t* fd, FileAccessInterface* file_access);
 void gfile_printf_then_putc_newline(const char*format,...) __attribute__ ((__format__ (__printf__, 1, 0)));
 void*gfile_malloc(size_t size);
 void gfile_free(void*a);

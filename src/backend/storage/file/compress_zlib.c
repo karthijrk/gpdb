@@ -1,5 +1,5 @@
 /* compress_zlib.c */
-#include "c.h"
+#include "postgres.h"
 #include "fstream/gfile.h"
 #include "storage/bfz.h"
 #include <zlib.h>
@@ -12,17 +12,60 @@ struct bfz_zlib_freeable_stuff
 	gfile_t *gfile;
 };
 
+typedef struct FileObject {
+	FileAccessInterface file_access;
+	File file;
+} FileObject;
+
+static ssize_t
+read_file(FileAccessInterface *file_access, void *ptr, size_t size)
+{
+	Assert(file_access);
+	Assert(PostgresFileObject == file_access->ftype);
+	FileObject* fobj = (FileObject*)file_access;
+	return FileRead(fobj->file, ptr, size);
+}
+
+static ssize_t
+write_file(FileAccessInterface *file_access, void *ptr, size_t size)
+{
+	Assert(file_access);
+	Assert(PostgresFileObject == file_access->ftype);
+	FileObject* fobj = (FileObject*)file_access;
+	return FileWrite(fobj->file, ptr, size);
+}
+
+static int
+close_file(FileAccessInterface *file_access)
+{
+	Assert(file_access);
+	Assert(PostgresFileObject == file_access->ftype);
+	FileObject* fobj = (FileObject*)file_access;
+	FileClose(fobj->file);
+	return 0;
+}
+
+static FileAccessInterface*
+gfile_create_fileobj_access(File file)
+{
+	FileObject *fobj = palloc0(sizeof(FileObject));
+	fobj->file_access.ftype = PostgresFileObj;
+	fobj->file_access.read_file = read_file;
+	fobj->file_access.write_file = write_file;
+	fobj->file_access.close_file = close_file;
+	fobj->file = file;
+	return &fobj->file_access;
+}
+
+
 /* This file implements bfz compression algorithm "zlib". */
 
 /*
  * bfz_zlib_close_ex
- *  Close a file and freeing up descriptor, buffers etc.
- *
- *  This is also called from an xact end callback, hence it should
- *  not contain any elog(ERROR) calls.
+ *	Close buffers etc. Does not close the underlying file!
  */
 static void
-bfz_zlib_close_ex(bfz_t * thiz)
+bfz_zlib_close_ex(bfz_t *thiz)
 {
 	struct bfz_zlib_freeable_stuff *fs = (void *) thiz->freeable_stuff;
 
@@ -30,29 +73,23 @@ bfz_zlib_close_ex(bfz_t * thiz)
 	{
 		Assert(NULL != fs->gfile);
 
+		/*
+		 * gfile->close() does not close the underlying file.
+		 */
 		fs->gfile->close(fs->gfile);
+		pfree((void*)fs->gfile->fd.file_access);
 		pfree(fs->gfile);
 		fs->gfile = NULL;
 
 		pfree(fs);
 		thiz->freeable_stuff = NULL;
 	}
-
-	/*
-	 * gfile->close() does not close the underlying file descriptor.
-	 * Let's close it here.
-	 */
-	if (thiz->fd != -1)
-	{
-		close(thiz->fd);
-		thiz->fd = -1;
-	}
 }
 
 /*
  * bfz_zlib_write_ex
- *   Write data to an opened compressed file.
- *   An exception is thrown if the data cannot be written for any reason.
+ *	 Write data to an opened compressed file.
+ *	 An exception is thrown if the data cannot be written for any reason.
  */
 static void
 bfz_zlib_write_ex(bfz_t *thiz, const char *buffer, int size)
@@ -70,10 +107,12 @@ bfz_zlib_write_ex(bfz_t *thiz, const char *buffer, int size)
 
 /*
  * bfz_zlib_read_ex
- *  Read data from an already opened compressed file.
+ *	Read data from an already opened compressed file.
  *
- *  The buffer pointer must be valid and have at least size bytes.
- *  An exception is thrown if the data cannot be read for any reason.
+ *	The buffer pointer must be valid and have at least size bytes.
+ *	An exception is thrown if the data cannot be read for any reason.
+ *
+ * The buffer is filled completely.
  */
 static int
 bfz_zlib_read_ex(bfz_t *thiz, char *buffer, int size)
@@ -93,10 +132,10 @@ bfz_zlib_read_ex(bfz_t *thiz, char *buffer, int size)
 
 /*
  * bfz_zlib_init
- *  Initialize the zlib subsystem for a file.
+ *	Initialize the zlib subsystem for a file.
  *
- *  The underlying file descriptor fd should already be opened
- *  and valid. Memory is allocated in the current memory context.
+ *	The underlying file descriptor fd should already be opened
+ *	and valid. Memory is allocated in the current memory context.
  */
 void
 bfz_zlib_init(bfz_t * thiz)
@@ -105,7 +144,7 @@ bfz_zlib_init(bfz_t * thiz)
 	struct bfz_zlib_freeable_stuff *fs = palloc(sizeof *fs);
 	fs->gfile = palloc0(sizeof *fs->gfile);
 
-	fs->gfile->fd.filefd = thiz->fd;
+	gfile_init_file_access(fs->gfile, gfile_create_fileobj_access(thiz->file));
 	fs->gfile->compression = GZ_COMPRESSION;
 
 	if (thiz->mode == BFZ_MODE_APPEND)

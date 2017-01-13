@@ -41,22 +41,72 @@
 
 #define COMPRESSION_BUFFER_SIZE		(1<<14)
 
+typedef struct FileDescriptorObject
+{
+	FileAccessInterface file_access;
+	int file_descriptor;
+} FileDescriptorObject;
+
+static ssize_t
+read_with_fd(FileAccessInterface *file_access, void *ptr, size_t size)
+{
+	assert(file_access);
+	assert(CFileObj == file_access->ftype);
+	ssize_t i = 0;
+	FileDescriptorObject* fobj = (FileDescriptorObject*)file_access;
+	do
+		i = read(fobj->file_descriptor, ptr, size);
+	while (i<0 && errno==EINTR);
+	return i;
+}
+
+static ssize_t
+write_with_fd(FileAccessInterface *file_access, void *ptr, size_t size)
+{
+	assert(file_access);
+	assert(CFileObj == file_access->ftype);
+	ssize_t i = 0;
+	FileDescriptorObject* fobj = (FileDescriptorObject*)file_access;
+	do
+		i = write(fobj->file_descriptor, ptr, size);
+	while (i<0 && errno==EINTR);
+
+	return i;
+}
 
 static int
-nothing_close(gfile_t *fd)
+close_with_fd(FileAccessInterface *file_access)
 {
-	return 0;
+	assert(file_access);
+	assert(CFileObj == file_access->ftype);
+	FileDescriptorObject* fobj = (FileDescriptorObject*)file_access;
+	int ret = 0;
+	do
+	{
+		//fsync(fobj->file_descriptor);
+		ret = close(fobj->file_descriptor);
+	}
+	while (ret < 0 && errno == EINTR);
+	return ret;
 }
+
+static FileAccessInterface*
+gfile_create_CFileObj_descriptor_access(int file_descriptor)
+{
+	FileDescriptorObject *fobj = gfile_malloc(sizeof(FileDescriptorObject));
+	fobj->file_access.ftype = CFileObj;
+	fobj->file_access.read_file = read_with_fd;
+	fobj->file_access.write_file = write_with_fd;
+	fobj->file_access.close_file = close_with_fd;
+	fobj->file_descriptor = file_descriptor;
+	return &fobj->file_access;
+}
+
 
 static ssize_t
 read_and_retry(gfile_t *fd, void *ptr, size_t size)
 {
-	ssize_t i = 0;
-
-	do
-		i = read(fd->fd.filefd, ptr, size);
-	while (i<0 && errno==EINTR);
-
+	ssize_t i = fd->fd.file_access->read_file(fd->fd.file_access, ptr, size);
 	if (i > 0)
 		fd->compressed_position += i;
 	return i;
@@ -65,15 +115,16 @@ read_and_retry(gfile_t *fd, void *ptr, size_t size)
 static ssize_t
 write_and_retry(gfile_t *fd, void *ptr, size_t size)
 {
-	ssize_t i = 0;
-
-	do
-		i = write(fd->fd.filefd, ptr, size);
-	while (i<0 && errno==EINTR);
-
+	ssize_t i = fd->fd.file_access->write_file(fd->fd.file_access, ptr, size);
 	if (i > 0)
 		fd->compressed_position += i;
 	return i;
+}
+
+static int
+nothing_close(gfile_t *fd)
+{
+	return 0;
 }
 
 static int
@@ -676,6 +727,7 @@ int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, co
 {
 	const char* s = strrchr(fpath, '.');
 	bool_t is_win_pipe = FALSE;
+	int filefd;
 #ifndef WIN32
 	struct 		stat sta;
 #endif
@@ -842,14 +894,14 @@ int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, co
 			}
 #endif
 			if (flags != GFILE_OPEN_FOR_READ)
-				fd->fd.filefd = open(fpath, O_WRONLY | O_CREAT | O_BINARY | O_APPEND | syncFlag, S_IRUSR | S_IWUSR);
+				filefd = open(fpath, O_WRONLY | O_CREAT | O_BINARY | O_APPEND | syncFlag, S_IRUSR | S_IWUSR);
 			else
-				fd->fd.filefd = open(fpath, O_RDONLY | O_BINARY);
+				filefd = open(fpath, O_RDONLY | O_BINARY);
 		}
-		while (fd->fd.filefd < 0 && errno == EINTR);
+		while (filefd < 0 && errno == EINTR);
 	}
 
-	if (!fd->is_win_pipe && -1 == fd->fd.filefd) 
+	if (!fd->is_win_pipe && -1 == filefd)
 	{
 		static char buf[256];
 		gfile_printf_then_putc_newline("gfile open (for %s) failed %s: %s",
@@ -862,6 +914,11 @@ int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, co
 		*response_string = buf;
 		return 1;
 	}
+
+	/*
+	 * create fileaccess based on file descriptor.
+	 */
+	gfile_init_file_access(fd, gfile_create_CFileObj_descriptor_access(filefd));
 
 	/*
 	 * prepare to use the appropriate i/o routines 
@@ -945,11 +1002,9 @@ int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, co
 	return 1;
 }
 
-int
+void
 gfile_close(gfile_t*fd)
 {
-	int ret = 1;
-
 	if (fd->close)
 	{
 #ifdef GPFXDIST
@@ -976,15 +1031,7 @@ gfile_close(gfile_t*fd)
 		}
 		else
 		{
-			do
-			{
-				//fsync(fd->fd.filefd);
-				ret = close(fd->fd.filefd);
-			}
-			while (ret < 0 && errno == EINTR);
-
-			if (ret == -1)
-				ret = 1;
+			fd->fd.file_access->close_file(fd->fd.file_access);
 		}
 
 #ifdef GPFXDIST
@@ -993,8 +1040,10 @@ gfile_close(gfile_t*fd)
 
 		fd->read = 0;
 		fd->close = 0;
+		gfile_free((void*)fd->fd.file_access);
+		fd->fd.file_access = NULL;
 	}
-	return ret;
+	return;
 }
 
 ssize_t 
@@ -1035,6 +1084,11 @@ gfile_write(gfile_t *fd, void *ptr, size_t len)
 	}
 	
 	return olen - len;
+}
+
+void
+gfile_init_file_access(gfile_t* fd, FileAccessInterface* file_access) {
+	fd->fd.file_access = file_access;
 }
 
 off_t gfile_get_compressed_size(gfile_t *fd)
