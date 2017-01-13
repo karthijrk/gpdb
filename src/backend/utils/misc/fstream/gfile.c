@@ -51,7 +51,12 @@ nothing_close(gfile_t *fd)
 static ssize_t
 read_and_retry(gfile_t *fd, void *ptr, size_t size)
 {
-	ssize_t i = FileRead(fd->fd.file, ptr, size);
+	ssize_t i = 0;
+
+	do
+		i = read(fd->fd.filefd, ptr, size);
+	while (i<0 && errno==EINTR);
+
 	if (i > 0)
 		fd->compressed_position += i;
 	return i;
@@ -60,7 +65,12 @@ read_and_retry(gfile_t *fd, void *ptr, size_t size)
 static ssize_t
 write_and_retry(gfile_t *fd, void *ptr, size_t size)
 {
-	ssize_t i = FileWrite(fd->fd.file, (char *)ptr, size);
+	ssize_t i = 0;
+
+	do
+		i = write(fd->fd.filefd, ptr, size);
+	while (i<0 && errno==EINTR);
+
 	if (i > 0)
 		fd->compressed_position += i;
 	return i;
@@ -830,22 +840,16 @@ int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, co
 				 */
 				syncFlag = O_SYNC;
 			}
-			if (flags != GFILE_OPEN_FOR_READ)
-				fd->fd.file = PathNameOpenFile(fpath, O_WRONLY | O_CREAT | O_BINARY | O_APPEND | syncFlag, S_IRUSR | S_IWUSR);
-			else
-				fd->fd.file = PathNameOpenFile(fpath, O_RDONLY | O_BINARY, 0);
-#else
+#endif
 			if (flags != GFILE_OPEN_FOR_READ)
 				fd->fd.filefd = open(fpath, O_WRONLY | O_CREAT | O_BINARY | O_APPEND | syncFlag, S_IRUSR | S_IWUSR);
 			else
 				fd->fd.filefd = open(fpath, O_RDONLY | O_BINARY);
-#endif
-
 		}
-		while (fd->fd.file < 0 && errno == EINTR);
+		while (fd->fd.filefd < 0 && errno == EINTR);
 	}
 
-	if (!fd->is_win_pipe && -1 == fd->fd.file)
+	if (!fd->is_win_pipe && -1 == fd->fd.filefd) 
 	{
 		static char buf[256];
 		gfile_printf_then_putc_newline("gfile open (for %s) failed %s: %s",
@@ -972,9 +976,6 @@ gfile_close(gfile_t*fd)
 		}
 		else
 		{
-#ifndef WIN32
-			FileClose(fd->fd.file);
-#else
 			do
 			{
 				//fsync(fd->fd.filefd);
@@ -984,7 +985,6 @@ gfile_close(gfile_t*fd)
 
 			if (ret == -1)
 				ret = 1;
-#endif
 		}
 
 #ifdef GPFXDIST
