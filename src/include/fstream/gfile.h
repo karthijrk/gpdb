@@ -6,6 +6,8 @@
 #ifndef WIN32
 #include <bzlib.h>
 #include <zlib.h>
+#include <postgres.h>
+#include "storage/fd.h"
 #endif
 
 #ifdef WIN32
@@ -51,8 +53,11 @@ typedef struct gfile_t
 
 	union
 	{
-		int filefd;
-#ifdef WIN32
+#ifndef WIN32
+		File file;
+#else
+		/* File descriptor */
+		int file;
 		HANDLE pipefd;
 #endif
 	} fd;
