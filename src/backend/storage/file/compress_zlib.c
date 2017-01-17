@@ -4,6 +4,10 @@
 #include "storage/bfz.h"
 #include <zlib.h>
 
+/* Use the one defined in fileam.c */
+extern void* gfile_malloc(size_t size);
+extern void gfile_free(void*a);
+
 struct bfz_zlib_freeable_stuff
 {
 	struct bfz_freeable_stuff super;
@@ -38,17 +42,14 @@ write_file(FileAccessInterface *file_access, void *ptr, size_t size)
 static int
 close_file(FileAccessInterface *file_access)
 {
-	Assert(file_access);
-	Assert(PostgresFileObject == file_access->ftype);
-	FileObject* fobj = (FileObject*)file_access;
-	FileClose(fobj->file);
+	/* don't call the `FileClose`. BFZ owns File and it knows when to close it.*/
 	return 0;
 }
 
 static FileAccessInterface*
-gfile_create_fileobj_access(File file)
+gfile_create_fileobj_access(File file, GFileAlloca gfile_alloca)
 {
-	FileObject *fobj = palloc0(sizeof(FileObject));
+	FileObject *fobj = gfile_alloca(sizeof(FileObject));
 	fobj->file_access.ftype = PostgresFileObj;
 	fobj->file_access.read_file = read_file;
 	fobj->file_access.write_file = write_file;
@@ -73,12 +74,8 @@ bfz_zlib_close_ex(bfz_t *thiz)
 	{
 		Assert(NULL != fs->gfile);
 
-		/*
-		 * gfile->close() does not close the underlying file.
-		 */
-		fs->gfile->close(fs->gfile);
-		pfree((void*)fs->gfile->fd.file_access);
-		pfree(fs->gfile);
+		gfile_close(fs->gfile);
+		gfile_destroy(fs->gfile);
 		fs->gfile = NULL;
 
 		pfree(fs);
@@ -140,19 +137,11 @@ bfz_zlib_read_ex(bfz_t *thiz, char *buffer, int size)
 void
 bfz_zlib_init(bfz_t * thiz)
 {
-	Assert(TopMemoryContext == CurrentMemoryContext);
 	struct bfz_zlib_freeable_stuff *fs = palloc(sizeof *fs);
-	fs->gfile = palloc0(sizeof *fs->gfile);
-
-	gfile_init_file_access(fs->gfile, gfile_create_fileobj_access(thiz->file));
-	fs->gfile->compression = GZ_COMPRESSION;
-
-	if (thiz->mode == BFZ_MODE_APPEND)
-	{
-		fs->gfile->is_write = TRUE;
-	}
-
-	int res = gz_file_open(fs->gfile);
+	bool is_write = thiz->mode == BFZ_MODE_APPEND;
+	fs->gfile = gfile_create(GZ_COMPRESSION, is_write, gfile_malloc, gfile_free);
+	FileAccessInterface* file_access = gfile_create_fileobj_access(thiz->file, gfile_malloc);
+	int res = gz_file_open(fs->gfile, file_access);
 
 	if (res == 1)
 	{

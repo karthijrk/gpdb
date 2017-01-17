@@ -427,19 +427,11 @@ bfz_scan_begin(bfz_t * thiz)
 
 	thiz->mode = BFZ_MODE_SCAN;
 
-	/*
-	 * Allocating in the TopMemoryContext since this memory context
-	 * is still available when calling the transaction callback at the
-	 * time when the transaction aborts.
-	 */
-	MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-
 	compression_algorithms[thiz->compression_index].init(thiz);
 	fs = thiz->freeable_stuff;
 	fs->buffer_pointer = fs->buffer_end = fs->buffer;
 	fs->tot_bytes = 0L;
 
-	MemoryContextSwitchTo(oldcxt);
 
 	if (gp_workfile_faultinject)
 	{
