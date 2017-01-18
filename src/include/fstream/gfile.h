@@ -55,36 +55,9 @@ typedef struct FileAccessInterface
 	void (*close_file)(struct FileAccessInterface *fileaccess);
 } FileAccessInterface;
 
-/* The struct gfile_t is private.  Please do not use any of its fields. */
-typedef struct gfile_t
-{
-	ssize_t(*read)(struct gfile_t*,void*,size_t);
-	ssize_t(*write)(struct gfile_t*,void*,size_t);
-	int(*close)(struct gfile_t*);
-	off_t compressed_size,compressed_position;
-	bool_t is_win_pipe;
-
-	union
-	{
-		FileAccessInterface *file_access;
-#ifdef WIN32
-		HANDLE pipefd;
-#endif
-	} fd;
-
-	union
-	{
-		int txt;
-#ifndef WIN32
-		struct zlib_stuff*z;
-		struct bzlib_stuff*bz;
-#endif
-	}u;
-	bool_t is_write;
-	compression_type compression;
-
-	struct gpfxdist_t* transform;
-}gfile_t;
+typedef struct gfile_t gfile_t;
+typedef void*(*GFileAlloca)(size_t size);
+typedef void(*GFileFree)(void*);
 
 /*
  * MPP-13817 (support opening files without O_SYNC)
@@ -94,17 +67,17 @@ int gfile_open_flags(int writing, int usesync);
 #define GFILE_OPEN_FOR_WRITE_NOSYNC 1
 #define GFILE_OPEN_FOR_WRITE_SYNC   2
 
+gfile_t* gfile_create(compression_type compression, bool_t is_write, GFileAlloca gfile_alloca, GFileFree gfile_free);
+void gfile_destroy(gfile_t* fd);
 int gfile_open(gfile_t* fd, const char* fpath, int flags, int* response_code, const char** response_string, struct gpfxdist_t* transform);
 void gfile_close(gfile_t*fd);
 off_t gfile_get_compressed_size(gfile_t*fd);
 off_t gfile_get_compressed_position(gfile_t*fd);
+bool_t gfile_is_win_pipe(gfile_t* fd);
 ssize_t gfile_read(gfile_t* fd, void* ptr, size_t len); /* gfile_read reads as much as it can--short read indicates error. */
 ssize_t gfile_write(gfile_t* fd, void* ptr, size_t len);
-void gfile_init_file_access(gfile_t* fd, FileAccessInterface* file_access);
 void gfile_printf_then_putc_newline(const char*format,...) __attribute__ ((__format__ (__printf__, 1, 0)));
-void*gfile_malloc(size_t size);
-void gfile_free(void*a);
 
-int gz_file_open(gfile_t *fd);
+int gz_file_open(gfile_t *fd, FileAccessInterface* file_access);
 
 #endif
