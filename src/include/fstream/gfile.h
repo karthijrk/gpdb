@@ -47,6 +47,19 @@ typedef enum FileAccessType
 	PostgresFileObj
 } FileAccessType;
 
+typedef enum GFileErrorCode
+{
+	GF_NoError = 0,
+	GF_AccessError = -1,
+	GF_BZDecompressInitError = -2,
+	GF_BZDecompressError = -3,
+	GF_InflateInit2Error = -4,
+	GF_InflateError = -5,
+	GF_DeflateInit2Error = -6,
+	GF_DeflateError = -7,
+	GF_OutOfMemory = -8
+} GFileErrorCode;
+
 typedef struct FileAccessInterface
 {
 	FileAccessType ftype;
@@ -77,7 +90,9 @@ bool_t gfile_is_win_pipe(gfile_t* fd);
 ssize_t gfile_read(gfile_t* fd, void* ptr, size_t len); /* gfile_read reads as much as it can--short read indicates error. */
 ssize_t gfile_write(gfile_t* fd, void* ptr, size_t len);
 void gfile_printf_then_putc_newline(const char*format,...) __attribute__ ((__format__ (__printf__, 1, 0)));
-
 int gz_file_open(gfile_t *fd, FileAccessInterface* file_access);
-
+GFileErrorCode gfile_error_code(gfile_t *fd);
+void gfile_reset_error(gfile_t *fd);
+bool_t gfile_has_error(gfile_t *fd);
+char* gfile_error_detail(gfile_t *fd);
 #endif
