@@ -54,6 +54,59 @@ gfile_create_fileobj_access(File file, GFileAlloca gfile_alloca)
 	return &fobj->file_access;
 }
 
+static void
+gfile_report_error(gfile_t *gf)
+{
+	Assert(gf);
+	GFileErrorCode error_code = gfile_error_code(gf);
+	char* msg_detail = gfile_error_detail(gf);
+	gfile_reset_error(gf);
+	switch(error_code)
+	{
+		case GF_NoError:
+			return;
+		case GF_AccessError:
+			ereport(ERROR,
+					(errcode_for_file_access(),
+							errmsg("could not write to temporary file: %m")));
+			break;
+		case GF_BZDecompressInitError:
+			ereport(ERROR,
+					(errmsg("bzlib decompression init failed")));
+			break;
+		case GF_BZDecompressError:
+			ereport(ERROR,
+					(errmsg("bzlib decompression failed")));
+			break;
+		case GF_InflateInit2Error:
+			ereport(ERROR,
+					(errmsg("zlib inflateInit2 failed"),
+							msg_detail ? errdetail("%s", msg_detail) : 0));
+			break;
+		case GF_InflateError:
+			ereport(ERROR,
+					(errmsg("zlib inflate failed"),
+							msg_detail ? errdetail("%s", msg_detail) : 0));
+			break;
+		case GF_DeflateInit2Error:
+			ereport(ERROR,
+					(errmsg("zlib deflateInit2 failed"),
+							msg_detail ? errdetail("%s", msg_detail) : 0));
+			break;
+		case GF_DeflateError:
+			ereport(ERROR,
+					(errmsg("zlib deflate failed"),
+							msg_detail ? errdetail("%s", msg_detail) : 0));
+			break;
+		case GF_OutOfMemory:
+			ereport(ERROR,
+					(errmsg("Out of memory")));
+			break;
+		default:
+			ereport(ERROR,
+					(errmsg("Unexpected error from gfile")));
+	}
+}
 
 void*
 bfz_gfile_palloc(size_t size)
@@ -81,6 +134,10 @@ bfz_zlib_close_ex(bfz_t *thiz)
 		Assert(NULL != fs->gfile);
 
 		gfile_close(fs->gfile);
+		if (gfile_has_error(fs->gfile))
+		{
+			gfile_report_error(fs->gfile);
+		}
 		gfile_destroy(fs->gfile);
 		fs->gfile = NULL;
 
@@ -99,12 +156,15 @@ bfz_zlib_write_ex(bfz_t *thiz, const char *buffer, int size)
 {
 	struct bfz_zlib_freeable_stuff *fs = (void *) thiz->freeable_stuff;
 
-	ssize_t written = gfile_write(fs->gfile, (void *)buffer, size);
-	if (written < 0)
+	gfile_write(fs->gfile, (void *)buffer, size);
+	if (gfile_has_error(fs->gfile))
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_IO_ERROR),
-				errmsg("could not write to temporary file: %m")));
+		Assert(read < 0);
+		gfile_report_error(fs->gfile);
+	}
+	else
+	{
+		Assert(read >= 0);
 	}
 }
 
@@ -123,13 +183,15 @@ bfz_zlib_read_ex(bfz_t *thiz, char *buffer, int size)
 	struct bfz_zlib_freeable_stuff *fs = (void *) thiz->freeable_stuff;
 
 	ssize_t read = gfile_read(fs->gfile, buffer, size);
-	if (read < 0)
+	if (gfile_has_error(fs->gfile))
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_IO_ERROR),
-				errmsg("could not read from temporary file: %m")));
+		Assert(read < 0);
+		gfile_report_error(fs->gfile);
 	}
-
+	else
+	{
+		Assert(read >= 0);
+	}
 	return read;
 }
 
@@ -147,13 +209,11 @@ bfz_zlib_init(bfz_t * thiz)
 	bool is_write = thiz->mode == BFZ_MODE_APPEND;
 	fs->gfile = gfile_create(GZ_COMPRESSION, is_write, bfz_gfile_palloc, bfz_gfile_pfree);
 	FileAccessInterface* file_access = gfile_create_fileobj_access(thiz->file, bfz_gfile_palloc);
-	int res = gz_file_open(fs->gfile, file_access);
+	gz_file_open(fs->gfile, file_access);
 
-	if (res == 1)
+	if (gfile_has_error(fs->gfile))
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_IO_ERROR),
-				errmsg("gz_file_open failed: %m")));
+		gfile_report_error(fs->gfile);
 	}
 
 	thiz->freeable_stuff = &fs->super;
