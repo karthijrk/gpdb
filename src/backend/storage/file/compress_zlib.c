@@ -4,10 +4,6 @@
 #include "storage/bfz.h"
 #include <zlib.h>
 
-/* Use the one defined in fileam.c */
-extern void* gfile_malloc(size_t size);
-extern void gfile_free(void*a);
-
 struct bfz_zlib_freeable_stuff
 {
 	struct bfz_freeable_stuff super;
@@ -59,7 +55,17 @@ gfile_create_fileobj_access(File file, GFileAlloca gfile_alloca)
 }
 
 
-/* This file implements bfz compression algorithm "zlib". */
+void*
+bfz_gfile_palloc(size_t size)
+{
+	return palloc(size);
+}
+
+void
+bfz_gfile_pfree(void*a)
+{
+	pfree(a);
+}
 
 /*
  * bfz_zlib_close_ex
@@ -139,8 +145,8 @@ bfz_zlib_init(bfz_t * thiz)
 {
 	struct bfz_zlib_freeable_stuff *fs = palloc(sizeof *fs);
 	bool is_write = thiz->mode == BFZ_MODE_APPEND;
-	fs->gfile = gfile_create(GZ_COMPRESSION, is_write, gfile_malloc, gfile_free);
-	FileAccessInterface* file_access = gfile_create_fileobj_access(thiz->file, gfile_malloc);
+	fs->gfile = gfile_create(GZ_COMPRESSION, is_write, bfz_gfile_palloc, bfz_gfile_pfree);
+	FileAccessInterface* file_access = gfile_create_fileobj_access(thiz->file, bfz_gfile_palloc);
 	int res = gz_file_open(fs->gfile, file_access);
 
 	if (res == 1)
