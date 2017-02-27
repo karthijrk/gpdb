@@ -1098,7 +1098,7 @@ tuplesort_finalize_stats_mk(Tuplesortstate_mk *state)
 		}
 
 		state->statsFinalized = true;
-		tuplesort_get_stats_mk(state, &state->instrument->sortMethod, &state->instrument->sortSpaceType, &state->instrument->sortSpaceUsed);
+		tuplesort_get_stats_mk(state, &state->instrument->sortMethod, &state->instrument->sortSpaceTypeStr, &state->instrument->sortSpaceUsed);
 	}
 }
 

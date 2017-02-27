@@ -37,8 +37,8 @@
 #define IN_PROGRESS_SORT_STR "sort still in progress"
 
 #define NUM_SORT_SPACE_TYPE 2
-#define MEMORY_STR_SORT_SPACE_TYPE "Memory"
-#define DISK_STR_SORT_SPACE_TYPE "Disk"
+#define MEMORY_SORT_SPACE_TYPE_STR "Memory"
+#define DISK_SORT_SPACE_TYPE_STR "Disk"
 
 
 /*
@@ -50,7 +50,7 @@
  */
 typedef enum
 {
-	UNINITALIZED_SORT = 0,
+	UNINITIALIZED_SORT = 0,
 	TOP_N_HEAP_SORT = 1,
 	QUICK_SORT = 2,
 	EXTERNAL_SORT = 3,
@@ -68,7 +68,7 @@ typedef enum
 /*
  * Convert the above enum `ExplainSortMethod` to printable string for
  * Explain Analyze.
- * Note : No conversion available for `UNINITALIZED_SORT`. Caller has to index
+ * Note : No conversion available for `UNINITIALIZED_SORT`. Caller has to index
  * this array by subtracting 1 from origin enum value.
  *
  * E.g. sort_method_enum_str[TOP_N_HEAP_SORT-1]
@@ -338,7 +338,7 @@ static int
 static ExplainSortMethod
 String2ExplainSortMethod(const char* sortMethod) {
 	if (sortMethod == NULL) {
-		return UNINITALIZED_SORT;
+		return UNINITIALIZED_SORT;
 	}
 	else if (strcmp(TOP_N_HEAP_SORT_STR, sortMethod) == 0) {
 		return TOP_N_HEAP_SORT;
@@ -355,7 +355,7 @@ String2ExplainSortMethod(const char* sortMethod) {
 	else if (strcmp(IN_PROGRESS_SORT_STR, sortMethod) == 0) {
 		return IN_PROGRESS_SORT;
 	}
-	return UNINITALIZED_SORT;
+	return UNINITIALIZED_SORT;
 }
 
 /*
@@ -925,13 +925,13 @@ cdbexplain_collectStatsFromNode(PlanState *planstate, CdbExplain_SendStatCtx *ct
 	si->firststart = instr->firststart;
 	si->numPartScanned = instr->numPartScanned;
 	si->sortMethod = String2ExplainSortMethod(instr->sortMethod);
-	if (MEMORY_STR_SORT_SPACE_TYPE == instr->sortSpaceType)
+	if (strcmp(MEMORY_SORT_SPACE_TYPE_STR, instr->sortSpaceTypeStr) == 0)
 	{
 		si->sortSpaceType = MEMORY_SORT_SPACE_TYPE;
 	}
 	else
 	{
-		AssertImply(si->sortMethod != UNINITALIZED_SORT, strcmp(DISK_STR_SORT_SPACE_TYPE, instr->sortSpaceType) == 0);
+		AssertImply(si->sortMethod != UNINITIALIZED_SORT, strcmp(DISK_SORT_SPACE_TYPE_STR, instr->sortSpaceTypeStr) == 0);
 		si->sortSpaceType = DISK_SORT_SPACE_TYPE;
 	}
 	si->sortSpaceUsed = instr->sortSpaceUsed;
@@ -1136,7 +1136,7 @@ cdbexplain_depositStatsToNode(PlanState *planstate, CdbExplain_RecvStatCtx *ctx)
 		cdbexplain_depStatAcc_upd(&totalWorkfileCreated, (rsi->workfileCreated ? 1 : 0), rsh, rsi, nsi);
 		cdbexplain_depStatAcc_upd(&peakMemBalance, rsi->peakMemBalance, rsh, rsi, nsi);
 		cdbexplain_depStatAcc_upd(&totalPartTableScanned, rsi->numPartScanned, rsh, rsi, nsi);
-		if (rsi->sortMethod < NUM_SORT_METHOD && rsi->sortMethod != UNINITALIZED_SORT && rsi->sortSpaceType != UNINITIALIZED_SORT_SPACE_TYPE) {
+		if (rsi->sortMethod < NUM_SORT_METHOD && rsi->sortMethod != UNINITIALIZED_SORT && rsi->sortSpaceType != UNINITIALIZED_SORT_SPACE_TYPE) {
 			Assert(rsi->sortSpaceType <= NUM_SORT_SPACE_TYPE);
 			cdbexplain_depStatAcc_upd(&sortSpaceUsed[rsi->sortSpaceType-1][rsi->sortMethod - 1], (double)rsi->sortSpaceUsed, rsh, rsi, nsi);
 		}
@@ -1577,8 +1577,8 @@ cdbexplain_showExecStats(struct PlanState *planstate,
 		case T_SortState:
 			for (int idx = 0; idx < NUM_SORT_METHOD; ++idx)
 			{
-				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], MEMORY_STR_SORT_SPACE_TYPE, &ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE-1][idx]);
-				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], DISK_STR_SORT_SPACE_TYPE, &ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE-1][idx]);
+				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], MEMORY_SORT_SPACE_TYPE_STR, &ns->sortSpaceUsed[MEMORY_SORT_SPACE_TYPE-1][idx]);
+				show_cumulative_sort_info(str, indent, sort_method_enum_str[idx], DISK_SORT_SPACE_TYPE_STR, &ns->sortSpaceUsed[DISK_SORT_SPACE_TYPE-1][idx]);
 			}
 			/* no break */
 		default:
