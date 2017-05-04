@@ -55,7 +55,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.191.2.1 2008/03/24 21:53:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.198 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1179,22 +1179,48 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 }
 
 /*
- * cost_ctescan
- *	  Determines and returns the cost of scanning a CTE RTE.
+ * cost_recursive_union
+ *	  Determines and returns the cost of performing a recursive union,
+ *	  and also the estimated output size.
+ *
+ * We are given Plans for the nonrecursive and recursive terms.
+ *
+ * Note that the arguments and output are Plans, not Paths as in most of
+ * the rest of this module.  That's because we don't bother setting up a
+ * Path representation for recursive union --- we have only one way to do it.
  */
 void
-cost_ctescan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
 {
-	/* Should only be applied to base relations that are CTEs */
-	Assert(baserel->relid > 0);
-	Assert(baserel->rtekind == RTE_CTE);
+	Cost		startup_cost;
+	Cost		total_cost;
+	double		total_rows;
+
+	/* We probably have decent estimates for the non-recursive term */
+	startup_cost = nrterm->startup_cost;
+	total_cost = nrterm->total_cost;
+	total_rows = nrterm->plan_rows;
 
 	/*
-	 * For now, there should be no extra cost of scanning a CTE RTE,
-	 * besides the cost of evaluating the subplan.
+	 * We arbitrarily assume that about 10 recursive iterations will be
+	 * needed, and that we've managed to get a good fix on the cost and
+	 * output size of each one of them.  These are mighty shaky assumptions
+	 * but it's hard to see how to do better.
 	 */
-	path->startup_cost = baserel->subplan->startup_cost;
-	path->total_cost = baserel->subplan->total_cost;
+	total_cost += 10 * rterm->total_cost;
+	total_rows += 10 * rterm->plan_rows;
+
+	/*
+	 * Also charge cpu_tuple_cost per row to account for the costs of
+	 * manipulating the tuplestores.  (We don't worry about possible
+	 * spill-to-disk costs.)
+	 */
+	total_cost += cpu_tuple_cost * total_rows;
+
+	runion->startup_cost = startup_cost;
+	runion->total_cost = total_cost;
+	runion->plan_rows = total_rows;
+	runion->plan_width = Max(nrterm->plan_width, rterm->plan_width);
 }
 
 /*
@@ -3076,33 +3102,6 @@ set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	set_baserel_size_estimates(root, rel);
 }
 
-/*
- * set_cte_size_estimates
- *		Set the size estimates for a base relation that is a CTE reference.
- *
- * The rel's targetlist and restrictinfo list must have been constructed
- * already, and we need the completed plan for the CTE (if a regular CTE)
- * or the non-recursive term (if a self-reference).
- *
- * We set the same fields as set_baserel_size_estimates.
- */
-void
-set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
-{
-	Assert(rel->relid > 0);
-
-#ifdef USE_ASSERT_CHECKING
-	/* Should only be applied to base relations that are CTE references */
-	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
-	Assert(rte->rtekind == RTE_CTE);
-#endif
-
-	/* Set the number of tuples to the CTE plan's output estimate */
-	rel->tuples = cteplan->plan_rows;
-
-	/* Now estimate number of output rows, etc */
-	set_baserel_size_estimates(root, rel);
-}
 
 /*
  * set_rel_width

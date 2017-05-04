@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.142.2.1 2008/04/21 20:54:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.148 2008/10/04 21:56:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2382,92 +2382,6 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	cost_valuesscan(pathnode, root, rel);
 
 	return pathnode;
-}
-
-/*
- * create_ctescan_path
- *	  Creates a path corresponding to a scan of a CTE,
- *	  returning the pathnode.
- */
-Path *
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
-{
-	Path *pathnode = makeNode(Path);
-
-	pathnode->pathtype = T_CteScan;
-	pathnode->parent = rel;
-	pathnode->pathkeys = pathkeys;
-
-	pathnode->locus = cdbpathlocus_from_subquery(root, rel->subplan, rel->relid);
-
-	/*
-	 * We can't extract these two values from the subplan, so we simple set
-	 * them to their worst case here.
-	 */
-	pathnode->motionHazard = true;
-	pathnode->rescannable = false;
-	pathnode->sameslice_relids = NULL;
-
-	cost_ctescan(pathnode, root, rel);
-
-	return pathnode;
-}
-
-/*
- * cdb_jointype_to_join_in
- *    Returns JOIN_IN if the jointype should be changed from JOIN_INNER to
- *    JOIN_IN so as to produce at most one matching inner row per outer row.
- *    Else returns the given jointype.
- *
- * CDB TODO: Allow outer joins to use the JOIN_IN technique.
- * CDB TODO: Occasionally, symmetric JOIN_IN might be useful (aka 'match join').
- */
-static inline JoinType
-cdb_jointype_to_join_in(RelOptInfo *joinrel, JoinType jointype, Path *inner_path)
-{
-    CdbRelDedupInfo    *dedup = joinrel->dedup_info;
-
-    if (dedup &&
-        dedup->spent_subqrelids &&
-        bms_is_subset(inner_path->parent->relids, dedup->spent_subqrelids) &&
-        !IsA(inner_path, UniquePath) &&
-        jointype == JOIN_INNER)
-    {
-        jointype = JOIN_IN;
-    }
-    return jointype;
-}                               /* cdb_jointype_to_join_in */
-
-bool
-path_contains_inner_index(Path *path)
-{
-    if (IsA(path, IndexPath) &&
-        ((IndexPath *)path)->isjoininner)
-		return true;
-    else if (IsA(path, BitmapHeapPath) &&
-             ((BitmapHeapPath *)path)->isjoininner)
-		return true;
-	else if (IsA(path, BitmapAppendOnlyPath) &&
-			 ((BitmapAppendOnlyPath *)path)->isjoininner)
-		return true;
-	else if (IsA(path, AppendPath))
-	{
-		/* MPP-2377: Append paths may conceal inner-index scans, if
-		 * any of the subpaths are indexpaths or bitmapheap-paths we
-		 * have to do more checking */
-		ListCell   *l;
-
-		/* scan the subpaths of the Append */
-		foreach(l, ((AppendPath *)path)->subpaths)
-		{
-			Path *subpath = (Path *)lfirst(l);
-
-			if (path_contains_inner_index(subpath))
-				return true;
-		}
-	}
-
-	return false;
 }
 
 /*
