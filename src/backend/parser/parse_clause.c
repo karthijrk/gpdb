@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.168 2008/01/01 19:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.180 2008/10/04 21:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,8 @@ static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 					  List *relnamespace,
 					  Relids containedRels);
 static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
+static RangeTblEntry *transformCTEReference(ParseState *pstate, RangeVar *r,
+					  CommonTableExpr *cte, Index levelsup);
 static RangeTblEntry *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
 static RangeTblEntry *transformRangeFunction(ParseState *pstate,
@@ -1124,6 +1126,20 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	return rte;
 }
 
+/*
+ * transformCTEReference --- transform a RangeVar that references a common
+ * table expression (ie, a sub-SELECT defined in a WITH clause)
+ */
+static RangeTblEntry *
+transformCTEReference(ParseState *pstate, RangeVar *r,
+					  CommonTableExpr *cte, Index levelsup)
+{
+	RangeTblEntry *rte;
+
+	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r->alias, true);
+
+	return rte;
+}
 
 /*
  * transformRangeSubselect --- transform a sub-SELECT appearing in FROM
@@ -1371,32 +1387,46 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 	if (IsA(n, RangeVar))
 	{
-		/* Plain relation reference */
+		/* Plain relation reference, or perhaps a CTE reference */
+		RangeVar *rv = (RangeVar *) n;
 		RangeTblRef *rtr;
 		RangeTblEntry *rte = NULL;
 		int			rtindex;
 		RangeVar *rangeVar = (RangeVar *)n;
 
 		/*
-		 * If it is an unqualified name, it might be a CTE reference.
+		 * If it is an unqualified name, it might be a reference to some
+		 * CTE visible in this or a parent query.
 		 */
-		if (rangeVar->schemaname == NULL)
+		if (!rv->schemaname)
 		{
-			CommonTableExpr *cte;
-			Index levelsup;
+			ParseState *ps;
+			Index	levelsup;
 
-			cte = scanNameSpaceForCTE(pstate, rangeVar->relname, &levelsup);
-			if (cte)
+			for (ps = pstate, levelsup = 0;
+				 ps != NULL;
+				 ps = ps->parentParseState, levelsup++)
 			{
-				rte = addRangeTableEntryForCTE(pstate, cte, levelsup, rangeVar, true);
+				ListCell *lc;
+
+				foreach(lc, ps->p_ctenamespace)
+				{
+					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+					if (strcmp(rv->relname, cte->ctename) == 0)
+					{
+						rte = transformCTEReference(pstate, rv, cte, levelsup);
+						break;
+					}
+				}
+				if (rte)
+					break;
 			}
 		}
 
-		/* If it is not a CTE reference, it must be a simple relation reference. */
-		if (rte == NULL)
-		{
-			rte = transformTableEntry(pstate, rangeVar);
-		}
+		/* if not found as a CTE, must be a table reference */
+		if (!rte)
+			rte = transformTableEntry(pstate, rv);
 
 		/* assume new rte is at end */
 		rtindex = list_length(pstate->p_rtable);
