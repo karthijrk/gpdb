@@ -565,15 +565,16 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		free_parsestate(sub_pstate);
 
 		/* The grammar should have produced a SELECT, but it might have INTO */
-		Assert(IsA(selectQuery, Query));
-		Assert(selectQuery->commandType == CMD_SELECT);
-		Assert(selectQuery->utilityStmt == NULL);
+		if (!IsA(selectQuery, Query) ||
+			selectQuery->commandType != CMD_SELECT ||
+			selectQuery->utilityStmt != NULL)
+			elog(ERROR, "unexpected non-SELECT command in INSERT ... SELECT");
 		if (selectQuery->intoClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("INSERT ... SELECT cannot specify INTO"),
 					 parser_errposition(pstate,
-						   exprLocation((Node *) selectQuery->intoClause))));
+										exprLocation((Node *) selectQuery->intoClause))));
 
 		/*
 		 * Make the source be a subquery in the INSERT's rangetable, and add
@@ -624,6 +625,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		{
 			qry->hasRecursive = selectStmt->withClause->recursive;
 			qry->cteList = transformWithClause(pstate, selectStmt->withClause);
+			qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
 		}
 
 		foreach(lc, selectStmt->valuesLists)
@@ -724,6 +726,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		{
 			qry->hasRecursive = selectStmt->withClause->recursive;
 			qry->cteList = transformWithClause(pstate, selectStmt->withClause);
+			qry->hasModifyingCTE = pstate->p_hasModifyingCTE;
 		}
 
 		/* Do basic expression transformation (same as a ROW() expr) */
@@ -1571,6 +1574,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
 	 * transformGroupClause and transformDistinctClause need the results.
+	 * Note that these functions can also change the targetList, so it's
+	 * passed to them by reference.
 	 */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
@@ -1744,6 +1749,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 		exprsLists = lappend(exprsLists, sublist);
 
+		/* Check for DEFAULT and build per-column expression lists */
 		i = 0;
 		foreach(lc2, sublist)
 		{
@@ -2256,6 +2262,13 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 /*
  * transformSetOperationTree
  *		Recursively transform leaves and internal nodes of a set-op tree
+ *
+ * In addition to returning the transformed node, we return a list of
+ * expression nodes showing the type, typmod, and location (for error messages)
+ * of each output column of the set-op node.  This is used only during the
+ * internal recursion of this function.  At the upper levels we use
+ * SetToDefault nodes for this purpose, since they carry exactly the fields
+ * needed, but any other expression node type would do as well.
  */
 static Node *
 transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
@@ -2890,6 +2903,7 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 
 	result = transformStmt(pstate, stmt->query);
 
+	/* Grammar should not have allowed anything but SELECT */
 	if (!IsA(result, Query) ||
 		result->commandType != CMD_SELECT ||
 		result->utilityStmt != NULL)
@@ -3041,7 +3055,7 @@ CheckSelectLocking(Query *qry)
  * This basically involves replacing names by integer relids.
  *
  * NB: if you need to change this, see also markQueryForLocking()
- * in rewriteHandler.c.
+ * in rewriteHandler.c, and isLockedRel() in parse_relation.c.
  */
 static void
 transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc)

@@ -1173,7 +1173,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		query->commandType != CMD_SELECT ||
 		query->utilityStmt != NULL)
 		elog(ERROR, "unexpected non-SELECT command in subquery in FROM");
-	if (query->intoClause != NULL)
+	if (query->intoClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in FROM cannot have SELECT INTO"),
@@ -1321,8 +1321,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("cannot use aggregate function in function expression in FROM"),
-				 parser_errposition(pstate,
-									locate_agg_of_level(funcexpr, 0))));
+					 parser_errposition(pstate,
+										locate_agg_of_level(funcexpr, 0))));
 	}
 
 	/*
@@ -3090,8 +3090,9 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 
 /*
  * addTargetToSortList
- *		If the given targetlist entry isn't already in the ORDER BY list,
- *		add it to the end of the list, using the given sort ordering info.
+ *		If the given targetlist entry isn't already in the SortGroupClause
+ *		list, add it to the end of the list, using the given sort ordering
+ *		info.
  *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
  * do nothing (which implies the search for a sort operator will fail).
@@ -3128,9 +3129,9 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	 * Rather than clutter the API of get_sort_group_operators and the other
 	 * functions we're about to use, make use of error context callback to
 	 * mark any error reports with a parse position.  We point to the operator
-	 * location if present, else to the expression being sorted.  (NB: use the
-	 * original untransformed expression here; the TLE entry might well point
-	 * at a duplicate expression in the regular SELECT list.)
+	 * location if present, else to the expression being sorted.  (NB: use
+	 * the original untransformed expression here; the TLE entry might well
+	 * point at a duplicate expression in the regular SELECT list.)
 	 */
 	location = sortby->location;
 	if (location < 0)
@@ -3157,8 +3158,9 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										  false);
 
 			/*
-			 * Verify it's a valid ordering operator, and determine whether to
-			 * consider it like ASC or DESC.
+			 * Verify it's a valid ordering operator, fetch the corresponding
+			 * equality operator, and determine whether to consider it like
+			 * ASC or DESC.
 			 */
 			if (!get_compare_function_for_ordering_op(sortop,
 													  &cmpfunc, &reverse))
