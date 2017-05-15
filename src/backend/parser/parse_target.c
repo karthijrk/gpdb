@@ -338,7 +338,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
  * indirection	subscripts/field names for target column, if any
- * location		error cursor position, or -1
+ * location		error cursor position for the target column, or -1
  *
  * Returns the modified expression.
  */
@@ -423,7 +423,8 @@ transformAssignedExpr(ParseState *pstate,
 			 */
 			colVar = (Node *) make_var(pstate,
 									   pstate->p_target_rangetblentry,
-									   attrno, location);
+									   attrno,
+									   location);
 		}
 
 		expr = (Expr *)
@@ -828,7 +829,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  * ExpandColumnRefStar()
  *		Transforms foo.* into a list of expressions or targetlist entries.
  *
- * This handles the case where '*' appears as the last or only name in a
+ * This handles the case where '*' appears as the last or only item in a
  * ColumnRef.  The code is shared between the case of foo.* at the top level
  * in a SELECT target list (where we want TargetEntry nodes in the result)
  * and foo.* in a ROW() or VALUES() construct (where we want just bare
