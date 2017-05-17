@@ -1065,6 +1065,7 @@ plan_tree_walker(Node *node,
 			break;
 
 		case T_ShareInputScan:
+		case T_CteScan:
 			if (walk_plan_node_fields((Plan *) node, walker, context))
 				return true;
 			break;
