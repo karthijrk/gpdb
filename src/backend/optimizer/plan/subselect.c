@@ -450,6 +450,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 
 	Plan *plan = subquery_planner(root->glob, subquery,
 			root,
+			false,
 			tuple_fraction,
 			&subroot,
 			config);
@@ -666,7 +667,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 					break;
 			}
 			if (use_material)
-				plan = materialize_finished_plan(plan);
+				plan = materialize_finished_plan(root, plan);
 		}
 
 		result = (Node *) splan;
@@ -984,7 +985,8 @@ SS_process_ctes(PlannerInfo *root)
 		plan = subquery_planner(root->glob, subquery,
 								root,
 								cte->cterecursive, 0.0,
-								&subroot);
+								&subroot,
+								root->config);
 
 		/*
 		 * Make a SubPlan node for it.  This is just enough unlike
@@ -996,7 +998,7 @@ SS_process_ctes(PlannerInfo *root)
 		splan->subLinkType = CTE_SUBLINK;
 		splan->testexpr = NULL;
 		splan->paramIds = NIL;
-		splan->firstColType = get_first_col_type(plan);
+		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod);
 		splan->useHashTable = false;
 		splan->unknownEqFalse = false;
 		splan->setParam = NIL;
@@ -1047,7 +1049,8 @@ SS_process_ctes(PlannerInfo *root)
 		root->cte_plan_ids = lappend_int(root->cte_plan_ids, splan->plan_id);
 
 		/* Lastly, fill in the cost estimates for use later */
-		cost_subplan(root, splan, plan);
+		// FIXME : CTE_MERGE: cost_subplan is part of the commit bd3daddaf232d95b0c9ba6f99b0170a0147dd8af
+		//cost_subplan(root, splan, plan);
 	}
 }
 

@@ -362,6 +362,7 @@ match_unsorted_outer(PlannerInfo *root,
 					 List *mergeclause_list,
 					 JoinType jointype)
 {
+	JoinType	save_jointype = jointype;
 	bool		nestjoinOK;
 	bool		useallclauses;
 	Path	   *inner_cheapest_startup = innerrel->cheapest_startup_path;
@@ -404,18 +405,7 @@ match_unsorted_outer(PlannerInfo *root,
     		&& !root->config->mpp_trying_fallback_plan)
         nestjoinOK = false;
 
-    /*
-	 * If we need to unique-ify the inner path, we will consider only the
-	 * cheapest inner.
-	 */
-	if (save_jointype == JOIN_UNIQUE_INNER)
-	{
-		inner_cheapest_total = (Path *)
-			create_unique_path(root, innerrel, inner_cheapest_total, sjinfo);
-		Assert(inner_cheapest_total);
-		inner_cheapest_startup = inner_cheapest_total;
-	}
-	else if (nestjoinOK)
+    if (nestjoinOK)
 	{
 		/*
 		 * If the cheapest inner path is a join or seqscan, we should consider
@@ -431,7 +421,7 @@ match_unsorted_outer(PlannerInfo *root,
 			  inner_cheapest_total->pathtype == T_CteScan ||
 			  inner_cheapest_total->pathtype == T_WorkTableScan))
 			matpath = (Path *)
-				create_material_path(innerrel, inner_cheapest_total);
+				create_material_path(root, innerrel, inner_cheapest_total);
 
 
 		/*

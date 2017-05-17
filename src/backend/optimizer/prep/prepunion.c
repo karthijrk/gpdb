@@ -56,7 +56,7 @@ static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
-					   List **sortClauses, double *pNumGroups);
+					   List **sortClauses);
 static Plan *generate_recursion_plan(SetOperationStmt *setOp,
 						PlannerInfo *root, double tuple_fraction,
 						List *refnames_tlist,
@@ -177,7 +177,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
-					   List **sortClauses, double *pNumGroups)
+					   List **sortClauses)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -200,22 +200,6 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 								   tuple_fraction,
 								   &subroot,
 								   config);
-
-		/*
-		 * Estimate number of groups if caller wants it.  If the subquery
-		 * used grouping or aggregation, its output is probably mostly
-		 * unique anyway; otherwise do statistical estimation.
-		 */
-		if (pNumGroups)
-		{
-			if (subquery->groupClause || subquery->distinctClause ||
-				subroot->hasHavingQual || subquery->hasAggs)
-				*pNumGroups = subplan->plan_rows;
-			else
-				*pNumGroups = estimate_num_groups(subroot,
-												  get_tlist_exprs(subquery->targetList, false),
-												  subplan->plan_rows);
-		}
 
 		/*
 		 * Add a SubqueryScan with the caller-requested targetlist
@@ -319,12 +303,12 @@ generate_recursion_plan(SetOperationStmt *setOp, PlannerInfo *root,
 	 */
 	lplan = recurse_set_operations(setOp->larg, root, tuple_fraction,
 								   setOp->colTypes, false, -1,
-								   refnames_tlist, sortClauses, NULL);
+								   refnames_tlist, sortClauses);
 	/* The right plan will want to look at the left one ... */
 	root->non_recursive_plan = lplan;
 	rplan = recurse_set_operations(setOp->rarg, root, tuple_fraction,
 								   setOp->colTypes, false, -1,
-								   refnames_tlist, sortClauses, NULL);
+								   refnames_tlist, sortClauses);
 	root->non_recursive_plan = NULL;
 
 	/*

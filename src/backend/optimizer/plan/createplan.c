@@ -80,8 +80,6 @@ static TidScan *create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
-static SubqueryScan *create_ctescan_plan(PlannerInfo *root, Path *best_path,
-					List *tlist, List *scan_clauses);
 static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static TableFunctionScan *create_tablefunction_plan(PlannerInfo *root,
@@ -2702,7 +2700,7 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
 							 plan_id, cte_param_id);
 
-	copy_path_costsize(&scan_plan->scan.plan, best_path);
+	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
 	return scan_plan;
 }
@@ -2755,9 +2753,62 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_worktablescan(tlist, scan_clauses, scan_relid,
 								   cteroot->wt_param_id);
 
-	copy_path_costsize(&scan_plan->scan.plan, best_path);
+	copy_path_costsize(root, &scan_plan->scan.plan, best_path);
 
 	return scan_plan;
+}
+
+static Expr *
+remove_isnotfalse_expr(Expr *expr)
+{
+	if (IsA(expr, BooleanTest))
+	{
+		BooleanTest *bt = (BooleanTest *) expr;
+
+		if (bt->booltesttype == IS_NOT_FALSE)
+		{
+			return bt->arg;
+		}
+	}
+	return expr;
+}
+
+/*
+ * remove_isnotfalse
+ *	  Given a list of joinclauses, extract the bare clauses, removing any IS_NOT_FALSE
+ *	  additions. The original data structure is not touched; a modified list is returned
+ */
+static List *
+remove_isnotfalse(List *clauses)
+{
+	List	   *t_list = NIL;
+	ListCell   *l;
+
+	foreach(l, clauses)
+	{
+		Node	   *node = (Node *) lfirst(l);
+
+		if (IsA(node, Expr) ||IsA(node, BooleanTest))
+		{
+			Expr	   *expr = (Expr *) node;
+
+			expr = remove_isnotfalse_expr(expr);
+			t_list = lappend(t_list, expr);
+		}
+		else if (IsA(node, RestrictInfo))
+		{
+			RestrictInfo *restrictinfo = (RestrictInfo *) node;
+			Expr	   *rclause = restrictinfo->clause;
+
+			rclause = remove_isnotfalse_expr(rclause);
+			t_list = lappend(t_list, rclause);
+		}
+		else
+		{
+			t_list = lappend(t_list, node);
+		}
+	}
+	return t_list;
 }
 
 /*****************************************************************************

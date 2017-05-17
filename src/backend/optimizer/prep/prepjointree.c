@@ -69,6 +69,7 @@ static void fix_in_clause_relids(List *in_info_list, int varno,
 static void fix_append_rel_relids(List *append_rel_list, int varno,
 					  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
+static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery, List *colTypes);
 
 extern void UpdateScatterClause(Query *query, List *newtlist);
 
