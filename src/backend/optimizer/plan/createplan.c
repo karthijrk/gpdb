@@ -397,6 +397,20 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 												   scan_clauses);
 			break;
 
+		case T_CteScan:
+			plan = (Plan *) create_ctescan_plan(root,
+					best_path,
+					tlist,
+					scan_clauses);
+			break;
+
+		case T_WorkTableScan:
+			plan = (Plan *) create_worktablescan_plan(root,
+					best_path,
+					tlist,
+					scan_clauses);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) best_path->pathtype);

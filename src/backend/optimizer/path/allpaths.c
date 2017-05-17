@@ -911,6 +911,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Generate appropriate path */
 	// FIXME CTE_MERGE: For `create_ctescan_path How to get pathkeys. For now we are passing NULL.
+	rel->subplan = cteplan;
 	add_path(root, rel, create_ctescan_path(root, rel, NIL));
 
 	/* Select cheapest path (pretty easy in this case...) */
