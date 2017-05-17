@@ -1976,6 +1976,7 @@ explain_outNode(StringInfo str,
 							indent + 4, es);
 		}
 	}
+}
 
 /*
  * Show the targetlist of a plan node

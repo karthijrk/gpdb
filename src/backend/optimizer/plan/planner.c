@@ -740,13 +740,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		cdbsubselect_flatten_sublinks(root, (Node *) parse);
 
 	/*
-	 * Scan the rangetable for set-returning functions, and inline them
-	 * if possible (producing subqueries that might get pulled up next).
-	 * Recursion issues here are handled in the same way as for SubLinks.
-	 */
-	inline_set_returning_functions(root);
-
-	/*
 	 * Check to see if any subqueries in the rangetable can be merged into
 	 * this query.
 	 */
@@ -1576,18 +1569,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		Path	   *sorted_path;
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
-		int			numGroupCols;
+		int			numGroupCols = list_length(parse->groupClause);
 		bool		use_hashed_grouping = false;
+		bool		grpext = false;
+		bool		has_within = false;
+		CanonicalGroupingSets *canonical_grpsets;
 
 		MemSet(&agg_counts, 0, sizeof(AggClauseCounts));
 
 		/* A recursive query should always have setOperations */
 		Assert(!root->hasRecursion);
-
-		/* Preprocess GROUP BY clause, if any */
-		if (parse->groupClause)
-			preprocess_groupclause(root);
-		numGroupCols = list_length(parse->groupClause);
 
 		/* Preprocess targetlist */
 		tlist = preprocess_targetlist(root, tlist);
