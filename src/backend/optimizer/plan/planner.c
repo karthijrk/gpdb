@@ -530,7 +530,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	/* walk plan and remove unused initplans and their params */
-	remove_unused_initplans(top_plan, root);
+	//remove_unused_initplans(top_plan, root);
 
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
