@@ -375,16 +375,6 @@ set_plan_references(PlannerGlobal *glob, Plan *plan, List *rtable)
 		/* flat copy to duplicate all the scalar fields */
 		newrte = copyObject(rte);
 
-		/* zap unneeded sub-structure */
-		newrte->subquery = NULL;
-		newrte->joinaliasvars = NIL;
-		newrte->funcexpr = NULL;
-		newrte->funccoltypes = NIL;
-		newrte->funccoltypmods = NIL;
-		newrte->values_lists = NIL;
-		newrte->ctecoltypes = NIL;
-		newrte->ctecoltypmods = NIL;
-
 		/** Need to fix up some of the references in the newly created newrte */
 		fix_scan_expr(glob, (Node *) newrte->funcexpr, rtoffset);
 		fix_scan_expr(glob, (Node *) newrte->joinaliasvars, rtoffset);
