@@ -4042,6 +4042,15 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_CteScan:
+			{
+				CteScan *ctescan = (CteScan*)node;
+				CteScan *newnode;
+
+				FLATCOPY(newnode, ctescan, CteScan);
+				return (Node*) newnode;
+			}
+			break;
 		case T_WindowRef:
 			{
 				WindowRef   *windowref = (WindowRef *) node;
