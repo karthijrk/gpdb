@@ -890,10 +890,11 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * So we mustn't use forboth here.
 	 */
 	ndx = 0;
+	List *rtable = NIL;
 	foreach(lc, cteroot->parse->cteList)
 	{
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
+		rtable = ((Query*)(cte->ctequery))->rtable;
 		if (strcmp(cte->ctename, rte->ctename) == 0)
 			break;
 		ndx++;
@@ -912,6 +913,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Generate appropriate path */
 	// FIXME CTE_MERGE: For `create_ctescan_path How to get pathkeys. For now we are passing NULL.
 	rel->subplan = cteplan;
+	rel->subrtable = rtable;
 	add_path(root, rel, create_ctescan_path(root, rel, NIL));
 
 	/* Select cheapest path (pretty easy in this case...) */
