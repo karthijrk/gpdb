@@ -1976,7 +1976,8 @@ explain_outNode(StringInfo str,
 							indent + 4, es);
 		}
 	}
-}
+    es->currentSlice = currentSlice;    /* restore */
+}                               /* explain_outNode */
 
 /*
  * Show the targetlist of a plan node
