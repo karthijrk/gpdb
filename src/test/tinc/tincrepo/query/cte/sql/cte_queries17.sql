@@ -13,7 +13,7 @@ with capitals(code,id) as
 (select country.code,id,city.name from city,country 
  where city.countrycode = country.code AND city.id = country.capital)
 
-select * from capitals;
+select * from capitals order by id;
 
 --query 2
 with lang_total(lang_count,code,countrycode,name) as
