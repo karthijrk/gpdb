@@ -1676,7 +1676,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 
 				if (walker(tc->arg, context))
 					return true;
-				if (walker(tc->typname, context))
+				if (walker(tc->typeName, context))
 					return true;
 			}
 			break;
@@ -1717,7 +1717,7 @@ raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			{
 				ColumnDef *coldef = (ColumnDef *) node;
 
-				if (walker(coldef->typname, context))
+				if (walker(coldef->typeName, context))
 					return true;
 				if (walker(coldef->raw_default, context))
 					return true;
